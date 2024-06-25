@@ -1,0 +1,10 @@
+{
+    "globalCommands": false,
+    "updateDelay": 7200000,
+    "updateAtStart": true, 
+    "allowManganatoScans": true,
+    "allowReaperScans": false,
+    "allowReaperScansFake": true,
+    "serverUrl": "worker_url",
+    "imageUrlBase": "image_bucket_url"
+}

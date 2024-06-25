@@ -1,0 +1,6 @@
+{
+    "code":"oAuth2 client secret",
+    "public":"bot public key",
+    "appID": "discord application id",
+    "guildID": "test server id"
+}

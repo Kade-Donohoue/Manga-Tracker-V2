@@ -1,0 +1,20 @@
+{
+  "name": "manga-activity",
+  "description": "Discord Activity for the manga tracking. This is also where the Database is managed. ",
+  "private": true,
+  "version": "0.1.0",
+  "author": "",
+  "license": "ISC",
+  "scripts": {
+    "dev": "pnpm run --filter \"./packages/**\" --parallel dev",
+    "staging": "pnpm run --filter \"./packages/**\" --parallel staging",
+    "tunnel": "cloudflared tunnel start discordActivity"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "dependencies": {
+    "@discord/embedded-app-sdk": "^1.2.0",
+    "react-json-view": "^1.21.3"
+  }
+}

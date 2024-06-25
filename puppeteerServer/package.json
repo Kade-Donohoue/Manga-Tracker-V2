@@ -1,0 +1,12 @@
+{
+  "main": "app.js",
+  "dependencies": {
+    "bull": "^4.12.9",
+    "express": "^4.19.2",
+    "puppeteer": "^22.9.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-adblocker": "^2.13.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "sharp": "^0.33.4"
+  }
+}

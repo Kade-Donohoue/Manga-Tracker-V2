@@ -1,0 +1,7 @@
+{
+    "updateDelay": 7200000,
+    "updateAtStart": true, 
+    "allowManganatoScans": true,
+    "allowReaperScansFake": true,
+    "serverUrl": "enter_url_here"
+}

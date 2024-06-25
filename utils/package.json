@@ -1,0 +1,6 @@
+{
+  "main": "convertOld.js",
+  "dependencies": {
+    "sqlite3": "^5.1.7"
+  }
+}

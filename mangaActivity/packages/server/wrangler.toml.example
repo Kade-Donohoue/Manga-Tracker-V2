@@ -1,0 +1,45 @@
+compatibility_flags = [ "nodejs_compat" ]
+name = "manga-activity"
+compatibility_date = "2022-05-03"
+
+workers_dev = false
+route = {pattern = "enter_domain_for_server_worker_here", custom_domain = true}
+
+[vars]
+ENVIRONMENT = "dev"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "name_for_dev_data_base"
+database_id = "id_to_dev_database"
+
+[env.dev.vars]
+ENVIRONMENT = "dev"
+[[env.dev.d1_databases]]
+binding = "DB"
+database_name = "name_for_dev_data_base"
+database_id = "id_to_dev_database"
+[[env.dev.r2_buckets]]
+binding = "IMG"
+bucket_name = "name_for_dev_image_server"
+
+[env.staging.vars]
+ENVIRONMENT = "staging"
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "name_for_staging_data_base"
+database_id = "id_to_staging_database"
+[[env.staging.r2_buckets]]
+binding = "IMG"
+bucket_name = "name_for_staging_image_server"
+
+
+[env.production.vars]
+ENVIRONMENT = "production"
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "name_for_production_data_base"
+database_id = "id_to_production_database"
+[[env.production.r2_buckets]]
+binding = "IMG"
+bucket_name = "name_for_production_image_server"
