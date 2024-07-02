@@ -75,6 +75,7 @@ export default function addBookmarks() {
   const [isLoading, setIsLoading] = React.useState(false)
   const [selectedFolder, setSelectedFolder] = React.useState<dropdownOptions|null>(null)
   const [selectedCat, setSelectedCat] = React.useState<dropdownOptions | null>(catOptions[0])
+  const [showError, setShowError] = React.useState<boolean>(true)
 
   const auth = authStore.getState();
   // console.log(auth)
@@ -87,7 +88,7 @@ export default function addBookmarks() {
     const notif = toast.loading("Adding Manga!", {closeOnClick: true, draggable: true,})
     try {
       setIsLoading(true)
-      //   setShowError(false)
+      setShowError(false)
       console.log(selectedFolder!.value)
 
       if (typeof selectedFolder!.value === 'string') return console.log('Wrong Type')
@@ -147,7 +148,7 @@ export default function addBookmarks() {
           progress: 0
         })
       } else {
-        // setShowError(true)
+        setShowError(true)
         toast.update(notif, {
           render: "Unable to Add 1 or More Manga!", 
           type: "error", 
@@ -250,6 +251,7 @@ export default function addBookmarks() {
             <li>Click Submit!</li>
           </ul>
         </div>
+        {showError?<label className='addError' id='errorField'></label>:<></>}
     </div>
   )
   return (

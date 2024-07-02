@@ -1,6 +1,6 @@
-import {authStore} from '../../stores/authStore';
-import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import {authStore} from '../../stores/authStore'
+import { toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 import React, { useEffect } from "react"
 import Select, { StylesConfig } from 'react-select'
 import './removeManga.css'
@@ -148,7 +148,11 @@ export default function removeManga() {
         }),
       })
 
-    if (resp.status!=200) return toast.error((await resp.json()).message||"Unable to Fetch Manga! Reload the Page or Contact an Admin!")
+    if (resp.status!=200) {
+      var errData:{message:string, url:string} = await resp.json()
+      toast.error(errData.message||"Unable to Fetch Manga! Reload the Page or Contact an Admin!")
+      return 
+    }
     const data:{"userData": [{"mangaName":string, "mangaId":string}]} = await resp.json()
     var options:dropdownOption[] = []
     for (var i = data.userData.length-1; i >= 0; i--) {

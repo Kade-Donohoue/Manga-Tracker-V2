@@ -12,6 +12,11 @@ the first 2 are required while the text command is optional. Each folder has its
 
 # **Change Logs**
 
+## Change Log v1.0.2
+- fixed type error which prevented building
+- added error reporting to end user for import bookmarks
+- resolved issue where string was returned instead of json for puppeteer fetch error
+
 ## Change Log v1.0.1
 - Changed timeout for grabbing dropdown in puppeteer down to 500 ms reducing how long it takes to tell you when you have a partial url
 - fixed tunnel command to properly start tunnel
