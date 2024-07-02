@@ -57,7 +57,7 @@ async function getMangaFull(url, icon = true) {
         await page.goto(url, {waitUntil: 'networkidle0', timeout: 25*1000})
         page.viewport({width: 960, height: 1040})
 
-        const chapterDropdown = await page.waitForSelector('#chapter', {timeout: 5000})
+        const chapterDropdown = await page.waitForSelector('#chapter', {timeout: 500})
 
         const chapterURLs = await chapterDropdown.evaluate(() => Array.from(
             document.querySelectorAll('#chapter > option'),

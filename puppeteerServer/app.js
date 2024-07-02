@@ -52,6 +52,7 @@ app.get('/getManga/', async function(req, res) {
     }, {priority: 1})
 
     const response = await job.finished()
+    if (response==null) return res.status(500).send('Unable to fetch Data! maybe invalid Url?')
     // console.log(response)
     res.send(response)
 })

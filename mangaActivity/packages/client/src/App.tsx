@@ -1,5 +1,6 @@
 import * as React from 'react'
 import {BrowserRouter as Router, Routes, Route, Link, useLocation} from 'react-router-dom'
+import { ToastContainer } from 'react-toastify';
 
 import * as Scrollable from './components/Scrollable'
 import {AuthProvider} from './components/AuthProvider'
@@ -11,6 +12,7 @@ import addManga from './pages/command/addManga'
 import removeManga from './pages/command/removeManga'
 import stats from './pages/command/stats'
 import debug from './pages/debug'
+import addBookmarks from './pages/command/addBookmarks'
 
 import * as S from './AppStyles'
 
@@ -19,6 +21,18 @@ export default function App(): React.ReactElement {
   return (
     <AuthProvider>
       <DesignSystemProvider>
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss={false}
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
         <Router>
           <RootedApp />
         </Router>
@@ -49,6 +63,11 @@ const routes: Record<string, AppRoute> = {
     name: 'Add Manga',
     component: addManga
   },
+  testJson: {
+    path: '/addBookmarks',
+    name: 'Import Bookmarks',
+    component: addBookmarks
+  },
   removeManga: {
     path: '/removeManga',
     name: 'Remove Manga',
@@ -58,7 +77,7 @@ const routes: Record<string, AppRoute> = {
     path: '/stats',
     name: 'Statistics',
     component: stats
-  }
+  },
   // debug: {
   //   path: '/debug',
   //   name: 'Dev',

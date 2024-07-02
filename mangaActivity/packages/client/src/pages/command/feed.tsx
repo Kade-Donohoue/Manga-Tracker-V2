@@ -1,8 +1,53 @@
 import discordSdk from '../../discordSdk';
 import {authStore} from '../../stores/authStore';
 import ReactJsonView from '../../components/ReactJsonView';
+import Select, { StylesConfig } from 'react-select'
 import React, { useEffect } from "react"
 import './feed.css'
+
+const customStyles: StylesConfig<dropdownOption, false> = {
+  control: (provided, state) => ({
+    ...provided,
+    width: '100%',
+    backgroundColor: '#121212',
+    margin: "8px 0",
+  }),
+  input: (provided) => ({
+    ...provided,
+    color: '#fff',
+    margin: '0', // Remove default margin to match regular select
+    padding: '2px', // Adjust padding to prevent overflow
+  }),
+  singleValue: (provided) => ({
+    ...provided,
+    color: '#fff',
+    margin: '0', // Remove default margin to prevent overflow
+  }),
+  menuList: (provided) => ({
+    ...provided,
+    padding: '0',
+  }),
+  menu: (provided) => ({
+    ...provided,
+    backgroundColor: '#121212',
+    borderRadius: '4px',
+    marginTop: '0',
+  }),
+  option: (provided, state) => ({
+    ...provided,
+    backgroundColor: state.isSelected ? '#6b6b6b' : '#121212',
+    color: '#fff',
+    '&:hover': {
+      backgroundColor: '#6b6b6b',
+    },
+    padding: '12px 20px', // Match padding of regular select options
+  }),
+}
+
+interface dropdownOption {
+  "value":string, 
+  "label": string
+}
 
 interface userData {
   "userID": string,
@@ -26,6 +71,26 @@ interface responseData {
   "mangaData": mangaData[]
 }
 
+const catOptions = [
+  {value: "reading", label: "Reading"},
+  {value: "notreading", label: "Not Reading"},
+  {value: "hold", label: "Hold"},
+  {value: "finished", label: "Finished"},
+  {value: "inqueue", label: "In Queue"},
+  {value: "other", label: "Other"},
+  {value: "unsorted", label: "Uncategorized"},
+]
+
+const ordOptions = [
+  {value: "ASC", label: "Ascending"},
+  {value: "DESC", label: "Descending"}
+]
+
+const methodOptions = [
+  {value: "interactTime", label: "Time"},
+  {value: "mangaName", label: "Alphabetical"}
+]
+
 export default function feed() {
   const [response, setResponse] = React.useState<responseData | null>(
     {
@@ -40,22 +105,14 @@ export default function feed() {
   const [showError,setShowError] = React.useState(true)
   const auth = authStore.getState();
 
+  const [selectedCat, setSelectedCat] = React.useState<{value: string; label: string;} | null>(catOptions[0])
+  const [selectedOrd, setSelectedOrd] = React.useState<{value: string; label: string;} | null>(ordOptions[0])
+  const [selectedMethod, setSelectedMethod] = React.useState<{value: string; label: string;} | null>(methodOptions[0])
+
   async function updateCard() {
     try {
       setIsLoadingStart(true)
-      const catSelector = document.getElementById("cat-select") as HTMLSelectElement|null
-      var cat = "%"
-      if (catSelector) cat = catSelector.options[catSelector.selectedIndex].value
 
-      const orderSelector = document.getElementById("sort-order") as HTMLSelectElement|null
-      var ord = "ASC"
-      if (orderSelector) ord = orderSelector.options[orderSelector.selectedIndex].value
-
-      const methodSelector = document.getElementById("sort-method") as HTMLSelectElement|null
-      var meth = "interactTime"
-      if (methodSelector) meth = methodSelector.options[methodSelector.selectedIndex].value
-
-      console.log(cat)
       const resp = await fetch("/api/data/pull/getUnread", {
         method: 'POST',
         headers: {
@@ -64,9 +121,9 @@ export default function feed() {
         body: JSON.stringify({
           "access_token": auth.access_token,
           "authId": null,
-          "userCat": cat,
-          "sortOrd": ord,
-          "sortMeth": meth
+          "userCat": selectedCat?.value,
+          "sortOrd": selectedOrd?.value,
+          "sortMeth": selectedMethod?.value
         }),
       });
       console.log(resp)
@@ -207,31 +264,36 @@ export default function feed() {
   if (response.userData.length <= 0) return (
     <div className="feedOptionContainer">
       <label htmlFor="cat-select">Choose a Category: </label>
-      <select name="categories" id="cat-select">
-        <option value="reading">Reading</option>
-        <option value="notreading">Not Reading</option>
-        <option value="hold">Hold</option>
-        <option value="hiatus">Hiatus</option>
-        <option value="finished">Finished</option>
-        <option value="inqueue">In Queue</option>
-        <option value="other">Other</option>
-        <option value="unsorted">Uncategorized</option>
-        <option value="%">Any</option>
-      </select>
+      <Select name="categories" 
+        id="cat-select" 
+        className="catSelect" 
+        value={selectedCat} 
+        onChange={setSelectedCat} 
+        options={catOptions} 
+        styles={customStyles} 
+      />
       <br></br>
 
       <label>Choose a sort Order: </label>
-      <select name="sortOrd" id="sort-order">
-        <option value="ASC">Ascending</option>
-        <option value="DESC">descending</option>
-      </select>
+      <Select name="sortOrd" 
+        id="sort-order" 
+        className="ordSelect" 
+        value={selectedOrd} 
+        onChange={setSelectedOrd} 
+        options={ordOptions} 
+        styles={customStyles} 
+      />
       <br></br>
 
       <label>Choose a sort Method: </label>
-      <select name="sortMeth" id="sort-method">
-      <option value="interactTime">Time</option>
-        <option value="mangaName">Alphabetical</option>
-      </select>
+      <Select name="sortMeth" 
+        id="sort-method" 
+        className="methodSelect" 
+        value={selectedMethod} 
+        onChange={setSelectedMethod} 
+        options={methodOptions} 
+        styles={customStyles} 
+      />
       
       <button className="addButton" type="submit" onClick={updateCard}>{isLoadingStart? 'Loading...':'Start Feed'}</button>
       {showError?<label className='addError' id='errorField'></label>:<></>}
@@ -294,7 +356,9 @@ export default function feed() {
         <button className='prev mangaFeedControlButton' onClick={(e) => {
           if (currentCard > 0) updateCardIndex(-1)
             console.log(currentCard)
-          }}>Prev
+          }}
+          disabled={(currentCard==0)}
+          >Prev
         </button>
         <button className='setCurrent mangaFeedControlButton' onClick={(e) => {
             openReadModal()
@@ -304,7 +368,9 @@ export default function feed() {
         <button className='next mangaFeedControlButton' onClick={(e) => {
           if (currentCard < response.mangaData.length - 1) updateCardIndex(1)
           console.log(currentCard)
-          }}>Next
+          }}
+          disabled={(response.mangaData.length <= currentCard+1)}
+          >Next
         </button>
       </div>
       

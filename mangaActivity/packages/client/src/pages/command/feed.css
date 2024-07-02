@@ -26,6 +26,14 @@
     flex: 10%
 }
 
+.mangaFeedControlButton:hover{
+    background-color: #273e89;
+}
+
+.mangaFeedControlButton:disabled{
+    background-color: #0f193b;
+}
+
 .feedMangaTitle {
     color: white;
     font-size: 3vh;

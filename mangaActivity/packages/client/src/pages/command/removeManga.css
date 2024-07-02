@@ -8,6 +8,10 @@ input[type=text], select {
     box-sizing: border-box;
   }
 
+.removeSelect {
+  background-color: #121212;
+}
+
 .removeContainer {
   width: 100%;
   padding: 12px 20px;

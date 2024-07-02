@@ -98,14 +98,6 @@ module.exports = class mangaFeedSubCommand extends BaseSubcommandExecutor {
         // }
 
         manageCardHandler(interaction, respData.mangaData, respData.userData)
-        
-        // getUnread(authID, userCat, sortMethod, sortOrd).then(async ([names, nextLinks, nextChap, currentChap, currentCat]) => {
-        //     if (names.length == 0) return interaction.reply({ content: "You have no Unread manga!", ephemeral: true })
-
-        //     await interaction.deferReply({ ephemeral: true })
-
-        //     manageCardHandler(names, nextLinks, nextChap, currentChap, interaction, currentCat)
-        // })
     }
 }
 

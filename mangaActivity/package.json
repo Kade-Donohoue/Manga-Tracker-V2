@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "pnpm run --filter \"./packages/**\" --parallel dev",
     "staging": "pnpm run --filter \"./packages/**\" --parallel staging",
-    "tunnel": "cloudflared tunnel start discordActivity"
+    "tunnel": "cloudflared tunnel run devManga"
   },
   "engines": {
     "node": ">=16.0.0"

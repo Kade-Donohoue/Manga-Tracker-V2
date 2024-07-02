@@ -1,30 +1,84 @@
-import discordSdk from '../../discordSdk';
 import {authStore} from '../../stores/authStore';
-import ReactJsonView from '../../components/ReactJsonView';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import React, { useEffect } from "react"
+import Select, { StylesConfig } from 'react-select'
 import './removeManga.css'
 
+const customStyles: StylesConfig<dropdownOption, false> = {
+  control: (provided, state) => ({
+    ...provided,
+    width: '100%',
+    backgroundColor: '#121212',
+    margin: "8px 0",
+  }),
+  input: (provided) => ({
+    ...provided,
+    color: '#fff',
+    margin: '0', // Remove default margin to match regular select
+    padding: '2px', // Adjust padding to prevent overflow
+  }),
+  singleValue: (provided) => ({
+    ...provided,
+    color: '#fff',
+    margin: '0', // Remove default margin to prevent overflow
+  }),
+  menuList: (provided) => ({
+    ...provided,
+    padding: '0',
+  }),
+  menu: (provided) => ({
+    ...provided,
+    backgroundColor: '#121212',
+    borderRadius: '4px',
+    marginTop: '0',
+  }),
+  option: (provided, state) => ({
+    ...provided,
+    backgroundColor: state.isSelected ? '#6b6b6b' : '#121212',
+    color: '#fff',
+    '&:hover': {
+      backgroundColor: '#6b6b6b',
+    },
+    padding: '12px 20px', // Match padding of regular select options
+  }),
+}
+
+interface dropdownOption {
+    "value":string, 
+    "label": string
+  }
+
 export default function removeManga() {
-  const [showSuccess,setShowSuccess] = React.useState(false)
-  const [showError,setShowError] = React.useState(true)
   const [isLoading, setIsLoading] = React.useState(false)
+  const [dropOptions, setDropOptions] = React.useState<dropdownOption[]>()
+  const [selectedOption, setSelectedOption] = React.useState<{value: string; label: string;} | null>(null)
 
   const auth = authStore.getState();
-  console.log(auth)
+  // console.log(auth)
   if (!auth) {
     console.log("No Auth!!!!!!!!!!!!!!!!")
     return <></>;
   }
 
   async function submitManga() {
+    const notif = toast.loading("Removing Manga!")
     try {
-      setIsLoading(true)
-      setShowError(false)
-      const mangaSelector = document.getElementById("manga-select") as HTMLSelectElement|null
-      var id:string|null = null
-      if (mangaSelector) id = mangaSelector.options[mangaSelector.selectedIndex].value
-
-      console.log(id)
+      // console.log(selectedOption)
+     if (!selectedOption) {
+      toast.update(notif, {
+        render: "No Manga Selected!", 
+        type: "error", 
+        isLoading: false,
+        autoClose: 5000, 
+        hideProgressBar: false, 
+        closeOnClick: true, 
+        draggable: true,
+        progress: 0
+      })
+      setIsLoading(false)
+      return
+    }
 
         const reply = await fetch('/api/data/remove/deleteUserManga', {
             method: 'POST',
@@ -34,28 +88,50 @@ export default function removeManga() {
             body: JSON.stringify({
             "access_token": auth.access_token,
             "authId": null,
-            "mangaId": id
+            "mangaId": selectedOption.value
             }),
         })
 
-        
         if (reply.status==200) {
-            setShowSuccess(true)
-            mangaSelector?.options[mangaSelector.selectedIndex].remove()
-            setTimeout(() => {
-            setShowSuccess(false)
-            }, 5000)
+            toast.update(notif, {
+              render: "Manga Successfully Removed!", 
+              type: "success", 
+              isLoading: false, 
+              autoClose: 5000, 
+              hideProgressBar: false, 
+              closeOnClick: true, 
+              draggable: true,
+              progress: 0
+            })
+            retrieveMangaList()
+            setSelectedOption(null)
         } else {
-            const data:{message:string, url:string} = await reply.json()
-            const errorField = document.getElementById('errorField') as HTMLLabelElement|null
-            errorField!.innerHTML = `${data.message}`
+          const data:{message:string, url:string} = await reply.json()
+          toast.update(notif, {
+            render: data.message, 
+            type: "error", 
+            isLoading: false,
+            autoClose: 5000, 
+            hideProgressBar: false, 
+            closeOnClick: true, 
+            draggable: true,
+            progress: 0
+          })
         }
 
         setIsLoading(false)
     } catch (error) {
-      setShowError(true)
+      toast.update(notif, {
+        render: "An Unknown Error has Occured", 
+        type: "error", 
+        isLoading: false,
+        autoClose: 5000, 
+        hideProgressBar: false, 
+        closeOnClick: true, 
+        draggable: true,
+        progress: 0
+      })
       setIsLoading(false)
-      console.error('Error fetching card', error)
     }
   } 
   
@@ -72,23 +148,17 @@ export default function removeManga() {
         }),
       })
 
-      const data:{"userData": [{"mangaName":string, "mangaId":string}]} = await resp.json()
-    
-    const selector = document.getElementById("manga-select") as HTMLSelectElement|null
-    if (!selector || resp.status!=200) return undefined
-    // emptySelector(selector)
-
+    if (resp.status!=200) return toast.error((await resp.json()).message||"Unable to Fetch Manga! Reload the Page or Contact an Admin!")
+    const data:{"userData": [{"mangaName":string, "mangaId":string}]} = await resp.json()
+    var options:dropdownOption[] = []
     for (var i = data.userData.length-1; i >= 0; i--) {
-        const option = document.createElement('option')
-        option.value = data.userData[i].mangaId
-        option.text = data.userData[i].mangaName
-        selector.add(option)
+      options.push({value: data.userData[i].mangaId, label: data.userData[i].mangaName})
     }
+    setDropOptions(options)
   }
 
   useEffect(() => {
     retrieveMangaList()
-    setShowSuccess(false)
   }, [])
 
 //   if (!mangaList) return <></>
@@ -96,14 +166,17 @@ export default function removeManga() {
     <div className="removeContainer">
 
       <label htmlFor="manga-select">Choose a Manga: </label>
-      <select name="categories" id="manga-select">
-
-      </select>
-      <br></br>
+      <Select name="categories" 
+        id="manga-select" 
+        className="removeSelect" 
+        value={selectedOption} 
+        onChange={setSelectedOption} 
+        options={dropOptions} 
+        styles={customStyles} 
+        isClearable={true} 
+        isLoading={(dropOptions) ? false:true} 
+        />
       <button className="removeButton" type="submit" onClick={submitManga}>{isLoading? 'Loading...':'Remove Manga!'}</button>
-      {showSuccess?<label className='removeConfirmation'>Manga Removed!</label>:<></>}
-      {showError?<label className='removeError' id='errorField'></label>:<></>}
-      <br></br>
     </div>
   );
 }

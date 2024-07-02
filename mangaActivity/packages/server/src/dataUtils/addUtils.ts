@@ -12,8 +12,9 @@ export async function saveManga(authToken:string, authId:string, url:string, use
         // console.log(mangaReq)
         
         if (mangaReq.status!=200) { 
+            const errorResp = await mangaReq.json()
             return new Response(JSON.stringify({
-                message: mangaReq,
+                message: errorResp.message,
                 url: url
             }), {status:mangaReq.status})
         }
