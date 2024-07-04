@@ -43,6 +43,7 @@ app.get('/getManga/', async function(req, res) {
     else if (req.query.url.includes('reaperscan') && config.allowReaperScans) webSite = "reaper"
     else if (req.query.url.includes('reaper-scan') && config.allowReaperScansFake) webSite = "reaper-scans-fake"
     else return res.status(422).send({message: "Unsupported WebPage"})
+    if (!req.query.url.includes('chapter')) return res.status(422).send({message: "link provided is for an overview page. Please provide a link to a specific chapter page!"})
 
     const job = await getQueue.add({
         type: webSite,

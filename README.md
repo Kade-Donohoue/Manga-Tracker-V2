@@ -12,6 +12,12 @@ the first 2 are required while the text command is optional. Each folder has its
 
 # **Change Logs**
 
+## Change Log v1.0.3
+- Resolved pull script from reaper-scans returning base64 image rather than buffer
+- Resolved reaper-scans returning double chapter text
+- Changed statistics chapter count to use manga url chapter count(decimals are cut off) rather than number of urls
+- reaper-scans now runs as headless
+
 ## Change Log v1.0.2
 - fixed type error which prevented building
 - added error reporting to end user for import bookmarks

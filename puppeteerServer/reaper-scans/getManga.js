@@ -3,6 +3,7 @@ const puppeteer = require("puppeteer-extra")
 const utils = require('../util')
 const stealthPlugin = require("puppeteer-extra-plugin-stealth")
 puppeteer.use(stealthPlugin())
+const sharp = require('sharp')
 const AdblockerPlugin = require('puppeteer-extra-plugin-adblocker')
 const adblocker = AdblockerPlugin({
   blockTrackers: true // default: false
@@ -26,7 +27,7 @@ puppeteer.use(adblocker)
 async function getMangaFull(url, icon = true) {
     // if (!config.allowReaperScansFake) return -2
     // console.log(`opening: ${url}`)
-    const browser = await puppeteer.launch({headless: false, devtools: false, ignoreHTTPSErrors: true, //"new"
+    const browser = await puppeteer.launch({headless: "new", devtools: false, ignoreHTTPSErrors: true, //"new"
             args: ['--enable-features=NetworkService', '--no-sandbox', '--disable-setuid-sandbox','--mute-audio']})
     try {
         const page = await browser.newPage()
@@ -77,7 +78,7 @@ async function getMangaFull(url, icon = true) {
 
         let chapterTextList = []
         chapterText.forEach((chap) => {
-            if (chap.includes('Select Chapter')) return
+            if (chap.includes('Select Chapter') || chapterTextList.includes(chap)) return
             chapterTextList.splice(0,0,chap)
         })
 
@@ -87,6 +88,7 @@ async function getMangaFull(url, icon = true) {
         const mangaURLButton = await page.waitForSelector('#content > div > div > div > div.ts-breadcrumb.bixbox > div > span:nth-child(2) > a', {timeout: 5000})
         const mangaURL = await mangaURLButton.evaluate(el => el.getAttribute('href'))
 
+        var resizedImage = null
         var iconData = null
         if (icon) {
             console.log("starting Icon Save")
@@ -111,14 +113,16 @@ async function getMangaFull(url, icon = true) {
             const icon = await photoPage.goto(photoURL)
 
             const iconBuffer = await icon.buffer()
-            iconData = iconBuffer.toString('base64')
+            resizedImage = await sharp(iconBuffer)
+                .resize(480, 720)
+                .toBuffer()
         }
 
         await browser.close()
 
         const currIndex = chapterUrlList.indexOf(url)
 
-        return {"mangaName": mangaName, "chapterUrlList": chapterUrlList.join(','), "chapterTextList": chapterTextList.join(','), "currentIndex": currIndex, "iconBuffer": iconData}
+        return {"mangaName": mangaName, "chapterUrlList": chapterUrlList.join(','), "chapterTextList": chapterTextList.join(','), "currentIndex": currIndex, "iconBuffer": resizedImage}
         
     } catch (err) {
         console.warn(err)

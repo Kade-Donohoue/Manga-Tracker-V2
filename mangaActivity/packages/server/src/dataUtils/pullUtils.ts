@@ -148,8 +148,11 @@ export async function userStats(access_token:string, authId:string, env:Env) {
 
             for (var i = 0; i < userResults.length; i++) {
                 const currResults:string[] = (userResults[i].results[0].chapterTextList).split(',')
-                read+= parseInt(userManga[i].currentIndex)+1
-                const currUnread = (currResults.length)-(parseInt(userManga[i].currentIndex)+1)
+                var currentChap = currResults[parseInt(userManga[i].currentIndex)]
+                var chapNumStr = currentChap.match(/[0-9.]+/g)
+                var latestNumStr = currResults[currResults.length-1].match(/[0-9.]+/g)
+                read+= parseInt(chapNumStr![chapNumStr!.length-1])
+                const currUnread = (parseInt(latestNumStr![latestNumStr!.length -1]))-(parseInt(chapNumStr![chapNumStr!.length-1]))
                 if (currUnread!=0) unreadManga++
                 unreadChapters+=currUnread
             }
