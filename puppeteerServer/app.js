@@ -1,4 +1,4 @@
-const getManga = require('./mangaNato/getManga')
+const getManga = require('./puppeteerScripts/mangaNato')
 const {getQueue, updateQueue} = require('./jobQueue')
 const express = require('express')
 const app = express()
@@ -8,10 +8,6 @@ const config = require('./config.json')
 const port = 80
 app.listen(port, function() {
     console.log(`Listening on port ${port}`)
-})
-
-app.get('/', function(req, res) {
-    res.send("Hello!")
 })
 
 app.get('/updateManga', async function(req, res) {
@@ -35,26 +31,27 @@ app.get('/updateManga', async function(req, res) {
 })
 
 app.get('/getManga/', async function(req, res) {
-    console.log(req.query)
+    // console.log(req.query)
 
     var webSite
     if (!req.query.url.includes('http')) return res.status(422).send({message: "Invalid URL!"})
     if (req.query.url.includes('manganato') && config.allowManganatoScans) webSite = "manganato"
     else if (req.query.url.includes('reaperscan') && config.allowReaperScans) webSite = "reaper"
     else if (req.query.url.includes('reaper-scan') && config.allowReaperScansFake) webSite = "reaper-scans-fake"
+    else if (req.query.url.includes('asura') && config.allowAsura) webSite = "asura"
     else return res.status(422).send({message: "Unsupported WebPage"})
     if (!req.query.url.includes('chapter')) return res.status(422).send({message: "link provided is for an overview page. Please provide a link to a specific chapter page!"})
 
     const job = await getQueue.add({
         type: webSite,
-        url: req.query.url, 
+        url: req.query.url.trim(), 
         getIcon: true,
         update: false
     }, {priority: 1})
 
     const response = await job.finished()
-    if (response==null) return res.status(500).send({message: 'Unable to fetch Data! maybe invalid Url?'})
-    // console.log(response)
+    // console.log(typeof response)
+    if (typeof response === "string") return res.status(500).send({message: response})
     res.send(response)
 })
 
@@ -78,6 +75,7 @@ async function updateAllManger() {
         if (firstChapUrl.includes('manganato') && config.allowManganatoScans) webSite = "manganato"
         else if (firstChapUrl.includes('reaperscan') && config.allowReaperScans) webSite = "reaper"
         else if (firstChapUrl.includes('reaper-scan') && config.allowReaperScansFake) webSite = "reaper-scans-fake"
+        else if (firstChapUrl.includes('asura') && config.allowAsura) webSite = "asura"
         else continue
         
         getQueue.add({
@@ -92,4 +90,4 @@ async function updateAllManger() {
     
 }
 
-updateAllManger()
+if (config.updateAtStart) updateAllManger()

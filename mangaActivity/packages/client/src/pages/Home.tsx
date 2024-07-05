@@ -9,7 +9,7 @@ export default function Home() {
   return (
     <div style={{padding: 32}}>
       Welcome to the Manga Bot. The one stop shop for yor manga tracking needs!<br></br>
-      Currently Manganato and reaper-scans(soon) are supported. 
+      Currently Manganato, Asura Scans and Reaper-Scans are supported. 
 
       <p>
         If you have any requests please file an issue on the <a href='https://github.com/Kade-Donohoue/Manga-Bot'>Github</a>!

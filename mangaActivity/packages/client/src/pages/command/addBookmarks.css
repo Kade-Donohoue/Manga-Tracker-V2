@@ -1,7 +1,7 @@
 .addBookmarksContainer {
     width: 100%;
-    margin: 20px 20px;
-    /* margin: 8px 0; */
+    padding: 12px 20px;
+    margin: 8px 0;
     display: inline-block;
     border: none;
     border-radius: 4px;

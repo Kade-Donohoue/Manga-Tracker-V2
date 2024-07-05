@@ -199,19 +199,22 @@ export default function addBookmarks() {
     }
   }
 
-  async function pullFolders(node:BookmarkNode, folders:dropdownOptions[]) {
+  async function pullFolders(node:BookmarkNode, folders:dropdownOptions[], path:string = "") {
     // console.log(node)
     if (!node.type) {
       for (const [key, value] of Object.entries(node)) {
         // console.log(key, value instanceof Object)
-        if (value instanceof Object) await pullFolders(value, folders)
+        if (value instanceof Object) await pullFolders(value, folders, path)
       }
     }
-    else if ((node.type == 'folder' || node.type == 'text/x-moz-place-container') && node.children?.length! > 0) folders.push({value:node, label:(node.name || node.title)!})
-
+    else if ((node.type == 'folder' || node.type == 'text/x-moz-place-container') && node.children?.length! > 0) {
+      if ((node.name || node.title)) path+=`/${(node.name || node.title)}`
+      // console.log(path+=`/${(node.name || node.title)}`)
+      folders.push({value:node, label:path})
+    }
     if (node.children) {
       for (const child of node.children) {
-        await pullFolders(child, folders)
+        await pullFolders(child, folders, path)
       }
     }
   }

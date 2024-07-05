@@ -12,6 +12,18 @@ the first 2 are required while the text command is optional. Each folder has its
 
 # **Change Logs**
 
+## Change Log v1.0.4
+- Resolved issue where if you had ", " instead of "," in add manga it would be unable to get the url index. 
+- restructured puppeteerServer scripts for pages
+- added config option in puppeteer for redisIp
+- config is now config.json.example instead of the json
+- added error returned to user if job isn't recognized
+- added support for asura scans
+- updated puppeteerServer readme to match new config and support
+- updated home page text
+- fixed add bookmark dropdowns going off screen
+- add bookmarks now shows folder paths instead of just the folder name
+
 ## Change Log v1.0.3
 - Resolved pull script from reaper-scans returning base64 image rather than buffer
 - Resolved reaper-scans returning double chapter text

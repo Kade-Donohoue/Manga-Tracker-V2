@@ -20,7 +20,7 @@ puppeteer.use(adblocker)
  *  "iconBuffer": base64 icon for manga
  * }
  */
-async function getMangaFull(url, icon = true) {
+async function getManga(url, icon = true) {
     // if (!config.allowManganatoScans) return -2
     
     const browser = await puppeteer.launch({headless: "new", devtools: false, ignoreHTTPSErrors: true, //"new"
@@ -110,10 +110,10 @@ async function getMangaFull(url, icon = true) {
     } catch (err) {
         console.warn(err)
         await browser.close()
-        return null
+        return 'Unable to fetch Data! maybe invalid Url?'
     }
 }
 
 module.exports = {
-    getMangaFull
+    getManga
 }

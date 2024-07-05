@@ -88,7 +88,7 @@ export default function addManga() {
 
       const urlBox = document.getElementById("chapURL") as HTMLTextAreaElement|null
       var url:string|null = null
-      if (urlBox) url = urlBox.value
+      if (urlBox) url = urlBox.value.replace(" ", "")
 
       if (!url) {
          toast.update(notif, {

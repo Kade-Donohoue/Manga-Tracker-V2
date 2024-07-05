@@ -3,5 +3,7 @@
     "updateAtStart": true, 
     "allowManganatoScans": true,
     "allowReaperScansFake": true,
-    "serverUrl": "enter_url_here"
+    "allowAsura": true,
+    "serverUrl": "enter_url_here",
+    "redisIp": "127.0.0.1"
 }

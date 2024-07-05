@@ -1,6 +1,7 @@
 const {getQueue} = require('./jobQueue')
-const manganato = require('./mangaNato/getManga')
-const reaperScansFake = require('./reaper-scans/getManga')
+const manganato = require('./puppeteerScripts/mangaNato')
+const reaperScansFake = require('./puppeteerScripts/reaper-scans')
+const asura = require('./puppeteerScripts/asura')
 const config = require('./config.json')
 
 getQueue.process(async (job, done) => {
@@ -9,15 +10,19 @@ getQueue.process(async (job, done) => {
     var data
     switch(job.data.type) {
         case 'manganato':
-            data = await manganato.getMangaFull(job.data.url, job.data.getIcon)
+            data = await manganato.getManga(job.data.url, job.data.getIcon)
             break
         case 'reaper': 
             done(new Error('Not Implemented! please disable in config'))
             break
         case 'reaper-scans-fake':
-            data = await reaperScansFake.getMangaFull(job.data.url, job.data.getIcon)
+            data = await reaperScansFake.getManga(job.data.url, job.data.getIcon)
+            break
+        case 'asura': 
+            data = await asura.getManga(job.data.url, job.data.getIcon)
             break
         default:
+                data = 'Invalid Job Type'
                 console.log('Unknown get manga job')
     }
     if (job.data.update) {
@@ -51,5 +56,9 @@ getQueue.on('completed', async (job, result) => {
         }
     }
 })
+
+// getQueue.on("waiting", (jobId) => {
+//     console.log(jobId)
+// })
 
 // console.log(getQueue.getQueue)
