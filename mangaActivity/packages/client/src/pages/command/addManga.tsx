@@ -1,11 +1,12 @@
-import discordSdk from '../../discordSdk';
-import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import {authStore} from '../../stores/authStore';
+import discordSdk from '../../discordSdk'
+import { toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+import {authStore} from '../../stores/authStore'
 import Select, { StylesConfig } from 'react-select'
-import ReactJsonView from '../../components/ReactJsonView';
 import React, { useEffect } from "react"
 import './addManga.css'
+import { catOptions } from '../../vars'
+import { dropdownOption } from '../../types'
 
 const customStyles: StylesConfig<dropdownOption, false> = {
   control: (provided, state) => ({
@@ -46,27 +47,6 @@ const customStyles: StylesConfig<dropdownOption, false> = {
   }),
 }
 
-interface dropdownOption {
-  "value":string, 
-  "label": string
-}
-
-interface cardData {
-  "name": string,
-  "chapter": string,
-  "url": string
-}
-
-const catOptions = [
-  {value: "reading", label: "Reading"},
-  {value: "notreading", label: "Not Reading"},
-  {value: "hold", label: "Hold"},
-  {value: "finished", label: "Finished"},
-  {value: "inqueue", label: "In Queue"},
-  {value: "other", label: "Other"},
-  {value: "unsorted", label: "Uncategorized"},
-]
-
 // Note: we're still using the anchor tag, to ensure standard accessibility UX
 export default function addManga() {
   const [showError,setShowError] = React.useState(true)
@@ -81,7 +61,7 @@ export default function addManga() {
   }
 
   async function submitManga() {
-    const notif = toast.loading("Adding Manga!", {closeOnClick: true, draggable: true,})
+    let notif = toast.loading("Adding Manga!", {closeOnClick: true, draggable: true,})
     try {
       setIsLoading(true)
       setShowError(false)

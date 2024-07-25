@@ -12,7 +12,9 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240405.0",
-    "@types/service-worker-mock": "^2.0.1",
+    "@types/jest": "^29.5.12",
+    "@types/service-worker-mock": "^2.0.4",
+    "@types/uuid": "^10.0.0",
     "service-worker-mock": "^2.0.5",
     "tsm": "^2.2.1",
     "uvu": "^0.5.3",

@@ -4,8 +4,9 @@ import 'react-toastify/dist/ReactToastify.css';
 import React, { useEffect } from "react"
 import Select, { StylesConfig } from 'react-select'
 import './addBookmarks.css'
+import { catOptions } from '../../vars';
 
-const customStyles: StylesConfig<dropdownOptions, false> = {
+const customStyles: StylesConfig<dropdownOption, false> = {
     control: (provided, state) => ({
       ...provided,
       width: '100%',
@@ -44,7 +45,7 @@ const customStyles: StylesConfig<dropdownOptions, false> = {
     }),
   }
   
-interface dropdownOptions {
+interface dropdownOption {
     "value":BookmarkNode|string, 
     "label": string
 }
@@ -59,22 +60,13 @@ interface BookmarkNode {
   version?: number
 }
 
-const catOptions:dropdownOptions[] = [
-    {value: "reading", label: "Reading"},
-    {value: "notreading", label: "Not Reading"},
-    {value: "hold", label: "Hold"},
-    {value: "finished", label: "Finished"},
-    {value: "inqueue", label: "In Queue"},
-    {value: "other", label: "Other"},
-    {value: "unsorted", label: "Uncategorized"},
-]
 
 export default function addBookmarks() {
   const [files, setFiles] = React.useState<any>(undefined)
-  const [folders, setFolders] = React.useState<dropdownOptions[]>([])
+  const [folders, setFolders] = React.useState<dropdownOption[]>([])
   const [isLoading, setIsLoading] = React.useState(false)
-  const [selectedFolder, setSelectedFolder] = React.useState<dropdownOptions|null>(null)
-  const [selectedCat, setSelectedCat] = React.useState<dropdownOptions | null>(catOptions[0])
+  const [selectedFolder, setSelectedFolder] = React.useState<dropdownOption|null>(null)
+  const [selectedCat, setSelectedCat] = React.useState<dropdownOption | null>(catOptions[0])
   const [showError, setShowError] = React.useState<boolean>(true)
 
   const auth = authStore.getState();
@@ -85,7 +77,7 @@ export default function addBookmarks() {
   }
 
   async function submitManga() {
-    const notif = toast.loading("Adding Manga!", {closeOnClick: true, draggable: true,})
+    let notif = toast.loading("Adding Manga!", {closeOnClick: true, draggable: true,})
     try {
       setIsLoading(true)
       setShowError(false)
@@ -188,7 +180,7 @@ export default function addBookmarks() {
         const loadedJson = await JSON.parse(await file.target.files[0].text())
         console.log(loadedJson)
 
-        const folderNodes:dropdownOptions[] = [] 
+        const folderNodes:dropdownOption[] = [] 
         await pullFolders(loadedJson, folderNodes)
 
         console.log(folderNodes)
@@ -199,7 +191,7 @@ export default function addBookmarks() {
     }
   }
 
-  async function pullFolders(node:BookmarkNode, folders:dropdownOptions[], path:string = "") {
+  async function pullFolders(node:BookmarkNode, folders:dropdownOption[], path:string = "") {
     // console.log(node)
     if (!node.type) {
       for (const [key, value] of Object.entries(node)) {

@@ -1,6 +1,7 @@
 // const config = require('../../../../data/config.json')
 const puppeteer = require("puppeteer-extra")
-const utils = require('../util')
+const {match} = require('../util')
+const config = require('../config.json')
 const stealthPlugin = require("puppeteer-extra-plugin-stealth")
 puppeteer.use(stealthPlugin())
 const sharp = require('sharp')
@@ -24,10 +25,10 @@ puppeteer.use(adblocker)
 *  }
  */
 
-async function getManga(url, icon = true) {
+export async function getManga(url:string, icon:boolean = true) {
     // if (!config.allowReaperScansFake) return -2
     // console.log(`opening: ${url}`)
-    const browser = await puppeteer.launch({headless: "new", devtools: false, ignoreHTTPSErrors: true, //"new"
+    const browser = await puppeteer.launch({headless: true, devtools: false, ignoreHTTPSErrors: true, //"new"
             args: ['--enable-features=NetworkService', '--no-sandbox', '--disable-setuid-sandbox','--mute-audio']})
     try {
         const page = await browser.newPage()
@@ -38,7 +39,7 @@ async function getManga(url, icon = true) {
         const blockRequests = ['.css', 'facebook', 'fbcdn.net', 'bidgear', '.png', '.svg']
         page.on('request', (request) => {
             const u = request.url()
-            if (!utils.match(u, allowRequests)) {
+            if (!match(u, allowRequests)) {
                 request.abort()
                 return
             }
@@ -48,7 +49,7 @@ async function getManga(url, icon = true) {
                 return
             }
 
-            if (utils.match(u, blockRequests)) {
+            if (match(u, blockRequests)) {
                 request.abort()
                 return
             }
@@ -67,17 +68,17 @@ async function getManga(url, icon = true) {
 
         const chapterText = await chapterDropdown.evaluate(() => Array.from(
             document.querySelectorAll('#chapter > option'),
-            a => a.innerText
+            a => a.innerHTML
         ))
 
-        let chapterUrlList = []
-        chapterURLs.forEach((chap) => {
+        let chapterUrlList:string[] = []
+        chapterURLs.forEach((chap:string) => {
             if (!chap.includes('reaper') || chapterUrlList.includes(chap)) return
             chapterUrlList.splice(0,0,chap)
         })
 
-        let chapterTextList = []
-        chapterText.forEach((chap) => {
+        let chapterTextList:string[] = []
+        chapterText.forEach((chap:string) => {
             if (chap.includes('Select Chapter') || chapterTextList.includes(chap)) return
             chapterTextList.splice(0,0,chap)
         })
@@ -91,7 +92,7 @@ async function getManga(url, icon = true) {
         var resizedImage = null
         var iconData = null
         if (icon) {
-            console.log("starting Icon Save")
+            if (config.verboseLogging) console.log("starting Icon Save")
             const photoPage = await browser.newPage()
             photoPage.setDefaultNavigationTimeout(15000)
             photoPage.setRequestInterception(true)
@@ -99,7 +100,7 @@ async function getManga(url, icon = true) {
             const blockRequests = ['.css', '.js', 'facebook', '.png', 'google', 'fonts']
             photoPage.on('request', (request) => {
                 const u = request.url()
-                if (utils.match(u, blockRequests)) {
+                if (match(u, blockRequests)) {
                     request.abort()
                     return
                 } 
@@ -125,12 +126,9 @@ async function getManga(url, icon = true) {
         return {"mangaName": mangaName, "chapterUrlList": chapterUrlList.join(','), "chapterTextList": chapterTextList.join(','), "currentIndex": currIndex, "iconBuffer": resizedImage}
         
     } catch (err) {
-        console.warn(err)
+        console.warn("Unable to fetch: " + url)
+        if (config.verboseLogging) console.warn(err)
         await browser.close()
         return 'Unable to fetch Data! maybe invalid Url?'
     }
-}
-
-module.exports = {
-    getManga
 }

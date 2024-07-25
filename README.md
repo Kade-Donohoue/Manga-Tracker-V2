@@ -12,6 +12,29 @@ the first 2 are required while the text command is optional. Each folder has its
 
 # **Change Logs**
 
+## Change Log 1.1.0
+- Server-Server com now has a password that must match for servers to communicate
+- You now need server password to use auth id instead of access token
+- Routes now have icons corresponding to what they are
+- loading screen is now dark and has a spinning wheel as well as large centered text
+- users can now create their own categories
+- some types are now moved to dedicated file
+- some variables now have own file instead of constantly being redefined
+- userData is renamed to userInfo
+- new table for storing user settings(currently only categories)
+- Stats screen global stats have been changed to Total tracked manga, Total tracked Chapters, and 2 TBD
+- new page for viewing all user tracked manga and manage them
+- new settings screen (currently only used for categories)
+- verifying users has been moved to dedicated function that handles getting user ID or returning error message
+- resolves changeMangaCat not always changing the category
+- commented out code in service worker as it caused issue deploying and wasnt used. 
+- puppeteer server has been changed to use typescript
+- resolved issue where when manga failed to pull during update none of the data was saved
+- added option for verbose logging in puppeteer server
+- updated asura pull utils for the new webpage
+- created new util for converting old asura links to new ones
+- utils now has config file instead of hard coded values 
+
 ## Change Log v1.0.4
 - Resolved issue where if you had ", " instead of "," in add manga it would be unable to get the url index. 
 - restructured puppeteerServer scripts for pages

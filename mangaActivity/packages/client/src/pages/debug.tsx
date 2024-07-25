@@ -1,6 +1,6 @@
 import React from 'react';
 import discordSdk from '../discordSdk';
-import ReactJsonView from '../components/ReactJsonView';
+// import ReactJsonView from '../components/ReactJsonView';
 import {useLocation} from 'react-router-dom';
 import {EventPayloadData} from '@discord/embedded-app-sdk';
 
@@ -28,7 +28,7 @@ export default function debug() {
         <h2>CURRENT_USER_UPDATE</h2>
         <br />
         <br />
-        {currentUser ? <ReactJsonView src={currentUser} /> : null}
+        {/* {currentUser ? <ReactJsonView src={currentUser} /> : null} */}
       </div>
     </div>
   );

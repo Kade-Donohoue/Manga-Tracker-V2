@@ -41,7 +41,7 @@ wrangler login
 ```
 cd packages/client
 npm run build
-CLOUDFLARE_ACCOUNT_ID=your_cloudflare_account_id_here npx wrangler pages publish dist
+npx wrangler pages deploy dist
 ```
 
 4. Build and deploy the server

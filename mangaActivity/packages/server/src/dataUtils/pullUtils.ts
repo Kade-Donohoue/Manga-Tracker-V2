@@ -1,11 +1,13 @@
 import {Env, userDataRow, mangaDataRowReturn, mangaDataRowProcessed} from '../types'
-import {getUserID} from '../utils'
+import {verifyUserAuth} from '../utils'
 
 export async function getUnreadManga(access_token:string, authId:string, userCat:string = '%', sortMethod:string = 'interactTime', sortOrd:string = 'ASC', env: Env) {
-
-    // return new Response('Not Ready', {status: 418})
     try {
-        if (access_token) authId = await getUserID(access_token)
+        const validationRes = await verifyUserAuth(access_token, authId, env)
+        
+        if (validationRes instanceof Response) return validationRes
+        authId = validationRes
+
         console.log(authId + userCat + sortMethod + sortOrd)
         var userData:userDataRow[]|null = (await env.DB.prepare(
             `SELECT * FROM userData WHERE userID = ? AND userCat LIKE ? ORDER BY ${sortMethod} ${sortOrd}`
@@ -53,7 +55,7 @@ export async function getUnreadManga(access_token:string, authId:string, userCat
             mangaData.push(mangaDataProcessed)
         }
 
-        return new Response(JSON.stringify({"userData": userData, "mangaData": mangaData}), {status: 200})
+        return new Response(JSON.stringify({"userInfo": userData, "mangaData": mangaData}), {status: 200})
     } catch (error) {
         console.error("Error:", error);
         return new Response(JSON.stringify({message:'unknown error occured'}), {status: 500})
@@ -61,9 +63,11 @@ export async function getUnreadManga(access_token:string, authId:string, userCat
 }
 
 export async function getManga(access_token:string, authId:string, mangaId:string, env: Env) {
-
     try {
-        if (access_token) authId = await getUserID(access_token)
+        const validationRes = await verifyUserAuth(access_token, authId, env)
+        
+        if (validationRes instanceof Response) return validationRes
+        authId = validationRes
 
         const userData:userDataRow|null = (await env.DB.prepare(
             `SELECT * FROM userData WHERE userID = ? AND mangaId = ?`
@@ -87,7 +91,7 @@ export async function getManga(access_token:string, authId:string, mangaId:strin
             return new Response(JSON.stringify({message:'Unable to get Manga Data'}), {status: 500})
         }
 
-        return new Response(JSON.stringify({"userData": userData, "mangaData": mangaInfo}), {status: 200})
+        return new Response(JSON.stringify({"userInfo": userData, "mangaData": mangaInfo}), {status: 200})
     } catch (error) {
         console.error("Error:", error);
         return new Response(JSON.stringify({message:'unknown error occured'}), {status: 500})
@@ -95,22 +99,57 @@ export async function getManga(access_token:string, authId:string, mangaId:strin
     }
 }
 
-export async function getUserManga(access_token:string, authId:string, userCat:string, env:Env) {
+export async function getUserManga(access_token:string, authId:string, env:Env) {
     try {
-        if (access_token != "null") authId = await getUserID(access_token)
-
-        const userManga = (await env.DB.prepare('SELECT mangaName, mangaId FROM userData WHERE userID = ? AND userCat LIKE ?')
-                .bind(authId, userCat)
-                .all()).results
+        const validationRes = await verifyUserAuth(access_token, authId, env)
         
-        return new Response(JSON.stringify({userData: userManga}), {status:200})
+        if (validationRes instanceof Response) return validationRes
+        authId = validationRes
+
+        const userManga:userDataRow[] = (await env.DB.prepare('SELECT * FROM userData WHERE userID = ?')
+                .bind(authId)
+                .all()).results as any
+
+
+
+        var mangaData:mangaDataRowProcessed[] = []
+        for (var i:number = 0; i < userManga.length; i++) {
+            var mangaInfo:mangaDataRowReturn|null = await env.DB.prepare(
+                `SELECT * FROM mangaData WHERE mangaId = ?`
+            )
+                .bind(userManga[i].mangaId)
+                .first()
+
+            if (!mangaInfo) {
+                console.log("Could not get manga Data")
+                mangaInfo = {
+                    "mangaId": "null",
+                    "mangaName": "null",
+                    "urlList": "null",
+                    "chapterTextList": "null", 
+                    "updateTime": "null"
+                }
+            }
+
+            const mangaDataProcessed:mangaDataRowProcessed = {
+                "mangaId": mangaInfo.mangaId,
+                "mangaName": mangaInfo.mangaName,
+                "urlList": mangaInfo.urlList.split(','),
+                "chapterTextList": mangaInfo.chapterTextList.split(','), 
+                "updateTime": mangaInfo.updateTime
+            }
+
+            mangaData.push(mangaDataProcessed)
+        }
+        
+        return new Response(JSON.stringify({userInfo: userManga, mangaData: mangaData}), {status:200})
     } catch (err) {
         console.error("Error:", err);
         return new Response(JSON.stringify({message: 'an unknown error occured'}), {status:500});
     }
 }
 
-export async function getAllManga(env:Env) {
+export async function getAllManga(env:Env, pass:string|null) {
     try {
         const allManga:[{mangaName:string, mangaId:string}] = (await env.DB.prepare('SELECT mangaName, mangaId FROM mangaData')
                 .all()).results as any
@@ -122,53 +161,63 @@ export async function getAllManga(env:Env) {
     }
 }
 
+//ToDo: Stat for total tracked manga
+//Idea: Stat for new chapters / day?
 export async function userStats(access_token:string, authId:string, env:Env) {
     try{
-        if (access_token != "null") authId = await getUserID(access_token)
+        const validationRes = await verifyUserAuth(access_token, authId, env)
+        
+        if (validationRes instanceof Response) return validationRes
+        authId = validationRes
 
-            const userManga:[{"currentIndex":string,"mangaId":string}] = (await env.DB.prepare('SELECT currentIndex, mangaId FROM userData WHERE userID = ? ')
-                    .bind(authId)
-                    .all()).results as any
+        const userManga:[{"currentIndex":string,"mangaId":string}] = (await env.DB.prepare('SELECT currentIndex, mangaId FROM userData WHERE userID = ? ')
+            .bind(authId)
+            .all()).results as any
 
-            const mangaStmt = env.DB.prepare('SELECT chapterTextList FROM mangaData WHERE mangaId = ?')
+        const mangaStmt = env.DB.prepare('SELECT chapterTextList FROM mangaData WHERE mangaId = ?')
 
-            var boundMangaStmt:D1PreparedStatement[] = []
-            for (var i = 0; i < userManga.length; i++) {
-                boundMangaStmt.push(mangaStmt.bind(userManga[i].mangaId))
-            }
+        var boundMangaStmt:D1PreparedStatement[] = []
+        for (var i = 0; i < userManga.length; i++) {
+            boundMangaStmt.push(mangaStmt.bind(userManga[i].mangaId))
+        }
 
-            const userResults:any = (await env.DB.batch(boundMangaStmt))
-            const rowCount = await env.DB.prepare('SELECT COUNT(*) as count FROM mangaData').first()
+        const userResults:any = (await env.DB.batch(boundMangaStmt))
+        const rowCount = await env.DB.prepare('SELECT COUNT(*) as count FROM mangaData').first()
 
 
-            var unreadChapters = 0
-            var read = 0
-            var unreadManga = 0
-            // return new Response(JSON.stringify({"data1": userManga[0].currentIndex, "Data2": userManga[1].currentIndex}), {status:200})
+        var unreadChapters = 0
+        var read = 0
+        var unreadManga = 0
 
-            for (var i = 0; i < userResults.length; i++) {
-                const currResults:string[] = (userResults[i].results[0].chapterTextList).split(',')
-                var currentChap = currResults[parseInt(userManga[i].currentIndex)]
-                var chapNumStr = currentChap.match(/[0-9.]+/g)
-                var latestNumStr = currResults[currResults.length-1].match(/[0-9.]+/g)
-                read+= parseInt(chapNumStr![chapNumStr!.length-1])
-                const currUnread = (parseInt(latestNumStr![latestNumStr!.length -1]))-(parseInt(chapNumStr![chapNumStr!.length-1]))
-                if (currUnread!=0) unreadManga++
-                unreadChapters+=currUnread
-            }
+        for (var i = 0; i < userResults.length; i++) {
+            const currResults:string[] = (userResults[i].results[0].chapterTextList).split(',')
+            var currentChap = currResults[parseInt(userManga[i].currentIndex)]
+            var chapNumStr = currentChap.match(/[0-9.]+/g)
+            var latestNumStr = currResults[currResults.length-1].match(/[0-9.]+/g)
+            read+= parseInt(chapNumStr![chapNumStr!.length-1])
+            const currUnread = (parseInt(latestNumStr![latestNumStr!.length -1]))-(parseInt(chapNumStr![chapNumStr!.length-1]))
+            if (currUnread!=0) unreadManga++
+            unreadChapters+=currUnread
+        }
 
-            const userStats = {"chaptersRead":read, "chaptersUnread":unreadChapters, "unreadManga": unreadManga, "readManga": userManga.length}
-            const mangaStats = {"trackedManga": rowCount?.count||0}
+        const userStats = {"chaptersRead":read, "chaptersUnread":unreadChapters, "unreadManga": unreadManga, "readManga": userManga.length}
+        const mangaStats = {"trackedManga": rowCount?.count||0}
 
-            return new Response(JSON.stringify({userStats: userStats, globalStats: mangaStats}), {status:200})
+        return new Response(JSON.stringify({userStats: userStats, globalStats: mangaStats}), {status:200})
     } catch (err) {
         console.error("Error:", err);
-        return new Response(JSON.stringify({message: 'an unknown error occured' + err}), {status:500});
+        return new Response(JSON.stringify({message: 'an unknown error occurred' + err}), {status:500});
     }
 }
 
-export async function getUpdateData(env:Env) {
+export async function getUpdateData(env:Env, pass:string|null) {
+    if (pass != env.SERVER_PASSWORD) return new Response(JSON.stringify({message: "Unauthorized"}), {status:401})
     try {
+        const validationRes = await verifyUserAuth(pass, null, env, true)
+        
+        if (validationRes instanceof Response) return validationRes
+
+        
         const allManga:[{mangaId:string, urlList:string}] = (await env.DB.prepare('SELECT urlList, mangaId FROM mangaData')
                 .all()).results as any
         console.log(allManga)
@@ -176,5 +225,24 @@ export async function getUpdateData(env:Env) {
     } catch (err) {
         console.error("Error:", err);
         return new Response(JSON.stringify({message: 'an unknown error occured'}), {status:500});
+    }
+}
+
+export async function pullUserCategories(access_token:string, authId:string, env:Env) {
+    try {
+        const validationRes = await verifyUserAuth(access_token, authId, env)
+                
+        if (validationRes instanceof Response) return validationRes
+        authId = validationRes
+
+        const results = await env.DB.prepare('Select categories FROM userSettings WHERE userID = ?')
+                .bind(authId)
+                .first()
+        
+        return new Response(JSON.stringify({message:"Success", cats: results?.categories}), {status:200})
+
+    } catch (err) {
+        console.warn("Error with updateInteractTime: " + err)
+        return new Response(JSON.stringify({message: "An error occured" + err}), {status:500})
     }
 }

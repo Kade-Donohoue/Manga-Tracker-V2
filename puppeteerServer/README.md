@@ -10,7 +10,7 @@ This is in charge of fetching all manga data from various sources
 1. Install Redis on system (https://redis.io/docs/latest/operate/oss_and_stack/install/install-redis/)
 2. copy `config.json.example` to `config.json` and configure as needed
 3. run `npm install`
-3. run `node .`
+4. run `npm run start`
 
 # config
  - updateDelay: milliseconds between updates (default: 2Hr)

@@ -2,8 +2,11 @@
     "updateDelay": 7200000,
     "updateAtStart": true, 
     "allowManganatoScans": true,
+    "allowReaperScans": false,
     "allowReaperScansFake": true,
     "allowAsura": true,
     "serverUrl": "enter_url_here",
-    "redisIp": "127.0.0.1"
+    "redisIp": "127.0.0.1",
+    "serverPassWord": "secret_Password_Change_Me",
+    "verboseLogging": false
 }

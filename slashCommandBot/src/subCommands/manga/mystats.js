@@ -18,7 +18,7 @@ module.exports = class mangaMyStatSubCommand extends BaseSubcommandExecutor {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                "access_token": "null",
+                "access_token": config.serverPassword,
                 "authId": interaction.user.id
             })
         })

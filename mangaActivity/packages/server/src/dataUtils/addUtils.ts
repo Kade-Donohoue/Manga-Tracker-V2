@@ -1,11 +1,15 @@
 import {Env, userDataRow, mangaDataRowReturn, user, mangaReturn} from '../types'
-import {getUserID} from '../utils'
+import {verifyUserAuth} from '../utils'
 import { v4 as uuidv4 } from 'uuid'
 
-export async function saveManga(authToken:string, authId:string, url:string, userCat:string = 'unsorted', env:Env) {
+export async function saveManga(access_token:string, authId:string, url:string, userCat:string = 'unsorted', env:Env) {
     try {
         console.log('starting manga req')
-        if (authToken!="null") authId = await getUserID(authToken)
+        const validationRes = await verifyUserAuth(access_token, authId, env)
+
+        if (validationRes instanceof Response) return validationRes
+        authId = validationRes
+
         const mangaReq:any = await fetch(`${env.PUPPETEER_SERVER}/getManga?url=${url}&icon=true`, {//authToken=${authToken}&userCat=${userCat}&
             method: 'GET'
         })

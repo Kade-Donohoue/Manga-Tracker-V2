@@ -1,113 +1,38 @@
-import discordSdk from '../../discordSdk';
-import {authStore} from '../../stores/authStore';
-import ReactJsonView from '../../components/ReactJsonView';
-import Select, { StylesConfig } from 'react-select'
-import React, { useEffect } from "react"
+import discordSdk from '../../discordSdk'
+import {authStore} from '../../stores/authStore'
+import {customStyles} from '../../styled/index'
+import {LoadingScreen} from '../../components/LoadingScreen'
+import Select from 'react-select'
+import React from "react"
 import './feed.css'
+import { mangaInfo, dropdownOption } from '../../types'
+import { catOptions, ordOptions, methodOptions } from '../../vars'
+import { RPCCloseCodes } from '@discord/embedded-app-sdk'
+import Box from '@mui/material/Box'
+import Modal from '@mui/material/Modal'
+import Button from '@mui/material/Button'
+import SvgIcon from '@mui/material/SvgIcon'
+import CircularProgress from '@mui/material/CircularProgress'
+import { toast } from 'react-toastify'
+import CancelIcon from '@mui/icons-material/Cancel'
+import {modalStyle} from '../../AppStyles'
 
-const customStyles: StylesConfig<dropdownOption, false> = {
-  control: (provided, state) => ({
-    ...provided,
-    width: '100%',
-    backgroundColor: '#121212',
-    margin: "8px 0",
-  }),
-  input: (provided) => ({
-    ...provided,
-    color: '#fff',
-    margin: '0', // Remove default margin to match regular select
-    padding: '2px', // Adjust padding to prevent overflow
-  }),
-  singleValue: (provided) => ({
-    ...provided,
-    color: '#fff',
-    margin: '0', // Remove default margin to prevent overflow
-  }),
-  menuList: (provided) => ({
-    ...provided,
-    padding: '0',
-  }),
-  menu: (provided) => ({
-    ...provided,
-    backgroundColor: '#121212',
-    borderRadius: '4px',
-    marginTop: '0',
-  }),
-  option: (provided, state) => ({
-    ...provided,
-    backgroundColor: state.isSelected ? '#6b6b6b' : '#121212',
-    color: '#fff',
-    '&:hover': {
-      backgroundColor: '#6b6b6b',
-    },
-    padding: '12px 20px', // Match padding of regular select options
-  }),
-}
-
-interface dropdownOption {
-  "value":string, 
-  "label": string
-}
-
-interface userData {
-  "userID": string,
-  "mangaName": string,
-  "mangaId": string,
-  "currentIndex": number,
-  "userCat": string,
-  "interactTime": number
-}
-
-interface mangaData {
-  "mangaId": string,
-  "mangaName": string,
-  "urlList": string[],
-  "chapterTextList": string[], 
-  "updateTime": string
-}
-
-interface responseData {
-  "userData": userData[]
-  "mangaData": mangaData[]
-}
-
-const catOptions = [
-  {value: "reading", label: "Reading"},
-  {value: "notreading", label: "Not Reading"},
-  {value: "hold", label: "Hold"},
-  {value: "finished", label: "Finished"},
-  {value: "inqueue", label: "In Queue"},
-  {value: "other", label: "Other"},
-  {value: "unsorted", label: "Uncategorized"},
-]
-
-const ordOptions = [
-  {value: "ASC", label: "Ascending"},
-  {value: "DESC", label: "Descending"}
-]
-
-const methodOptions = [
-  {value: "interactTime", label: "Time"},
-  {value: "mangaName", label: "Alphabetical"}
-]
-
-export default function feed() {
-  const [response, setResponse] = React.useState<responseData | null>(
+export default function feed():JSX.Element {
+  const [response, setResponse] = React.useState<mangaInfo | null>(
     {
-      "userData": [],
+      "userInfo": [],
       "mangaData": []
     }
   );
-  const [currentCard, setCurrentCard] = React.useState(0);
-  const [currentImg, setCurrentImg] = React.useState(null);
-  const [isLoadingStart, setIsLoadingStart] = React.useState(false);
-  const [isLoadingUpdate, setIsLoadingUpdate] = React.useState(false);
+  const [currentCard, setCurrentCard] = React.useState(0)
+  const [isLoadingStart, setIsLoadingStart] = React.useState(false)
   const [showError,setShowError] = React.useState(true)
-  const auth = authStore.getState();
+  const auth = authStore.getState()
 
-  const [selectedCat, setSelectedCat] = React.useState<{value: string; label: string;} | null>(catOptions[0])
-  const [selectedOrd, setSelectedOrd] = React.useState<{value: string; label: string;} | null>(ordOptions[0])
-  const [selectedMethod, setSelectedMethod] = React.useState<{value: string; label: string;} | null>(methodOptions[0])
+  const [selectedCat, setSelectedCat] = React.useState<dropdownOption | null>(catOptions[0])
+  const [selectedOrd, setSelectedOrd] = React.useState<dropdownOption | null>(ordOptions[0])
+  const [selectedMethod, setSelectedMethod] = React.useState<dropdownOption | null>(methodOptions[0])
+  const [newChapter, setChapter] = React.useState<dropdownOption | null>(null)
 
   async function updateCard() {
     try {
@@ -125,7 +50,8 @@ export default function feed() {
           "sortOrd": selectedOrd?.value,
           "sortMeth": selectedMethod?.value
         }),
-      });
+      })
+
       console.log(resp)
       if (resp.status!=200) {
         const errorData:{message:string} = await resp.json()
@@ -134,12 +60,12 @@ export default function feed() {
       }
       setCurrentCard(0)
       setIsLoadingStart(false)
-      const data:responseData = await resp.json();
+      const data:mangaInfo = await resp.json();
       console.log(data)
       setResponse(data)
       
       
-      if (response!.userData.length < 1) setError("No Manga Found") 
+      if (response!.userInfo.length < 1) setError("No Manga Found") 
       else setShowError(false) 
     }
     catch (error) {
@@ -172,62 +98,29 @@ export default function feed() {
       }),
     })
 
-    if (!response) return 
+    if (!response) return LoadingScreen
     setCurrentCard(currentCard+increment)
+    setChapter(null)
 
     console.log(await resp)
   }
 
-  function emptySelector(selector:HTMLSelectElement) {
-    while (selector.options.length > 0) {
-      selector.remove(0);
-    }
-  }
+  async function submitManga(mangaId:string) {
+    console.log(mangaId)
+    let notif = toast.loading("Updating Chapter!")
+    const newIndex = response?.mangaData[currentCard].chapterTextList.indexOf(newChapter!.label)
+    if (!newIndex || newIndex == -1) return toast.update(notif, {
+        render: "Internal Error Updating Chapter!", 
+        type: "error", 
+        isLoading: false,
+        autoClose: 5000, 
+        hideProgressBar: false, 
+        closeOnClick: true, 
+        draggable: true,
+        progress: 0
+    })
 
-  function addMangaUrlsModal() {
-    const selector = document.getElementById("curr-select") as HTMLSelectElement|null
-    if (!selector || !response) return undefined
-    emptySelector(selector)
-    const links = response.mangaData[currentCard].urlList
-    const text = response.mangaData[currentCard].chapterTextList
-    if (!links || !text) return undefined
-
-    for (var i = links.length-1; i >= 0; i--) {
-      const option = document.createElement('option')
-      option.value = i.toString()
-      option.text = text[i]
-      if (links[i] == links[response.userData[currentCard].currentIndex]) option.selected = true
-      selector.add(option)
-    }
-  }
-  
-  function openReadModal() {
-    addMangaUrlsModal()
-    const modal = document.getElementById("updateCurrentModal")
-    if (modal) modal.style.display = "block"
-    return undefined
-  }
-
-  function closeReadModal() {
-    const modal = document.getElementById("updateCurrentModal")
-    if (modal) modal.style.display = "none"
-    return undefined
-  }
-
-  window.onclick = function(event) {
-    const modal = document.getElementById("updateCurrentModal")
-    if (event.target == modal) {
-      if (modal) modal.style.display = "none";
-    }
-    return undefined
-  } 
-
-
-
-  async function submitManga(newIndex:number) {
-    console.log(response?.mangaData[currentCard].urlList[newIndex])
-    setIsLoadingUpdate(true)
-    const newData:any = await fetch('/api/data/update/updateCurrentIndex', {
+    const reply:any = await fetch('/api/data/update/updateCurrentIndex', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -236,32 +129,59 @@ export default function feed() {
         "access_token": auth.access_token,
         "authId": null,
         "newIndex": newIndex,
-        "mangaId": response?.mangaData[currentCard].mangaId
+        "mangaId": mangaId
       }),
     })
 
-    if (!response || newData.status!=200) return
-    // console.log(mangaDataDict)
-    var tmp = {...response}
-    tmp.userData[currentCard].interactTime = Date.now()
-    tmp.userData[currentCard].currentIndex = newIndex
-    setResponse(tmp)
-    // setCurrentCard(0)
-    setIsLoadingUpdate(false)
+    if (reply.ok && response) {
+      var tmp = {...response}
+      tmp.userInfo[currentCard].interactTime = Date.now()
+      tmp.userInfo[currentCard].currentIndex = newIndex
+      setResponse(tmp)
+      setChapter(null)
+
+      return toast.update(notif, {
+        render: "Chapter Successfully Changed!", 
+        type: "success", 
+        isLoading: false, 
+        autoClose: 5000, 
+        hideProgressBar: false, 
+        closeOnClick: true, 
+        draggable: true,
+        progress: 0
+      })
+    }
+
+    const data:{message:string, url:string} = await reply.json()
+
+    toast.update(notif, {
+        render: data.message, 
+        type: "error", 
+        isLoading: false,
+        autoClose: 5000, 
+        hideProgressBar: false, 
+        closeOnClick: true, 
+        draggable: true,
+        progress: 0
+    })
   }
-
-  useEffect(() => {
-    closeReadModal()
-  }, [])
-
 
   if (!auth) {
     console.log("No Auth!!!!!!!!!!!!!!!!")
+    discordSdk.close(RPCCloseCodes.TOKEN_REVOKED, "Restart Activity to Continue!")
+    return <div>Restart Activity</div>
+  }
+  if (!response || !response.userInfo) {
+    console.log(response)
     return <></>
   }
-  if (!response) return <></>
-  console.log(response)
-  if (response.userData.length <= 0) return (
+
+  const [chapterOpen, setChapterOpen] = React.useState(false)
+  const handleChapterOpen = () => setChapterOpen(true)
+  const handleChapterClose = () => setChapterOpen(false)
+
+  // console.log(response)
+  if (response.userInfo.length <= 0) return (
     <div className="feedOptionContainer">
       <label htmlFor="cat-select">Choose a Category: </label>
       <Select name="categories" 
@@ -295,33 +215,31 @@ export default function feed() {
         styles={customStyles} 
       />
       
-      <button className="addButton" type="submit" onClick={updateCard}>{isLoadingStart? 'Loading...':'Start Feed'}</button>
+      <button className="addButton" type="submit" onClick={updateCard}>{isLoadingStart? <><CircularProgress size="1.2rem"/><label>Loading</label></>:'Start Feed'}</button>
       {showError?<label className='addError' id='errorField'></label>:<></>}
     </div>
   )
   return (
     <div style={{padding: 32}}>
-      <label className='feedMangaTitle'>{response.userData[currentCard].mangaName}</label>
+      <label className='feedMangaTitle'>{response!.userInfo[currentCard].mangaName}</label>
       <div className='mangaContainer'>
-        {response ? <img src={`/image/${response!.userData[currentCard].mangaId}`} alt="Manga Icon" className='cover-image' /> : <p>Loading...</p>}
+        {response ? <img src={`/image/${response!.userInfo[currentCard].mangaId}`} alt="Manga Icon" className='cover-image' /> : <p>Loading...</p>}
         <div className="button-container">
           <div className="button-wrapper">
             <button className="action-button" 
               onClick={(e) => {
-              // e.preventDefault();
               const links = response.mangaData[currentCard].urlList
-              console.log(links[response.userData[currentCard].currentIndex])
-              discordSdk.commands.openExternalLink({url: links[response.userData[currentCard].currentIndex+1]});
+              console.log(links[response.userInfo[currentCard].currentIndex])
+              discordSdk.commands.openExternalLink({url: links[response.userInfo[currentCard].currentIndex+1]});
             }}
             >Read Next</button>
             <span className="chapter-number">{ 
-            ( response.userData[currentCard].currentIndex+1 < response.mangaData[currentCard].chapterTextList.length ) ? response.mangaData[currentCard].chapterTextList[response.userData[currentCard].currentIndex+1] : response.mangaData[currentCard].chapterTextList[response.mangaData[currentCard].chapterTextList.length-1]
+            ( response.userInfo[currentCard].currentIndex+1 < response.mangaData[currentCard].chapterTextList.length ) ? response.mangaData[currentCard].chapterTextList[response.userInfo[currentCard].currentIndex+1] : response.mangaData[currentCard].chapterTextList[response.mangaData[currentCard].chapterTextList.length-1]
             }</span>
           </div>
           <div className="button-wrapper">
             <button className="action-button" 
               onClick={(e) => {
-              // e.preventDefault();
               const links = response.mangaData[currentCard].urlList
               discordSdk.commands.openExternalLink({url: links[links.length-1]!});
             }}>Read Latest</button>
@@ -330,27 +248,40 @@ export default function feed() {
           <div className="button-wrapper">
             <button className="action-button" 
               onClick={(e) => {
-              // e.preventDefault();
-              discordSdk.commands.openExternalLink({url: response.mangaData[currentCard].urlList[response.userData[currentCard].currentIndex]});
+              discordSdk.commands.openExternalLink({url: response.mangaData[currentCard].urlList[response.userInfo[currentCard].currentIndex]});
             }}>Read Current</button>
-            <span className="chapter-number">{response.mangaData[currentCard].chapterTextList[response.userData[currentCard].currentIndex]}</span>
+            <span className="chapter-number">{response.mangaData[currentCard].chapterTextList[response.userInfo[currentCard].currentIndex]}</span>
           </div>
         </div>
       </div>
 
-      <div id="updateCurrentModal" className="modal"> 
-        <div className="modal-content"> 
-          <span className='close' onClick={(e) => {closeReadModal()}}>&times;</span>
-          <p className='modal-title'>Select your Current Chapter</p>
-          <select name="setCurrentSelect" id="curr-select"></select>
-          <button disabled={isLoadingUpdate} type="submit" className='currentButtonSubmit' onClick={async (e) => {
-            const submitURL = document.getElementById("curr-select") as HTMLSelectElement|null
-            if (submitURL) await submitManga(parseInt(submitURL.value))
-            closeReadModal()
-          }}>{isLoadingUpdate? "Loading please wait!": "Submit!"}</button>
-          {/* {isLoading && <p>Loading...</p>} */}
-        </div>
-      </div>
+      <Modal
+          open={chapterOpen}
+          onClose={handleChapterClose}
+          aria-labelledby="chap-modal-title"
+          aria-describedby="chap-modal-description"
+      >
+          <Box sx={{width: "80vw", height: "25vh", ...modalStyle}}>
+          <h2 id="chap-modal-title">Choose a new Chapter</h2>
+          <Select name="chap" 
+              id="chap" 
+              className="chapSelect" 
+              value={newChapter} 
+              onChange={setChapter} 
+              options={response?.mangaData[currentCard].chapterTextList.toReversed().map((text, i) => {
+                  return {value: text, label: text}
+              })} 
+              styles={customStyles} 
+          />
+          <Button onClick={(e) => {
+              submitManga(response!.userInfo[currentCard].mangaId)
+              handleChapterClose()
+          }}>Submit</Button>
+          <SvgIcon onClick={handleChapterClose} sx={{position: "absolute", top: 10, right: 10}}>
+              <CancelIcon sx={{color: "white"}}/>
+          </SvgIcon>
+          </Box>
+      </Modal>
 
       <div className='controlButtonContainer'>
         <button className='prev mangaFeedControlButton' onClick={(e) => {
@@ -361,7 +292,7 @@ export default function feed() {
           >Prev
         </button>
         <button className='setCurrent mangaFeedControlButton' onClick={(e) => {
-            openReadModal()
+            handleChapterOpen()
             console.log('CLICK')
           }}>Mark As Read
         </button>
@@ -376,15 +307,14 @@ export default function feed() {
       
       <br></br>
       <button className='feedChangeOptionButton' onClick={(e) => {
+        //remove response data 
         setResponse(
           {
-            "userData": [],
+            "userInfo": [],
             "mangaData": []
           }
         )
       }}>Change Options</button>
-      {/* {auth ? <ReactJsonView src={auth} /> : null} */}
-      {/* {response ? <ReactJsonView src={response} collapsed={true} /> : null} */}
     </div>
-  );
+  )
 }

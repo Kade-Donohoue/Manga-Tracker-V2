@@ -1,6 +1,7 @@
 import {styled} from './styled';
 import {Link} from 'react-router-dom';
 import * as ScrollArea from '@radix-ui/react-scroll-area';
+import { BorderAllRounded } from '@mui/icons-material';
 
 export const Navigation = styled(ScrollArea.Root, {
   height: '100%',
@@ -53,3 +54,15 @@ export const SiteWrapper = styled('div', {
     flexDirection: 'column',
   },
 });
+
+export const modalStyle = {
+  position: 'absolute' as 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  bgcolor: '#1f1f1f',
+  border: '2px solid #000',
+  borderRadius: "25px",
+  boxShadow: 24,
+  p: 4,
+}

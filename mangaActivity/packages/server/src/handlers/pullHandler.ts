@@ -1,6 +1,6 @@
 import {Env, IGetEntitlements, IGetSKUs, EntitlementTypes, SKUFlags} from '../types';
 import {readRequestBody, requestHeaders} from '../utils';
-import {getUnreadManga, getUserManga, getAllManga, getManga, userStats, getUpdateData} from '../dataUtils/pullUtils'
+import {getUnreadManga, getUserManga, getAllManga, getManga, userStats, getUpdateData, pullUserCategories} from '../dataUtils/pullUtils'
 
 export default async function pullHandler(path: string[], request: Request, env: Env) {
     var body = {"access_token":"", "authId":"", "userCat":"", "sortMeth":"%", "sortOrd":"", "url":"", "newIndex":"", "mangaId":"", "interactionTime":"", "newCat":""}
@@ -13,14 +13,16 @@ export default async function pullHandler(path: string[], request: Request, env:
         case 'getUnread':
             return await getUnreadManga(body.access_token, body.authId, body.userCat, body.sortMeth, body.sortOrd, env)
         case 'getUserManga':
-            return await getUserManga(body.access_token, body.authId, body.userCat, env)
+            return await getUserManga(body.access_token, body.authId, env)
         case 'getAllManga':
-            return await getAllManga(env)
+            return await getAllManga(env, request.headers.get("pass"))
         case 'getManga':
             return await getManga(body.access_token, body.authId, body.mangaId, env)
         case 'userStats':
             return await userStats(body.access_token, body.authId, env)
         case 'getUpdateData':
-            return await getUpdateData(env)
+            return await getUpdateData(env, request.headers.get("pass"))
+        case 'pullUserCategories':
+            return await pullUserCategories(body.access_token, body.authId, env)
     }
 }

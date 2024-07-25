@@ -1,18 +1,33 @@
 import * as React from 'react'
 import {BrowserRouter as Router, Routes, Route, Link, useLocation} from 'react-router-dom'
-import { ToastContainer } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 
 import * as Scrollable from './components/Scrollable'
 import {AuthProvider} from './components/AuthProvider'
+import { authStore } from './stores/authStore';
 import DesignSystemProvider from './components/DesignSystemProvider'
+import { setCatOptions, catOptions } from './vars';
+
 
 import Home from './pages/Home'
 import feed from './pages/command/feed'
 import addManga from './pages/command/addManga'
 import removeManga from './pages/command/removeManga'
 import stats from './pages/command/stats'
+import tracked from './pages/command/viewTracked'
 import debug from './pages/debug'
 import addBookmarks from './pages/command/addBookmarks'
+import settings from './pages/settings';
+
+import HomeIcon from '@mui/icons-material/Home';
+import DynamicFeedIcon from '@mui/icons-material/DynamicFeed';
+import ArtTrackIcon from '@mui/icons-material/ArtTrack';
+import AddCircleIcon from '@mui/icons-material/AddCircle';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import AnalyticsIcon from '@mui/icons-material/Analytics';
+import BugReportIcon from '@mui/icons-material/BugReport';
+import SettingsIcon from '@mui/icons-material/Settings';
 
 import * as S from './AppStyles'
 
@@ -44,6 +59,7 @@ export default function App(): React.ReactElement {
 interface AppRoute {
   path: string;
   name: string;
+  icon: any;
   component: () => JSX.Element;
 }
 
@@ -51,41 +67,91 @@ const routes: Record<string, AppRoute> = {
   home: {
     path: '/',
     name: 'Home',
+    icon: HomeIcon,
     component: Home,
   },
   customExternalLink: {
     path: '/feed',
     name: 'Feed',
+    icon: DynamicFeedIcon,
     component: feed
+  },
+  tracked: {
+    path: '/tracked',
+    name: 'View Tracked',
+    icon: ArtTrackIcon,
+    component: tracked
   },
   addManga: {
     path: '/addManga',
     name: 'Add Manga',
+    icon: AddCircleIcon,
     component: addManga
   },
-  testJson: {
+  addBookmarks: {
     path: '/addBookmarks',
     name: 'Import Bookmarks',
+    icon: UploadFileIcon,
     component: addBookmarks
   },
   removeManga: {
     path: '/removeManga',
     name: 'Remove Manga',
+    icon: DeleteForeverIcon,
     component: removeManga
   },
   stats: {
     path: '/stats',
     name: 'Statistics',
+    icon: AnalyticsIcon,
     component: stats
   },
   // debug: {
   //   path: '/debug',
   //   name: 'Dev',
+  //   icon: BugReportIcon,
   //   component: debug
-  // }
+  // },
+  settings: {
+    path: '/settings',
+    name: 'Settings',
+    icon: SettingsIcon,
+    component: settings
+  }
 }
 
 function RootedApp(): React.ReactElement {
+
+  React.useEffect(() => {
+    //fetch userCats
+    
+    async function getCats() {
+      try{
+        const auth = authStore.getState()
+    
+        const data = await fetch('/api/data/pull/pullUserCategories', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+              "access_token": auth.access_token,
+              "authId": null,
+          }),
+        })
+    
+        if (!data.ok) return toast.error("Unable to get User Cats")
+          
+        let catStr:{cats:string} = await data.json()
+        setCatOptions(JSON.parse(catStr.cats))
+      } catch {
+        return toast.error("Unable to get User Cats")
+      }
+    }
+    
+    getCats()
+  }, [])
+
   const location = useLocation();
   return (
     <S.SiteWrapper>
@@ -101,7 +167,7 @@ function RootedApp(): React.ReactElement {
           <S.Ul>
             {Object.values(routes).map((r) => (
               <S.Li as={Link} to={r.path} key={r.path} selected={location.pathname === r.path}>
-                <p>{r.name}</p>
+                <p style={{display: "flex", alignItems: 'center', fontSize:16}}><r.icon sx={{fontSize:18, align:"center" }} />{` ${r.name}`}</p>
               </S.Li>
             ))}
           </S.Ul>

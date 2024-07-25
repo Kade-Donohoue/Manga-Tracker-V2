@@ -1,6 +1,5 @@
-import discordSdk from '../../discordSdk';
-import {authStore} from '../../stores/authStore';
-import ReactJsonView from '../../components/ReactJsonView';
+import discordSdk from '../../discordSdk'
+import {authStore} from '../../stores/authStore'
 import React, { useEffect } from "react"
 import './stats.css'
 
@@ -74,16 +73,16 @@ export default function stats() {
             <h3 id="globalTrackedMangaCount">???</h3>
           </div>
           <div className="statistics-item">
-            <p>Unread Manga</p>
-            <h3 id="globalUnreadMangaCount">???</h3>
+            <p>Tracked Chapters</p>
+            <h3 id="globalTrackChapters">W.I.P.</h3>
           </div>
           <div className="statistics-item">
-            <p>Read Chapters</p>
-            <h3 id="globalReadCount">???</h3>
+            <p>TBD</p>
+            <h3 id="globalTBD">???</h3>
           </div>
           <div className="statistics-item">
-            <p>Unread Chapters</p>
-            <h3 id="globalUnreadCount">???</h3>
+            <p>TBD</p>
+            <h3 id="globalTBD">???</h3>
           </div>
         </div>
       </div>

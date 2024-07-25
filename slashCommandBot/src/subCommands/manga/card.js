@@ -21,7 +21,7 @@ module.exports = class mangaCardSubCommand extends BaseSubcommandExecutor {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                "access_token": null,
+                "access_token": config.serverPassword,
                 "authId": authID,
                 "mangaId": mangaId
             })

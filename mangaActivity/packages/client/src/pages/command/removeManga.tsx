@@ -4,6 +4,7 @@ import 'react-toastify/dist/ReactToastify.css'
 import React, { useEffect } from "react"
 import Select, { StylesConfig } from 'react-select'
 import './removeManga.css'
+import { mangaInfo } from '../../types'
 
 const customStyles: StylesConfig<dropdownOption, false> = {
   control: (provided, state) => ({
@@ -62,7 +63,7 @@ export default function removeManga() {
   }
 
   async function submitManga() {
-    const notif = toast.loading("Removing Manga!")
+    let notif = toast.loading("Removing Manga!")
     try {
       // console.log(selectedOption)
      if (!selectedOption) {
@@ -153,10 +154,10 @@ export default function removeManga() {
       toast.error(errData.message||"Unable to Fetch Manga! Reload the Page or Contact an Admin!")
       return 
     }
-    const data:{"userData": [{"mangaName":string, "mangaId":string}]} = await resp.json()
+    const data:mangaInfo = await resp.json()
     var options:dropdownOption[] = []
-    for (var i = data.userData.length-1; i >= 0; i--) {
-      options.push({value: data.userData[i].mangaId, label: data.userData[i].mangaName})
+    for (var i = data.userInfo.length-1; i >= 0; i--) {
+      options.push({value: data.userInfo[i].mangaId, label: data.userInfo[i].mangaName})
     }
     setDropOptions(options)
   }

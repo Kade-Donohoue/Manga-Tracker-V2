@@ -1,9 +1,12 @@
 import {Env, userDataRow, mangaDataRowReturn, user, mangaReturn} from '../types'
-import {getUserID} from '../utils'
+import {verifyUserAuth} from '../utils'
 
 export async function forgetUser(access_token:string|null=null, authId:string, env:Env) {
     try {
-        if (access_token) authId = await getUserID(access_token)
+        const validationRes = await verifyUserAuth(access_token, authId, env)
+        
+        if (validationRes instanceof Response) return validationRes
+        authId = validationRes
 
         await env.DB.prepare('DELETE FROM userData WHERE userID = ?')
                 .bind(authId)
@@ -11,13 +14,16 @@ export async function forgetUser(access_token:string|null=null, authId:string, e
         return new Response(JSON.stringify({message: "Success"}), {status:200})
     } catch (err) {
         console.error("Error:", err);
-        return new Response(JSON.stringify({message: 'an unknown error occured'}), {status:500});
+        return new Response(JSON.stringify({message: 'an unknown error occurred'}), {status:500});
     }
 }
 
 export async function deleteUserManga(access_token:string|null=null, authId:string, mangaId:string, env:Env) {
     try {
-        if (access_token) authId = await getUserID(access_token)
+        const validationRes = await verifyUserAuth(access_token, authId, env)
+        
+        if (validationRes instanceof Response) return validationRes
+        authId = validationRes
 
         await env.DB.prepare('DELETE FROM userData WHERE userID = ? AND mangaId = ?')
                 .bind(authId, mangaId)
@@ -25,6 +31,6 @@ export async function deleteUserManga(access_token:string|null=null, authId:stri
         return new Response(JSON.stringify({message: "Success", data: authId+mangaId}), {status:200})
     } catch (err) {
         console.error("Error:", err);
-        return new Response(JSON.stringify({message: 'an unknown error occured'}), {status:500});
+        return new Response(JSON.stringify({message: 'an unknown error occurred'}), {status:500});
     }
 }

@@ -1,6 +1,3 @@
-DROP TABLE IF EXISTS userData;
-DROP TABLE IF EXISTS mangaData;
-DROP TABLE IF EXISTS userSettings;
 CREATE TABLE IF NOT EXISTS userData (
     userID,
     mangaName,

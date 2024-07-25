@@ -21,8 +21,6 @@ export interface IGuildsMembersRead {
   deaf: boolean;
 }
 
-// TODO: Can we reuse the existing enum from the SDK package?
-// https://app.asana.com/0/1202090529698493/1205406173366737/f
 export enum SkuType {
   UNHANDLED = -1,
   DURABLE_PRIMARY = 1,
@@ -274,3 +272,26 @@ export type VoiceChannel = {
     pinned: boolean;
   }>;
 } | null;
+
+export interface mangaInfo {
+  userInfo: {
+    "userID": string,
+    "mangaName": string,
+    "mangaId": string,
+    "currentIndex": number,
+    "userCat": string,
+    "interactTime": number
+  }[],
+  mangaData: {
+    "mangaId": string,
+    "mangaName": string,
+    "urlList": string[],
+    "chapterTextList": string[], 
+    "updateTime": string
+  }[]
+}
+
+export interface dropdownOption {
+  "value":string, 
+  "label": string
+}

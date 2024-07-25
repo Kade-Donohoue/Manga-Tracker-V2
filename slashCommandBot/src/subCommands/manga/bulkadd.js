@@ -23,7 +23,7 @@ module.exports = class mangaBulkAddSubCommand extends BaseSubcommandExecutor {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        "access_token": "null",
+                        "access_token": config.serverPassword,
                         "authId": authID,
                         "userCat": userCat,
                         "url": URL

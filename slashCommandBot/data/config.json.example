@@ -6,5 +6,6 @@
     "allowReaperScans": false,
     "allowReaperScansFake": true,
     "serverUrl": "worker_url",
-    "imageUrlBase": "image_bucket_url"
+    "imageUrlBase": "image_bucket_url",
+    "serverPassword": "secret_Password_Change_Me"
 }

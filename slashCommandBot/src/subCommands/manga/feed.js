@@ -79,7 +79,7 @@ module.exports = class mangaFeedSubCommand extends BaseSubcommandExecutor {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                "access_token": null,
+                "access_token": config.serverPassword,
                 "authId": authID,
                 "userCat": userCat,
                 "sortOrd": sortOrd,
@@ -151,7 +151,7 @@ async function manageCardHandler(interaction, mangaData, userData) {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    "access_token": null,
+                    "access_token": config.serverPassword,
                     "authId": interaction.user.id,
                     "mangaId": mangaData[currentIndex].mangaId,
                     "interactionTime": Date.now()
@@ -188,7 +188,7 @@ async function manageCardHandler(interaction, mangaData, userData) {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    "access_token": null,
+                    "access_token": config.serverPassword,
                     "authId": interaction.user.id,
                     "mangaId": mangaData[currentIndex].mangaId,
                     "interactionTime": Date.now()
@@ -269,7 +269,7 @@ async function manageCardHandler(interaction, mangaData, userData) {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    "access_token": null,
+                    "access_token": config.serverPassword,
                     "authId": interaction.user.id,
                     "newIndex": interact.values[0],
                     "mangaId": mangaData[currentIndex-1].mangaId
@@ -294,7 +294,7 @@ async function manageCardHandler(interaction, mangaData, userData) {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    "access_token": null,
+                    "access_token": config.serverPassword,
                     "authId": interaction.user.id,
                     "newCat": interact.values[0],
                     "mangaId": mangaData[currentIndex].mangaId

@@ -1,0 +1,5 @@
+{
+    "serverUrl": "URL_FOR_WORKER_SERVER",
+    "serverPassWord": "secret_Password_Change_Me",
+    "verboseLogging": false
+}

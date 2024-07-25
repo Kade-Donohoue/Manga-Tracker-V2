@@ -10,6 +10,7 @@ export interface Env {
   DB: D1Database;
   IMG: R2Bucket;
   PUPPETEER_SERVER: string;
+  SERVER_PASSWORD: string
 }
 
 export interface IGetOAuthToken {

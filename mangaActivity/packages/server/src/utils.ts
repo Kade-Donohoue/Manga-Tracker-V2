@@ -1,3 +1,4 @@
+import { SetConfigResponse } from '@discord/embedded-app-sdk/output/schema/responses';
 import {Env, user} from './types';
 
 /**
@@ -53,12 +54,33 @@ export function requestHeaders(env: Env, customHeaders: Record<string, string> =
   return headers;
 }
 
-export async function getUserID(authToken:string) {
-  console.log('fetching auth id')
-  const response:any = await fetch('https://discord.com/api/users/@me', {
-          method: 'GET',
-          headers: {Authorization: `Bearer ${authToken}`},
-      })
-      const auth:user = await response.json()
-      return auth.id
+/**
+ * Validates user or server
+ * @param access_token User Access token or server password
+ * @param userId provided user id
+ * @param env environment
+ * @param serverOnly when true token must match server password 
+ * @returns userId or new error response
+ */
+export async function verifyUserAuth(access_token:string|null, userId:string|null, env:Env, serverOnly = false) {
+
+  //If no access token provided return error response
+  if (!access_token) return new Response(JSON.stringify({message: "No Access Token"}), {status:401}) 
+
+  //if access token matches trust provided user id
+  if (access_token == env.SERVER_PASSWORD) return userId
+
+  //If onlyServer and token doesn't match return error response
+  if (serverOnly) return new Response(JSON.stringify({message: "401: Unauthorized"}), {status:401}) 
+
+  const response:any = await fetch(`${env.VITE_DISCORD_API_BASE}/users/@me`, {
+    method: 'GET',
+    headers: {Authorization: `Bearer ${access_token}`},
+  })
+
+  //if user is unauthorized by discord return discord response
+  if (!response.ok) return response
+  
+  const auth:user = await response.json()
+  return auth.id
 }
