@@ -1,5 +1,5 @@
 import {Env, userDataRow, mangaDataRowReturn, mangaDataRowProcessed} from '../types'
-import {verifyUserAuth} from '../utils'
+import {verifyUserAuth, verifyIndexRange} from '../utils'
 
 export async function getUnreadManga(access_token:string, authId:string, userCat:string = '%', sortMethod:string = 'interactTime', sortOrd:string = 'ASC', env: Env) {
     try {
@@ -191,7 +191,7 @@ export async function userStats(access_token:string, authId:string, env:Env) {
 
         for (var i = 0; i < userResults.length; i++) {
             const currResults:string[] = (userResults[i].results[0].chapterTextList).split(',')
-            var currentChap = currResults[parseInt(userManga[i].currentIndex)]
+            var currentChap = currResults[verifyIndexRange(parseInt(userManga[i].currentIndex), currResults.length)] 
             var chapNumStr = currentChap.match(/[0-9.]+/g)
             var latestNumStr = currResults[currResults.length-1].match(/[0-9.]+/g)
             read+= parseInt(chapNumStr![chapNumStr!.length-1])

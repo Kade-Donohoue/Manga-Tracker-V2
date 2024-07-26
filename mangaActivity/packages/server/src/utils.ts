@@ -84,3 +84,9 @@ export async function verifyUserAuth(access_token:string|null, userId:string|nul
   const auth:user = await response.json()
   return auth.id
 }
+
+export function verifyIndexRange(index:number, listLength:number) {
+  if (index < 0 ) return 0
+  if (index < listLength) return index
+  return index-1
+}

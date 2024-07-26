@@ -384,6 +384,11 @@ export default function tracked() {
         )
     }
 
+    function checkIndexInRange(index:number, listLength:number) {
+        if (index < 0) return 0
+        if (index < listLength) return index
+        return listLength-1
+    }
 
     //modal control
     const [open, setOpen] = React.useState(false)
@@ -478,7 +483,7 @@ export default function tracked() {
                       <table>
                         <tr> 
                           <td>Chapter:</td>
-                          <td>{`${data.chapterTextList[mangaInfo.userInfo[i].currentIndex].match(/[0-9.]+/g)}/${data.chapterTextList[data.chapterTextList.length-1].match(/[0-9.]+/g)}`}</td>
+                          <td>{`${data.chapterTextList[checkIndexInRange(mangaInfo.userInfo[i].currentIndex, data.chapterTextList.length)].match(/[0-9.]+/g)}/${data.chapterTextList[data.chapterTextList.length-1].match(/[0-9.]+/g)}`}</td>
                         </tr>
                         <tr>
                           <td>Category: </td>

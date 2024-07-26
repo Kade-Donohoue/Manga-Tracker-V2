@@ -12,6 +12,12 @@ the first 2 are required while the text command is optional. Each folder has its
 
 # **Change Logs**
 
+## Change Log 1.1.1
+- password on puppeteer server is now properly uses
+- add manga now sends server password to verify to puppeteer server
+- view tracked now has a catch for when user current index for a manga is out of bounds(can happen when a chapter is removed)
+- added catch for when user current index for a manga is out of bounds in pull user stats(can happen when a chapter is removed)
+
 ## Change Log 1.1.0
 - Server-Server com now has a password that must match for servers to communicate
 - You now need server password to use auth id instead of access token
@@ -27,7 +33,7 @@ the first 2 are required while the text command is optional. Each folder has its
 - new settings screen (currently only used for categories)
 - verifying users has been moved to dedicated function that handles getting user ID or returning error message
 - resolves changeMangaCat not always changing the category
-- commented out code in service worker as it caused issue deploying and wasnt used. 
+- commented out code in service worker as it caused issue deploying and wasn't used. 
 - puppeteer server has been changed to use typescript
 - resolved issue where when manga failed to pull during update none of the data was saved
 - added option for verbose logging in puppeteer server

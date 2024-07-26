@@ -10,7 +10,7 @@ export async function saveManga(access_token:string, authId:string, url:string, 
         if (validationRes instanceof Response) return validationRes
         authId = validationRes
 
-        const mangaReq:any = await fetch(`${env.PUPPETEER_SERVER}/getManga?url=${url}&icon=true`, {//authToken=${authToken}&userCat=${userCat}&
+        const mangaReq:any = await fetch(`${env.PUPPETEER_SERVER}/getManga?url=${url}&icon=true&pass=${env.SERVER_PASSWORD}`, {//authToken=${authToken}&userCat=${userCat}&
             method: 'GET'
         })
         // console.log(mangaReq)

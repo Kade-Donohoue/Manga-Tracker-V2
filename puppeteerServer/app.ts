@@ -11,7 +11,8 @@ app.listen(port, function() {
 
 app.get('/updateManga', async function(req, res) {
 
-    if (req.query.pass == config.serverPassWord) return res.status(401).send({message: "Unauthorized"})
+    console.log(req.query.pass)
+    if (req.query.pass != config.serverPassWord) return res.status(401).send({message: "Unauthorized"})
 
     var webSite
     if (!req.query.url.includes('http')) return res.status(422).send({message: "Invalid URL!"})
@@ -28,15 +29,15 @@ app.get('/updateManga', async function(req, res) {
     }, {priority: 2})
 
     const response = await job.finished()
-    // console.log(response)
+    if (config.verboseLogging) console.log(response)
     res.send(response)
 })
 
 app.get('/getManga/', async function(req, res) {
     // console.log(req.query)
-    if (req.query.pass == config.serverPassWord) return res.status(401).send({message: "Unauthorized"})
+    if (req.query.pass != config.serverPassWord) return res.status(401).send({message: "Unauthorized"})
 
-    var webSite
+    var webSite:string
     if (!req.query.url.includes('http')) return res.status(422).send({message: "Invalid URL!"})
     if (req.query.url.includes('manganato') && config.allowManganatoScans) webSite = "manganato"
     else if (req.query.url.includes('reaperscan') && config.allowReaperScans) webSite = "reaper"
