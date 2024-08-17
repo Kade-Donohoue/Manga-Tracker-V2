@@ -6,6 +6,9 @@ import Select, { StylesConfig } from 'react-select'
 import './addBookmarks.css'
 import { catOptions } from '../../vars';
 
+import Button from '@mui/material/Button'
+import ButtonGroup from '@mui/material/ButtonGroup'
+
 const customStyles: StylesConfig<dropdownOption, false> = {
     control: (provided, state) => ({
       ...provided,
@@ -68,19 +71,28 @@ export default function addBookmarks() {
   const [selectedFolder, setSelectedFolder] = React.useState<dropdownOption|null>(null)
   const [selectedCat, setSelectedCat] = React.useState<dropdownOption | null>(catOptions[0])
   const [showError, setShowError] = React.useState<boolean>(true)
+  const [errorList, setErrorList] = React.useState<string[]>([])
+  const [userChoice, setUserChoice] = React.useState<boolean>(false)
+  const [addedMangaCount, setAddedMangaCount] = React.useState<number>(0)
 
   const auth = authStore.getState();
   // console.log(auth)
   if (!auth) {
-    console.log("No Auth!!!!!!!!!!!!!!!!")
+    console.log("No Auth!")
     return <></>;
   }
 
+  /**
+   * sends urls in selected folder to server 1 by 1 with provided category
+   * @returns toast error or nothing
+   */
   async function submitManga() {
+    if (isLoading) return toast.error('Already adding!')
     let notif = toast.loading("Adding Manga!", {closeOnClick: true, draggable: true,})
     try {
       setIsLoading(true)
       setShowError(false)
+      setErrorList([])
       console.log(selectedFolder!.value)
 
       if (typeof selectedFolder!.value === 'string') return console.log('Wrong Type')
@@ -105,6 +117,7 @@ export default function addBookmarks() {
 
 
       var errorLog = []
+      let addedCount = 0
       for (var i = 0; i < currentUrls.length; i++) {
         const reply = await fetch('/api/data/add/addManga', {
           method: 'POST',
@@ -119,15 +132,18 @@ export default function addBookmarks() {
           }),
         })
 
-        if (reply.status!=200) {
+        if (!reply.ok) {
           // console.log(await reply.json())
           const data:{message:string, url:string} = await reply.json()
           errorLog.push(`${data.url}: ${data.message}`)
+        } else {
+          addedCount++
         }
       }
 
-
-      setFolders([])
+      setAddedMangaCount(addedCount)
+      setUserChoice(true)
+      // setFolders([])
       if (errorLog.length == 0) {
         toast.update(notif, {
           render: "Manga Successfully Added!", 
@@ -152,8 +168,9 @@ export default function addBookmarks() {
           progress: 0
         })
 
-        const errorField = document.getElementById('errorField') as HTMLLabelElement|null
-        errorField!.innerHTML = errorLog.join("<br></br>")
+        // const errorField = document.getElementById('errorField') as HTMLLabelElement|null
+        setErrorList(errorLog)
+        // errorField!.innerHTML = errorLog.join("<br></br>")
       }
       setIsLoading(false)
     } catch (error) {
@@ -191,6 +208,12 @@ export default function addBookmarks() {
     }
   }
 
+  /**
+   * adds found folders with manga urls to provided folders array
+   * @param node any bookmark node
+   * @param folders array to add found folders to
+   * @param path current path to folder
+   */
   async function pullFolders(node:BookmarkNode, folders:dropdownOption[], path:string = "") {
     // console.log(node)
     if (!node.type) {
@@ -202,7 +225,7 @@ export default function addBookmarks() {
     else if ((node.type == 'folder' || node.type == 'text/x-moz-place-container') && node.children?.length! > 0) {
       if ((node.name || node.title)) path+=`/${(node.name || node.title)}`
       // console.log(path+=`/${(node.name || node.title)}`)
-      folders.push({value:node, label:path})
+      if (checkForMangaUrl(node)) folders.push({value:node, label:path})
     }
     if (node.children) {
       for (const child of node.children) {
@@ -211,18 +234,67 @@ export default function addBookmarks() {
     }
   }
 
+  /**
+   * checks if folder contains a manga url(reaper, manganato, mangadex, asura)
+   * @param node bookmark folder
+   * @returns true if manga url found otherwise false
+   */
+  function checkForMangaUrl(node:BookmarkNode) {
+    for (const child of node.children!) {
+      if (child.type=='url' || child.type=='text/x-moz-place') {
+        let currentUrl = (child.url||child.uri!).toLowerCase()
+        if (currentUrl.includes('manga')) return true
+        if (currentUrl.includes('reaper')) return true
+        if (currentUrl.includes('asura')) return true
+        // console.log(currentUrl)
+      }
+    }
+    return false
+  }
+
+  /**
+   * ads found mangaUrls to provided folder
+   * @param node bookmark folder
+   * @param urls array to add found urls to
+   */
   async function pullUrlsFromFolder(node:BookmarkNode, urls:string[]) {
     for (const child of node.children!) {
       console.log(child.name)
-      if (child.type=='url' || child.type=='text/x-moz-place') urls.push(child.url||child.uri!)
+      if (child.type=='url' || child.type=='text/x-moz-place') {
+        let currentUrl = (child.url||child.uri!).toLowerCase()
+        if (currentUrl.includes('manga') || currentUrl.includes('reaper') || currentUrl.includes('asura')) urls.push(currentUrl)
+      }
     }
     
   }
 
-  useEffect(() => {
-    
-  }, [])
+  /**
+   * Counts the number of urls in folder
+   * @param node Bookmark Folder
+   * @returns Number of urls in folder
+   */
+  function getUrlCount(node:BookmarkNode) {
+    let count = 0
+    for (const child of node.children!) {
+      if (child.type=='url' || child.type=='text/x-moz-place') count++
+    }
+    return count
+  }
 
+  if (userChoice && folders.length > 0) return (
+    <div style={{display:"flex", justifyContent:"center", flexDirection:'column', height:"100vh"}}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "20px" }}>
+        <h2>{(typeof (selectedFolder?.value) === 'string' || typeof (selectedFolder?.value.children) === 'undefined' )?'':`Successfully added ${addedMangaCount} / ${getUrlCount(selectedFolder.value)} manga Added`}</h2>
+      
+        <br/>
+        <label className='addError' id='errorField' style={{display:(showError?'block':'none')}}>{errorList.map(error => <div>{error}</div>)}</label>
+      </div>
+      <ButtonGroup variant='contained' sx={{padding: "10px 0", alignSelf:"center", width: "95%"}}>
+          <Button sx={{width:"50%"}} onClick={(e) => {setUserChoice(false); setSelectedFolder(null); setSelectedCat(catOptions[0])}}>Add More Manga</Button>
+          <Button sx={{width:"50%"}} onClick={(e) => setFolders([])}>Change File</Button>
+      </ButtonGroup>
+    </div>
+  )
   if (folders.length < 1) return (
     <div className='addBookmarksContainer'>
         <label htmlFor="manga-select">Upload Bookmarks: </label> <br/>
@@ -246,7 +318,7 @@ export default function addBookmarks() {
             <li>Click Submit!</li>
           </ul>
         </div>
-        {showError?<label className='addError' id='errorField'></label>:<></>}
+        
     </div>
   )
   return (
@@ -272,7 +344,7 @@ export default function addBookmarks() {
             styles={customStyles} 
         />
       
-        <button className="addButton" type="submit" onClick={submitManga}>{isLoading? 'Loading...':'Add Manga!'}</button>
+        <button className="addButton" type="submit" onClick={submitManga} >{isLoading? 'Loading...':'Add Manga!'}</button>
     </div>
   );
 }

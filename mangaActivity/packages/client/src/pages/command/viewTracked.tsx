@@ -35,9 +35,9 @@ export default function tracked() {
     const [newChapter, setChapter] = React.useState<dropdownOption | null>(null)
 
     const auth = authStore.getState();
-    console.log(auth)
+    // console.log(auth)
     if (!auth) {
-        console.log("No Auth!!!!!!!!!!!!!!!!")
+        console.log("No Auth!")
         return <></>
     }
 
@@ -59,8 +59,9 @@ export default function tracked() {
             toast.error(errorData.message)
             return 
         }
-
-        setMangaInfo(await response.json())
+        const results:mangaInfo = await response.json()
+        if (results.mangaData.length <= 0) toast.info("No Manga!")
+        setMangaInfo(results)
     }
 
     async function openMangaOverview(mangaIndex:number) {
@@ -414,7 +415,7 @@ export default function tracked() {
 
     if (!mangaInfo) return LoadingScreen()
     return (
-    <div className='viewTrackerContainer'>
+    <div className='viewTrackerContainer' style={{display:"flex", justifyContent:"center"}}>
         <div className='mangaOverviewModal' id="overviewModal">
             <Modal
                 open={open}
@@ -426,9 +427,18 @@ export default function tracked() {
                     <div style={{display: 'flex', flexDirection: 'row'}}>
                         <img className="modalImage" src={`/image/${modalIndex >= 0 ? mangaInfo.userInfo[modalIndex].mangaId: "mangaNotFoundImage"}`}></img>
                         <div style={{paddingLeft: "20px"}}>
-                            <Typography id="modal-title" variant="h6" component="h2" >
-                                {modalIndex >= 0 ? mangaInfo.mangaData[modalIndex].mangaName:"Unknown"}
-                            </Typography>
+                            
+
+                            <Tooltip title={<h1>{modalIndex >= 0 ? mangaInfo.mangaData[modalIndex].mangaName:"Unknown"}</h1>} enterDelay={700}>
+                                <Typography gutterBottom variant="h3" component="h3" style={{"display": "-webkit-box",
+                                    "WebkitBoxOrient": "vertical",
+                                    "WebkitLineClamp": 1,
+                                    "overflow": "hidden",
+                                    "textOverflow": "ellipsis",}}
+                                >
+                                    {modalIndex >= 0 ? mangaInfo.mangaData[modalIndex].mangaName:"Unknown"}
+                                </Typography>
+                                </Tooltip>
                             <Typography id="modal-chapter-list" sx={{overflowY: "scroll", height: 256, color:"blue", textDecoration:'underline'}}>
                                 <ul>
                                 {modalIndex >= 0 ? mangaInfo.mangaData[modalIndex].chapterTextList.toReversed().map((chapText, i) => <li><a onClick={(e) => {discordSdk.commands.openExternalLink({url:mangaInfo.mangaData[modalIndex].urlList.toReversed()[i]})}}>{chapText}</a></li>):<div/>}
@@ -457,7 +467,7 @@ export default function tracked() {
 
 
 
-        <div className='cardContainer'>
+        <div className='cardContainer' style={{display:"flex", justifyContent:"center", justifyItems:"center"}}>
             {mangaInfo.mangaData.map((data, i) => 
                 <Card sx={{ width: 320, height: 350, backgroundColor: "black", color: "white"}}>
                 <CardActionArea onClick={(e) => openMangaOverview(i)}>

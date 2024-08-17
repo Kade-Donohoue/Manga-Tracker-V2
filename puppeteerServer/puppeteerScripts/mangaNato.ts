@@ -21,7 +21,7 @@ puppeteer.use(adblocker)
  *  "iconBuffer": base64 icon for manga
  * }
  */
-export async function getManga(url:string, icon:boolean = true) {
+export async function getManga(url:string, icon:boolean = true, ignoreIndex = false) {
     const browser = await puppeteer.launch({headless: true, devtools: false, ignoreHTTPSErrors: true, //"new"
             args: ['--enable-features=NetworkService', '--no-sandbox', '--disable-setuid-sandbox','--mute-audio']})
     try {
@@ -30,7 +30,7 @@ export async function getManga(url:string, icon:boolean = true) {
         page.setRequestInterception(true)
 
         const allowRequests = ['manganato']
-        const blockRequests = ['.css', '.js', 'facebook', 'fbcdn.net', 'bidgear']
+        const blockRequests = ['.css', '.js', 'facebook', 'fbcdn.net', 'bidgear', '.png']
         page.on('request', (request) => {
             const u = request.url()
             if (!match(u, allowRequests)) {
@@ -72,6 +72,8 @@ export async function getManga(url:string, icon:boolean = true) {
             chapterTextList.push(`Chapter ${chapters![i]}`)
         }
 
+        if (chapterUrlList.length <= 0 || chapterUrlList.length != chapterTextList.length) return 'Issue fetching chapters! Please Contact and Admin!'
+
         const titleSelect = await page.waitForSelector('body > div.body-site > div:nth-child(1) > div.panel-breadcrumb > a:nth-child(3)')
         const mangaName = await titleSelect?.evaluate(el => el.innerText)
 
@@ -105,7 +107,11 @@ export async function getManga(url:string, icon:boolean = true) {
         
         const currIndex = chapterUrlList.indexOf(url)
 
-        return {"mangaName": mangaName, "chapterUrlList": chapterUrlList.join(','), "chapterTextList": chapterTextList.join(','), "currentIndex": currIndex, "iconBuffer": resizedImage/*iconData*/}
+        if (currIndex == -1 && !ignoreIndex) {
+            return "unable to find current chapter. Please retry or contact Admin!"
+        }
+
+        return {"mangaName": mangaName, "chapterUrlList": chapterUrlList.join(','), "chapterTextList": chapterTextList.join(','), "currentIndex": currIndex, "iconBuffer": resizedImage}
     } catch (err) {
         console.warn('Unable to fetch data for: ' + url)
         if (config.verboseLogging) console.warn(err)

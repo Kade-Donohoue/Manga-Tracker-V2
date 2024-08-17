@@ -25,7 +25,7 @@ puppeteer.use(adblocker)
 *  }
  */
 
-export async function getManga(url:string, icon:boolean = true) {
+export async function getManga(url:string, icon:boolean = true, ignoreIndex = false) {
     // if (!config.allowReaperScansFake) return -2
     // console.log(`opening: ${url}`)
     const browser = await puppeteer.launch({headless: true, devtools: false, ignoreHTTPSErrors: true, //"new"
@@ -83,6 +83,8 @@ export async function getManga(url:string, icon:boolean = true) {
             chapterTextList.splice(0,0,chap)
         })
 
+        if (chapterUrlList.length <= 0 || chapterTextList.length != chapterUrlList.length) return 'Issue fetching Chapters Contact an Admin!'
+
         const titleSelect = await page.waitForSelector('#content > div > div > div > div.ts-breadcrumb.bixbox > div > span:nth-child(2) > a > span', {timeout: 5000})
         let mangaName = await titleSelect.evaluate(el => el.innerText)
 
@@ -109,7 +111,7 @@ export async function getManga(url:string, icon:boolean = true) {
 
             await photoPage.goto(mangaURL)
             photoPage.viewport({width: 960, height: 1040})
-            const photo = await photoPage.waitForSelector('::-p-xpath(/html/body/div[1]/div[2]/div/div[2]/div[1]/article/div[1]/div[2]/div[1]/div[1]/img)', {timeout: 5000})
+            const photo = await photoPage.waitForSelector('div.thumb > img.wp-post-image', {timeout: 5000})
             const photoURL = await photo.evaluate(el => el.src)
             const icon = await photoPage.goto(photoURL)
 
@@ -122,6 +124,10 @@ export async function getManga(url:string, icon:boolean = true) {
         await browser.close()
 
         const currIndex = chapterUrlList.indexOf(url)
+
+        if (currIndex == -1 && !ignoreIndex) {
+            return "unable to find current chapter. Please retry or contact Admin!"
+        }
 
         return {"mangaName": mangaName, "chapterUrlList": chapterUrlList.join(','), "chapterTextList": chapterTextList.join(','), "currentIndex": currIndex, "iconBuffer": resizedImage}
         

@@ -1,12 +1,18 @@
 const {getQueue, updateQueue} = require('./jobQueue')
 const processor = require('./mangaGetProc')
-const express = require('express')
+const fastify = require('fastify')
 import config from './config.json'
 
-const app = express()
+const app = fastify()
 const port = 80
-app.listen(port, function() {
-    console.log(`Listening on port ${port}`)
+app.listen({port: port}, function(err, address) {
+    if (err) {
+        console.error(err)
+        process.exit(1)
+    }
+    getQueue.obliterate({ force: true })
+    if (config.updateAtStart) updateAllManger()
+    console.log(`Puppeteer server listening at: ${address}`)
 })
 
 app.get('/updateManga', async function(req, res) {
@@ -33,14 +39,15 @@ app.get('/updateManga', async function(req, res) {
     res.send(response)
 })
 
-app.get('/getManga/', async function(req, res) {
+app.get('/getManga', async function(req, res) {
     // console.log(req.query)
     if (req.query.pass != config.serverPassWord) return res.status(401).send({message: "Unauthorized"})
 
     var webSite:string
     if (!req.query.url.includes('http')) return res.status(422).send({message: "Invalid URL!"})
     if (req.query.url.includes('manganato') && config.allowManganatoScans) webSite = "manganato"
-    else if (req.query.url.includes('reaperscan') && config.allowReaperScans) webSite = "reaper"
+    else if (req.query.url.includes('mangadex') && config.allowMangaDex) webSite = "mangadex"
+    else if (req.query.url.includes('reaperscans') && config.allowReaperScans) webSite = "reaperScans"
     else if (req.query.url.includes('reaper-scan') && config.allowReaperScansFake) webSite = "reaper-scans-fake"
     else if (req.query.url.includes('asura') && config.allowAsura) webSite = "asura"
     else return res.status(422).send({message: "Unsupported WebPage"})
@@ -59,10 +66,9 @@ app.get('/getManga/', async function(req, res) {
     res.send(response)
 })
 
-setInterval(updateAllManger, config.updateDelay)
+
 
 async function updateAllManger() {
-    await getQueue.obliterate({ force: true });
     if (config.verboseLogging) console.log(`Updating all manga at ${Date.now()}`)
     const resp = await fetch(`${config.serverUrl}/api/data/pull/getUpdateData`, {
         method: 'GET',
@@ -77,34 +83,43 @@ async function updateAllManger() {
     if (config.verboseLogging) console.log(returnData.length)
     // console.log(returnData)
     for (var i = 0; i < returnData.length; i++) {
+
+        let firstChapUrl = ''
         if (returnData[i].urlList.indexOf(',') == -1) {
-            console.log(returnData[i].urlList)
-            console.log("Unable to find first chap skipping")
-            continue
+            if (returnData[i].urlList.length <= 0) {
+                console.log("Unable to find first chap skipping: " + returnData[i].mangaId)
+                if (config.verboseLogging) console.log(returnData[i].urlList)
+                continue
+            } else {
+                firstChapUrl = returnData[i].urlList.substring(0, returnData[i].urlList.length)
+            }
+        } else {
+            firstChapUrl = returnData[i].urlList.substring(0, returnData[i].urlList.indexOf(','))
         }
-        // const chapList = returnData[i].urlList.split('^[,]+$')
-        const firstChapUrl = returnData[i].urlList.substring(0, returnData[i].urlList.indexOf(','))
         if (config.verboseLogging) console.log(firstChapUrl)
         var webSite:string
         if (!firstChapUrl.includes('http')) return
         if (firstChapUrl.includes('manganato') && config.allowManganatoScans) webSite = "manganato"
-        else if (firstChapUrl.includes('reaperscan') && config.allowReaperScans) webSite = "reaper"
+        else if (firstChapUrl.includes('mangadex') && config.allowMangaDex) webSite = "mangadex"
+        else if (firstChapUrl.includes('reaperscans') && config.allowReaperScans) webSite = "reaperScans"
         else if (firstChapUrl.includes('reaper-scan') && config.allowReaperScansFake) webSite = "reaper-scans-fake"
         else if (firstChapUrl.includes('asura') && config.allowAsura) webSite = "asura"
         else {
-            console.log('unknown id db skipping: ' + firstChapUrl)
+            console.log(`unknown id db skipping: id: ${returnData[i].mangaId}, url: ${firstChapUrl}`)
             continue
         }
-        
+        if (config.verboseLogging) console.log(returnData[i])
         getQueue.add({
             type: webSite,
             url: firstChapUrl,
             mangaId: returnData[i].mangaId, 
             getIcon: false,
             update: true,    
-            length: returnData.length
+            length: returnData.length,
+            oldUrlList: returnData[i].urlList
         }, {priority: 2})
     }
     
 }
-if (config.updateAtStart) updateAllManger()
+
+setInterval(updateAllManger, config.updateDelay)

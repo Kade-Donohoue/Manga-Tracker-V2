@@ -8,7 +8,9 @@
     "test": "uvu -r tsm test",
     "resetDbLocal": "npx wrangler d1 execute dev-manga-bot --local --file=./src/schemaBlank.sql",
     "resetDbRemote": "npx wrangler d1 execute dev-manga-bot --remote --file=./src/schemaBlank.sql",
-    "viewMangaStoredLocal": "npx wrangler d1 execute dev-manga-bot --local --command='SELECT mangaName from mangaData'"
+    "createNewTable": "npx wrangler d1 execute dev-manga-bot --remote --file=./src/schemaReplace.sql",
+    "viewMangaStoredLocal": "npx wrangler d1 execute dev-manga-bot --local --command='SELECT mangaName from mangaData'",
+    "changeKey": "npx wrangler d1 execute dev-manga-bot --remote --file=./src/schemaChangeKey.sql"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240405.0",

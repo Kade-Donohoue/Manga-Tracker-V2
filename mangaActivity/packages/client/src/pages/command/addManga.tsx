@@ -56,11 +56,12 @@ export default function addManga() {
   const auth = authStore.getState();
   // console.log(auth)
   if (!auth) {
-    console.log("No Auth!!!!!!!!!!!!!!!!")
+    console.log("No Auth!")
     return <></>;
   }
 
   async function submitManga() {
+    if (isLoading) return toast.error('Already adding!')
     let notif = toast.loading("Adding Manga!", {closeOnClick: true, draggable: true,})
     try {
       setIsLoading(true)
@@ -176,7 +177,7 @@ export default function addManga() {
         />
       <br></br>
       <button className="addButton" type="submit" onClick={submitManga}>{isLoading? 'Loading...':'Add Manga!'}</button>
-      {showError?<label className='addError' id='errorField'></label>:<></>}
+      <label style={{display:(showError?'block':'none')}} className='addError' id='errorField'></label>
     </div>
   );
 }

@@ -106,46 +106,52 @@ export async function getUserManga(access_token:string, authId:string, env:Env) 
         if (validationRes instanceof Response) return validationRes
         authId = validationRes
 
-        const userManga:userDataRow[] = (await env.DB.prepare('SELECT * FROM userData WHERE userID = ?')
-                .bind(authId)
-                .all()).results as any
+        let queryTimeDebug = 0
+        const userRes = await env.DB.prepare('SELECT * FROM userData WHERE userID = ?')
+            .bind(authId)
+            .all()
 
+        queryTimeDebug+= userRes.meta.duration
+        const userManga:userDataRow[] = userRes.results as any
 
+        let boundMangaDataStmt:D1PreparedStatement[] = []
+        for (const manga of userManga) {
+            boundMangaDataStmt.push(env.DB.prepare(`SELECT * FROM mangaData WHERE mangaId = ? LIMIT 1`).bind(manga.mangaId))
+        }
 
-        var mangaData:mangaDataRowProcessed[] = []
-        for (var i:number = 0; i < userManga.length; i++) {
-            var mangaInfo:mangaDataRowReturn|null = await env.DB.prepare(
-                `SELECT * FROM mangaData WHERE mangaId = ?`
-            )
-                .bind(userManga[i].mangaId)
-                .first()
+        const mangaRes = await env.DB.batch(boundMangaDataStmt)
 
-            if (!mangaInfo) {
-                console.log("Could not get manga Data")
-                mangaInfo = {
+        let mangaData:mangaDataRowProcessed[] = []
+        for (const resRow of mangaRes) {
+            queryTimeDebug+=resRow.meta.duration
+            let results:mangaDataRowReturn = resRow.results[0] as any
+            if (!results) {
+                console.warn('Could not fetch data for Manga Check DB!!!')
+                mangaData.push({
                     "mangaId": "null",
                     "mangaName": "null",
-                    "urlList": "null",
-                    "chapterTextList": "null", 
+                    "urlList": [],
+                    "chapterTextList": [], 
                     "updateTime": "null"
-                }
+                })
+                continue
+            } else {
+                mangaData.push({
+                    "mangaId": results.mangaId,
+                    "mangaName": results.mangaName,
+                    "urlList": results.urlList.split(','),
+                    "chapterTextList": results.chapterTextList.split(','), 
+                    "updateTime": results.updateTime
+                })
             }
-
-            const mangaDataProcessed:mangaDataRowProcessed = {
-                "mangaId": mangaInfo.mangaId,
-                "mangaName": mangaInfo.mangaName,
-                "urlList": mangaInfo.urlList.split(','),
-                "chapterTextList": mangaInfo.chapterTextList.split(','), 
-                "updateTime": mangaInfo.updateTime
-            }
-
-            mangaData.push(mangaDataProcessed)
         }
         
+        console.log(`Query took ${queryTimeDebug} milliseconds to process`)
+
         return new Response(JSON.stringify({userInfo: userManga, mangaData: mangaData}), {status:200})
     } catch (err) {
         console.error("Error:", err);
-        return new Response(JSON.stringify({message: 'an unknown error occured'}), {status:500});
+        return new Response(JSON.stringify({message: 'an unknown error occurred'}), {status:500});
     }
 }
 
@@ -174,34 +180,54 @@ export async function userStats(access_token:string, authId:string, env:Env) {
             .bind(authId)
             .all()).results as any
 
-        const mangaStmt = env.DB.prepare('SELECT chapterTextList FROM mangaData WHERE mangaId = ?')
+        const mangaLists:{"chapterTextList":string, "mangaId":string}[] = (await env.DB.prepare('SELECT chapterTextList, mangaId FROM mangaData').all()).results as any
 
-        var boundMangaStmt:D1PreparedStatement[] = []
-        for (var i = 0; i < userManga.length; i++) {
-            boundMangaStmt.push(mangaStmt.bind(userManga[i].mangaId))
+
+        // const userResults:any = (await env.DB.batch(boundMangaStmt))
+        const mangaCount = await env.DB.prepare('SELECT COUNT(*) AS count FROM mangaData').first()
+        //Get new chapter count in last 30 days
+        const updateCount = await env.DB.prepare('SELECT SUM(stat_value) AS total FROM stats WHERE type = "chapCount" AND timestamp > datetime("now", "-30 days")').first()
+        const newCount = await env.DB.prepare('SELECT COUNT(stat_value) AS total FROM stats WHERE type = "mangaCount" AND timestamp > datetime("now", "-30 days")').first()
+
+
+        var unreadChapters:number = 0
+        var read:number = 0
+        var unreadManga:number = 0
+        var totalChapters:number = 0
+
+        for (const currentMangaData of mangaLists) {
+            if (!currentMangaData.chapterTextList) {
+                console.warn(`${currentMangaData.mangaId} has no Chapter List!`)
+                continue
+            }
+            let currentList:string[] = currentMangaData.chapterTextList.split(',')
+            let lastChapNums = currentList[currentList.length-1].match(/[0-9.]+/g)
+            let latestChapNumber:number = parseInt(lastChapNums![lastChapNums!.length -1])
+
+            totalChapters+=latestChapNumber
+
+            
+
+            //If current manga is tracked by user
+            let foundUserManga = userManga.find(manga => manga.mangaId === currentMangaData.mangaId)
+            if (foundUserManga) {
+                try {
+                    let currentChapNums = currentList[verifyIndexRange(parseInt(foundUserManga.currentIndex), currentList.length)].match(/[0-9.]+/g)
+
+                    read+= parseInt(currentChapNums![currentChapNums!.length-1])
+
+                    const currUnread = (latestChapNumber)-(parseInt(currentChapNums![currentChapNums!.length-1]))
+                    console.log(currUnread)
+                    if (currUnread!=0) unreadManga++
+                    unreadChapters+=currUnread
+                } catch (error) {
+                    console.log(error)
+                    console.log('Issue fetching data for manga: ' + foundUserManga.mangaId)
+                }
+            }
         }
-
-        const userResults:any = (await env.DB.batch(boundMangaStmt))
-        const rowCount = await env.DB.prepare('SELECT COUNT(*) as count FROM mangaData').first()
-
-
-        var unreadChapters = 0
-        var read = 0
-        var unreadManga = 0
-
-        for (var i = 0; i < userResults.length; i++) {
-            const currResults:string[] = (userResults[i].results[0].chapterTextList).split(',')
-            var currentChap = currResults[verifyIndexRange(parseInt(userManga[i].currentIndex), currResults.length)] 
-            var chapNumStr = currentChap.match(/[0-9.]+/g)
-            var latestNumStr = currResults[currResults.length-1].match(/[0-9.]+/g)
-            read+= parseInt(chapNumStr![chapNumStr!.length-1])
-            const currUnread = (parseInt(latestNumStr![latestNumStr!.length -1]))-(parseInt(chapNumStr![chapNumStr!.length-1]))
-            if (currUnread!=0) unreadManga++
-            unreadChapters+=currUnread
-        }
-
         const userStats = {"chaptersRead":read, "chaptersUnread":unreadChapters, "unreadManga": unreadManga, "readManga": userManga.length}
-        const mangaStats = {"trackedManga": rowCount?.count||0}
+        const mangaStats = {"trackedManga": mangaCount?.count||0, "totalTrackedChapters":totalChapters, "newMangaCount": newCount?.total||0, "newChapterCount": updateCount?.total||0}
 
         return new Response(JSON.stringify({userStats: userStats, globalStats: mangaStats}), {status:200})
     } catch (err) {

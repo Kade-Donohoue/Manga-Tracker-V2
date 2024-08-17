@@ -28,8 +28,10 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import AnalyticsIcon from '@mui/icons-material/Analytics';
 import BugReportIcon from '@mui/icons-material/BugReport';
 import SettingsIcon from '@mui/icons-material/Settings';
+import MenuIcon from '@mui/icons-material/Menu';
 
 import * as S from './AppStyles'
+import { IconButton } from '@mui/material';
 
 // Add contexts here
 export default function App(): React.ReactElement {
@@ -152,6 +154,8 @@ function RootedApp(): React.ReactElement {
     getCats()
   }, [])
 
+  const [sideBarExpanded, setSideBarExpanded] = React.useState<boolean>(true)
+
   const location = useLocation();
   return (
     <S.SiteWrapper>
@@ -159,15 +163,16 @@ function RootedApp(): React.ReactElement {
         css={{
           border: '1px solid black',
           height: '100%',
-          width: '200px',
-          '@small': {height: '200px', width: '100%'},
-          '@xsmall': {height: 0, width: '100%'},
+          width: sideBarExpanded?'200px':'65px',
+          '@small': {height: (sideBarExpanded?'200px':'50px'), width: '100%'},
+          '@xsmall': {height: (sideBarExpanded?'100%':'40px'), width: '100%'},
         }}>
         <Scrollable.Viewport>
           <S.Ul>
+            <IconButton sx={{borderRadius:0}} onClick={(e) => setSideBarExpanded(!sideBarExpanded)}><MenuIcon sx={{fontSize:30, align:"left", color:"white"}}/></IconButton>
             {Object.values(routes).map((r) => (
-              <S.Li as={Link} to={r.path} key={r.path} selected={location.pathname === r.path}>
-                <p style={{display: "flex", alignItems: 'center', fontSize:16}}><r.icon sx={{fontSize:18, align:"center" }} />{` ${r.name}`}</p>
+              <S.Li as={Link} to={r.path} key={r.path} selected={location.pathname === r.path} css={{"@small": {display:(sideBarExpanded?"block":"none")}}}>
+                <p style={{display: "flex", alignItems: 'center', fontSize:16}}><r.icon sx={{fontSize:18, align:"center" }} />{sideBarExpanded?` ${r.name}`:''}</p>
               </S.Li>
             ))}
           </S.Ul>

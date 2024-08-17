@@ -91,7 +91,7 @@ export async function changeMangaCat(access_token:string|null=null, authId:strin
     return new Response(JSON.stringify({message:"Unable to change Category. Contact an Admin!"}), {status:500})
 }
 
-export async function bulkUpdateMangaInfo(access_token:string, newData:updateData[], env:Env) {
+export async function bulkUpdateMangaInfo(access_token:string, newData:updateData[], amountNewChapters:number, env:Env) {
     try {
         const validationRes = await verifyUserAuth(access_token, null, env, true)
             
@@ -105,6 +105,8 @@ export async function bulkUpdateMangaInfo(access_token:string, newData:updateDat
             console.log(newData[i].chapterUrlList, newData[i].chapterTextList, newData[i].mangaId)
             boundStmt.push(stmt.bind(newData[i].chapterUrlList, newData[i].chapterTextList, newData[i].mangaId))
         }
+        boundStmt.push(env.DB.prepare('INSERT INTO stats (timestamp, type, stat_value) VALUES (CURRENT_TIMESTAMP, "chapCount", ?)').bind(amountNewChapters))
+        // boundStmt.push(env.DB.prepare('DELETE FROM stats WHERE timestamp < datetime("now", "-30 days")')) //removes any stat thats older than 30 days
 
         await env.DB.batch(boundStmt)
 

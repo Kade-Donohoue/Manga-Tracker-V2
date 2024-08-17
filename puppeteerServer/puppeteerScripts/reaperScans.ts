@@ -24,7 +24,7 @@ puppeteer.use(adblocker)
  */
 export async function getManga(url:string, icon:boolean = true, ignoreIndex = false) {
     // if (!config.allowManganatoScans) return -2
-    if (config.verboseLogging) console.log('Asura')
+    if (config.verboseLogging) console.log('ReaperScans')
     
     const browser = await puppeteer.launch({headless: true, devtools: false, ignoreHTTPSErrors: true, //"new"
             args: ['--enable-features=NetworkService', '--no-sandbox', '--disable-setuid-sandbox','--mute-audio']})
@@ -33,9 +33,9 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         page.setDefaultNavigationTimeout(25*1000) // timeout nav after 25 sec
         page.setRequestInterception(true)
 
-        const allowRequests = ['asura']
-        const bypassAllowReqs = ['_next/static/chunks']
-        const blockRequests = ['.css', 'facebook', 'fbcdn.net', 'bidgear', '.png', '.svg', 'disqus', '.js', '.woff', '/api/']
+        const allowRequests = ['reaperscans.com']
+        const bypassAllowReqs = ['jquery.min.js', 'function.js', 'webpack', 'rocket']
+        const blockRequests = ['.css', 'facebook', 'fbcdn.net', 'bidgear', '.png', '.svg', 'disqus', '.js', '.ico']
         page.on('request', (request) => {
             const u = request.url()
             if (!match(u, allowRequests)) {
@@ -53,11 +53,6 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
                 return
             }
 
-            if (request.resourceType() == "fetch") {
-                request.abort()
-                return
-            }
-
             if (match(u, blockRequests)) {
                 request.abort()
                 return
@@ -65,31 +60,33 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
             request.continue()
         })
         
-        await page.goto(url, {waitUntil: 'networkidle0', timeout: 25*1000})
+        await page.goto(url, {waitUntil: 'load', timeout: 10*1000})
         page.setViewport({width: 960, height: 1040})
 
-        const dropdown = await page.waitForSelector('button.dropdown-btn', {timeout: 500})
-        await dropdown?.scrollIntoView()
+        // await new Promise((resolve) => {setTimeout(resolve, 5*60*1000)})
 
-        const menuAvailable = await clickButton(page)
+        let seriesSlug = url.replace('//', '').split('/')[2]
+        
+        let chapResponse = await fetch(`https://api.reaperscans.com/chapter/all/${seriesSlug}`)
 
-        if (!menuAvailable) return "Unable to get chapter list!"
+        if (!chapResponse.ok) return 'Unable to get Chapter List'
 
-        //prevents dropdown from being closes be click
-        await page.evaluate(() => {
-            const dropdownContent = document.querySelector('div.dropdown-content');
-            dropdownContent?.addEventListener('click', (event) => {
-              event.stopPropagation()
-            })
-        })
+        let chapterLinks:string[] = []
+        let chapterText:string[] = []
+        for (const chapData of (await chapResponse.json())) {
+            // filters out early releases
+            if (chapData.price != 0) continue
 
-        //extracts chapter links as well as the text for each chapter
-        const chapterLinks:string[] = await page.evaluate(() =>  Array.from(document.querySelectorAll('div.dropdown-content > a'), element => `${(window as any).__ENV.NEXT_PUBLIC_FRONTEND_URL}${element.getAttribute('href')}`).reverse())
-        const chapterText:string[] = await page.evaluate(() =>  Array.from(document.querySelectorAll('div.dropdown-content > a > h2'), element => element.innerHTML).reverse())
+            chapterLinks.push(`https://reaperscans.com/series/${seriesSlug}/${chapData.chapter_slug}`)
+            chapterText.push(chapData.chapter_name.split('-')[0].trim())
+        }
+        chapterLinks.reverse()
+        chapterText.reverse()
+
 
         if (chapterLinks.length == 0 || chapterLinks.length != chapterText.length) return 'Issue fetching Chapters'
 
-        const title = await page.evaluate(() => document.querySelector("a.items-center:nth-child(2) > h3:nth-child(1)")?.innerHTML, {timeout: 500})
+        const title = await page.evaluate(() => document.querySelector("h2.font-semibold")?.innerHTML, {timeout: 500})
 
         if (config.verboseLogging) {
             console.log(chapterLinks)
@@ -99,14 +96,12 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         
         var resizedImage:Buffer|null = null
         if (icon) {
-            const overViewURL = await page.evaluate(() => `${(window as any).__ENV.NEXT_PUBLIC_FRONTEND_URL}${document.querySelector("a.items-center:nth-child(2)")?.getAttribute('href')}`, {timeout: 500})
-            if (config.verboseLogging) console.log(overViewURL)
-            await page.goto(overViewURL)
-                                                  
-            const photoSelect = await page.waitForSelector('img.rounded', {timeout:1000}) // issue
+            // await new Promise((resolve) => {setTimeout(resolve, 5*60*1000)}) // 10 min delay for testing
+
+            const photoSelect = await page.waitForSelector('img.rounded', {timeout:1000})
             const iconPage = await browser.newPage()
             
-            const blockRequestsImg = ['.css', 'facebook', 'fbcdn.net', 'bidgear', '.svg', 'disqus', ]
+            const blockRequestsImg = ['.css', 'facebook', 'fbcdn.net', 'bidgear', '.svg', 'disqus', '.js']
             iconPage.on('request', (request) => {
                 const u = request.url()
     
@@ -117,11 +112,10 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
                 request.continue()
             })
 
-            const photo = await photoSelect?.evaluate(el => el.getAttribute('src'))
-            // console.log(photo)
+            const photo = (await photoSelect?.evaluate(el => el.getAttribute('src'))).replace('w=48', 'w=384')
+            if (config.verboseLogging) console.log(`https://reaperscans.com${photo}`)
             
-            const icon = await iconPage.goto(photo!)
-            // await new Promise((resolve) => {setTimeout(resolve, 10*60*1000)}) // 10 min delay for testing
+            const icon = await iconPage.goto(`https://reaperscans.com${photo!}`)
             let iconBuffer = await icon?.buffer()
             resizedImage = await sharp(iconBuffer)
                 .resize(480, 720)
@@ -129,10 +123,7 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         }
         await browser.close()
         
-
-        //match index by chapter number as asura frequently changes id in url 
-        let endChapUrls = chapterLinks.map((valUrl) => valUrl.split('/chapter/').at(-1))
-        const currIndex = endChapUrls.indexOf(url.split('/chapter/').at(-1))
+        const currIndex = chapterLinks.indexOf(url)
 
         if (currIndex == -1 && !ignoreIndex) {
             return "unable to find current chapter. Please retry or contact Admin!"
@@ -143,20 +134,9 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         console.warn(`Unable to fetch data for: ${url}`)
         if (config.verboseLogging) console.warn(err)
         await browser.close()
+        if (err.name === 'TimeoutError') {
+            return "Exceeded Timeout please try again later!"
+        }
         return "Unknown Error occurred"
     }
-}
-
-async function clickButton(page) {
-    for (let attempt = 0; attempt <= 4; attempt++) {
-        try {
-            await page.click('button.dropdown-btn')
-
-            await page.waitForSelector('div.dropdown-content', { visible: true, timeout:500 })
-            return true
-        } catch (error) {
-            if (config.verboseLogging) console.log('Dropdown menu did not appear retrying')
-        }
-    }
-    return false
 }

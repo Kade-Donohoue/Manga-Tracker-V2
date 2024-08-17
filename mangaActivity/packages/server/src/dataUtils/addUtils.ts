@@ -39,7 +39,11 @@ export async function saveManga(access_token:string, authId:string, url:string, 
         // if manga isnt in database insert data otherwise update it
         if (!mangaRowTest) {
             console.log('not already in db')
-            mangaId = uuidv4().toString() //generate manga ID if manga isnt already in DB
+
+            //track new manga being added to DB
+            await env.DB.prepare('INSERT INTO stats (timestamp, type, stat_value) VALUES (CURRENT_TIMESTAMP, "mangaCount", ?)').bind(1).run()
+
+            mangaId = uuidv4().toString() //generate manga ID if manga isn't already in DB
             // console.log(mangaId)
             mangaStmt = env.DB.prepare('INSERT INTO mangaData (mangaId,mangaName,urlList,chapterTextList,updateTime) VALUES(?,?,?,?,?)')
                 .bind(mangaId, mangaInfo.mangaName, mangaInfo.chapterUrlList, mangaInfo.chapterTextList, currentTime)

@@ -58,11 +58,13 @@ export default function removeManga() {
   const auth = authStore.getState();
   // console.log(auth)
   if (!auth) {
-    console.log("No Auth!!!!!!!!!!!!!!!!")
+    console.log("No Auth!")
     return <></>;
   }
 
   async function submitManga() {
+    setIsLoading(true)
+    if (isLoading) return toast.error('Already adding!')
     let notif = toast.loading("Removing Manga!")
     try {
       // console.log(selectedOption)

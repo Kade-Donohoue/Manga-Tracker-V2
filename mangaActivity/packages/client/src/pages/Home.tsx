@@ -9,10 +9,17 @@ export default function Home() {
   return (
     <div style={{padding: 32}}>
       Welcome to the Manga Bot. The one stop shop for yor manga tracking needs!<br></br>
-      Currently Manganato, Asura Scans and Reaper-Scans are supported. 
+      Currently 
+      <a style={{color:"lightblue", textDecoration:"underline"}} onClick={(e) => {discordSdk.commands.openExternalLink({url:'https://manganato.com/'})}}>Manganato</a>, 
+      <a style={{color:"lightblue", textDecoration:"underline"}} onClick={(e) => {discordSdk.commands.openExternalLink({url:'https://asuracomic.net/'})}}> Asura Scans</a>, 
+      <a style={{color:"lightblue", textDecoration:"underline"}} onClick={(e) => {discordSdk.commands.openExternalLink({url:'https://reaper-scans.com//'})}}> Reaper-Scans</a>, 
+      <a style={{color:"lightblue", textDecoration:"underline"}} onClick={(e) => {discordSdk.commands.openExternalLink({url:'https://reaperscans.com/'})}}> Reaper Scans</a>
+      , and 
+      <a style={{color:"lightblue", textDecoration:"underline"}} onClick={(e) => {discordSdk.commands.openExternalLink({url:'https://mangadex.org/'})}}> Mangadex </a> 
+      are supported. 
 
       <p>
-        If you have any requests please file an issue on the <a href='https://github.com/Kade-Donohoue/Manga-Bot'>Github</a>!
+        If you have any requests please file an issue on the <a style={{color:"lightblue", textDecoration:"underline"}} onClick={(e) => {discordSdk.commands.openExternalLink({url:'https://github.com/Kade-Donohoue/Manga-Bot'})}}>Github</a>!
       </p><br></br>
 
       To get started select a category<br></br><br></br>

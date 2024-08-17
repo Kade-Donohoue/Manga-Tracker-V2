@@ -167,7 +167,7 @@ export default function feed():JSX.Element {
   }
 
   if (!auth) {
-    console.log("No Auth!!!!!!!!!!!!!!!!")
+    console.log("No Auth!")
     discordSdk.close(RPCCloseCodes.TOKEN_REVOKED, "Restart Activity to Continue!")
     return <div>Restart Activity</div>
   }

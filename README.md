@@ -8,9 +8,47 @@ Each folder is a separate part of the bot and it has 3 main parts.
 3. The Text Command server. This is made to run locally and processes commands fetches required data from activity backend as well as create images for the user. 
 4. the utils folder contains some tools primarily converting old manga bot db to new system
 
-the first 2 are required while the text command is optional. Each folder has its own readme with setup instructions. 
+the first 2 are required while the text command and utils are optional. Each folder has its own readme with setup instructions. 
 
 # **Change Logs**
+
+## Change Log 1.1.2
+- Side bar can now be collapsed 
+- Loading screen now has centered spinning wheal with loading text underneath
+- add bookmarks now filters out folders that don't have manga urls
+- add bookmarks now has dedicated screen for seeing errors and going back to add more folders
+- add manga, remove, and add bookmarks now prevents clicking add button multiple times
+- new stats! new manga(user added manga) in last 30 days, new chapters in last 30 days(chapters released on already tracked manga)
+- tracked chapters global now is calculated and displayed
+- statistics now gives error when its unable to load
+- an error is shown when manga is unable to be fetched for view tracked or if you have no manga added
+- view tracked cards are now centered 
+- view tracked overview titles are now larger and can cut off but have a tooltip when hovered over
+- you can now click on github on home to open my github page
+- github page now opens correct repo
+- settings for custom cats now prevents only spaces, extra spaces at beg and end, prevents 0 width ascii, and prevents duplicate categories names. 
+- table for user cats shouldn't move anymore when you click new cat button
+- new sql for converting db to use primary keys and types reducing query time (note you will need to run `npm run changeKey` in `puppeteerServer/packages/server` and change dev-manga-bot to name of your db)
+- new stats table used to calculate some of the new stats
+- getUserManga is now optimized and fasted by batching statements 
+- fixed verifyIndexRange function to return last index when provided index is greater than lists length
+- puppeteer now uses fastify instead of express
+- update parameter added to puppeteer scraping scripts to bypass getChapterIndex
+- puppeteer server now only returns manga that has new chapters
+- puppeteer server calculates stats for how many new chapters per update
+- puppeteer server packages updated
+- changed image selector for asura
+- added catches in case chapter url list and chapter text list length don't match or are 0
+- updated image selector in reaper-scans
+- added support for mangadex
+- resolved manga with only 1 saved chapter being unable to update
+- added Accordion to settings. this will allow more settings to be added in the future while keeping the settings page manageable. 
+- added new test version of categories settings under its own dropdown(Categories V2)
+- created new version of ReaperScans scrapper that supports new webpage
+- ReaperScans config now defaults to on
+- modified block lists for all scraping scripts reducing how long it takes to pull data. 
+- on home page you can now click on the different supported sites and be brought to their homepage. 
+
 
 ## Change Log 1.1.1
 - password on puppeteer server is now properly uses

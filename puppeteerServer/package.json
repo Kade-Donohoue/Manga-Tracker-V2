@@ -5,7 +5,7 @@
   },
   "dependencies": {
     "bull": "^4.12.9",
-    "express": "^4.19.2",
+    "fastify": "^4.28.1",
     "puppeteer": "^22.9.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-adblocker": "^2.13.6",
