@@ -1,4 +1,4 @@
-import React, { ChangeEvent, TextareaHTMLAttributes } from 'react';
+import React, { ChangeEvent, HTMLAttributes } from 'react';
 import discordSdk from '../discordSdk';
 // import ReactJsonView from '../components/ReactJsonView';
 import {useLocation} from 'react-router-dom';
@@ -17,7 +17,7 @@ import Accordion from '@mui/material/Accordion'
 import AccordionSummary from '@mui/material/AccordionSummary'
 import AccordionDetails from '@mui/material/AccordionDetails'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import { DataGrid, GridActionsCellItem, GridFooterContainer, GridFooter, GridRowModes, GridEventListener, GridRowEditStopReasons, GridRowProps, GridRowModesModel, GridRowId, GridRowModel, GridRowsProp, GridSlots, renderEditInputCell, GridRenderEditCellParams } from '@mui/x-data-grid'
+import { DataGrid, GridActionsCellItem, GridFooterContainer, GridFooter, GridRowModes, GridEventListener, GridRowEditStopReasons, GridRowProps, GridRowModesModel, GridRowId, GridRowModel, GridRowsProp, GridSlots, renderEditInputCell, GridRenderEditCellParams, GridColDef } from '@mui/x-data-grid'
 import SaveIcon from '@mui/icons-material/Save'
 import CancelIcon from '@mui/icons-material/Cancel'
 import EditIcon from '@mui/icons-material/Edit';
@@ -29,21 +29,21 @@ interface dataGridRow {
   isNew?:boolean
 }
 
-interface EditFooterProps {
-  setRows: (newRows: (oldRows: GridRowProps) => GridRowProps) => void
+interface EditFooterProps extends Partial<HTMLAttributes<HTMLDivElement>> {
+  setRows: (newRows: (oldRows: GridRowsProp) => GridRowsProp) => void
   setRowModesModel: (newModel: (oldModel: GridRowModesModel) => GridRowModesModel) => void
 }
 
 export default function settings() {
   const [editRows, setEditRows] = React.useState<string[]>([])
   const [localCats, setLocalCats] = React.useState<dropdownOption[]>(catOptions)
-  const [rows, setRows] = React.useState(convertToDataGrid(catOptions))
+  const [rows, setRows] = React.useState<GridRowsProp>(convertToDataGrid(catOptions))
   const [rowModesModel, setRowModesModel] = React.useState<GridRowModesModel>({})
   const auth = authStore.getState()
 
 
 
-  function convertToDataGrid(dropdownOptions:dropdownOption[]) {
+  function convertToDataGrid(dropdownOptions:dropdownOption[]):GridRowsProp {
     let newData:dataGridRow[] = []
     for (const cat of dropdownOptions) {
       newData.push({id:cat.value, label:cat.label, isNew: false})
@@ -121,18 +121,18 @@ export default function settings() {
 
 
   //dataGridFeatures
-  function customFooter(props: EditFooterProps) {
-    const {setRows, setRowModesModel} = props
-
-    function handleClick() {
-      setRows((oldRows) => [...oldRows, {id: `user:${(rows.length+1).toString()}`, label:'', isNew: true}])
-      setRowModesModel((oldModel) => ({...oldModel, [`user:${(rows.length+1).toString()}`]: {mode: GridRowModes.Edit, fieldToFocus: 'label'}}))
+  const customFooter = (props: EditFooterProps) => {
+    const handleClick = () => {
+      props.setRows((oldRows) => [...oldRows, { id: `user:${(oldRows.length + 1).toString()}`, label: '', isNew: true }])
+      props.setRowModesModel((oldModel) => ({ ...oldModel, [`user:${(rows.length + 1).toString()}`]: { mode: GridRowModes.Edit, fieldToFocus: 'label' } }))
     }
   
     return (
       <GridFooterContainer>
-        <IconButton color='primary' sx={{borderRadius:0, fontSize:'10'}} onClick={handleClick}><AddCircleIcon />Add Category</IconButton>
-        <GridFooter sx={{border: 'none'}}/>
+        <IconButton color='primary' sx={{ borderRadius: 0, fontSize: '10' }} onClick={handleClick}>
+          <AddCircleIcon /> Add Category
+        </IconButton>
+        <GridFooter sx={{ border: 'none' }} />
       </GridFooterContainer>
     )
   }
@@ -147,7 +147,7 @@ export default function settings() {
   }
 
   const handleDeleteClick = (id: GridRowId) => async () => {
-    setRows(rows.filter((row) => row.id !== id))
+    setRows(rows.filter((row:any) => row.id !== id))
     let newCatOptions = localCats.filter((cat) => cat.value !== id)
     setLocalCats(newCatOptions)
 
@@ -157,9 +157,9 @@ export default function settings() {
   const handleCancelClick = (id: GridRowId) => () => {
     setRowModesModel({...rowModesModel, [id]: { mode: GridRowModes.View, ignoreModifications: true }})
 
-    const editedRow = rows.find((row) => row.id === id)
+    const editedRow = rows.find((row:any) => row.id === id)
     if (editedRow!.isNew) {
-      setRows(rows.filter((row) => row.id !== id))
+      setRows(rows.filter((row:any) => row.id !== id))
     }
   }
 
@@ -168,15 +168,21 @@ export default function settings() {
     //remove spaces at beg and end and remove some bad chars
   newRow.label.trim().replace('/‎|​/g', '')    
 
-  if (newRow.label == '') return toast.error('Please Enter a Category Name!')
+  if (newRow.label === '') {
+    toast.error('Please Enter a Category Name!');
+    throw new Error('Invalid Category Name');
+  }
 
   for (const row of rows) {
-    if (row.id != newRow.id && row.label === newRow.label) return toast.error('Category Already Exists with this name!')
+    if (row.id !== newRow.id && row.label === newRow.label) {
+      toast.error('Category Already Exists with this name!');
+      throw new Error('Duplicate Category Name');
+    }
   }
 
   const updatedRow = { ...newRow, isNew: false } as GridRowModel
 
-    setRows(rows.map((row) => (row.id === newRow.id ? updatedRow : row)))
+    setRows(rows.map((row:any) => (row.id === newRow.id ? updatedRow : row)))
 
     //sync with Categories V1
     let newRowsV1:dropdownOption[] = []
@@ -201,12 +207,12 @@ export default function settings() {
     }
   }
 
-  const columns = [
+  const columns:GridColDef[] = [
     { field: 'label', headerName: 'Category Title', width: 600, editable: true},
-    { field: 'actions', headerName: 'Actions', type:'actions', width: 100, getActions: ({ id }) => {
+    { field: 'actions', headerName: 'Actions', type:'actions', width: 100, getActions: ({ id }:{id:GridRowId}) => {
       const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit 
   
-      if (!id.includes('user:')) return []
+      if (!(id as string).includes('user:')) return []
 
       if (isInEditMode) {
         return [
@@ -303,12 +309,14 @@ export default function settings() {
                 onRowEditStop={handleRowEditStop}
                 processRowUpdate={processRowUpdate}
                 slots={{
-                  footer: customFooter as GridSlots['footer']
+                  footer: customFooter as (props: any) => JSX.Element
                 }}
-                slotProps={{footer: {setRows, setRowModesModel}}}
+                slotProps={{
+                  footer: { setRows, setRowModesModel } as EditFooterProps
+                }}
                 rows={rows} 
                 columns={columns} 
-                isCellEditable={(params) => params.row.id.includes('user:')}/>
+                isCellEditable={(params:any) => params.row.id.includes('user:')}/>
 
             </Box>
           </AccordionDetails>
