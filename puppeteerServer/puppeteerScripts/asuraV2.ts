@@ -1,15 +1,8 @@
-import puppeteer from "puppeteer-extra"
 import {match} from '../util'
 import config from '../config.json'
-// const config = require('../config.json')
-import stealthPlugin from "puppeteer-extra-plugin-stealth"
-puppeteer.use(stealthPlugin())
-import AdblockerPlugin from 'puppeteer-extra-plugin-adblocker'
 import sharp from 'sharp'
-const adblocker = AdblockerPlugin({
-  blockTrackers: true // default: false
-})
-puppeteer.use(adblocker)
+import { getBrowser } from '../jobQueue'
+import { Job } from 'bullmq'
 
 /**
  * Gets the chapter list from ChapManganato
@@ -22,21 +15,23 @@ puppeteer.use(adblocker)
  *  "iconBuffer": base64 icon for manga
  * }
  */
-export async function getManga(url:string, icon:boolean = true, ignoreIndex = false) {
-    // if (!config.allowManganatoScans) return -2
-    if (config.verboseLogging) console.log('Asura')
+export async function getManga(url:string, icon:boolean = true, ignoreIndex = false, job:Job) {
+    if (config.logging.verboseLogging) console.log('Asura')
     
-    const browser = await puppeteer.launch({headless: true, devtools: false, ignoreHTTPSErrors: true, //"new"
-            args: ['--enable-features=NetworkService', '--no-sandbox', '--disable-setuid-sandbox','--mute-audio']})
+    const browser = await getBrowser()
+    const page = await browser.newPage()
+
     try {
-        const page = await browser.newPage()
         page.setDefaultNavigationTimeout(25*1000) // timeout nav after 25 sec
         page.setRequestInterception(true)
 
+        let allowAllRequests:boolean = false
         const allowRequests = ['asura']
         const bypassAllowReqs = ['_next/static/chunks']
         const blockRequests = ['.css', 'facebook', 'fbcdn.net', 'bidgear', '.png', '.svg', 'disqus', '.js', '.woff', '/api/']
         page.on('request', (request) => {
+            if (allowAllRequests) return request.continue()
+                
             const u = request.url()
             if (!match(u, allowRequests)) {
                 request.abort()
@@ -66,14 +61,14 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         })
         
         await page.goto(url, {waitUntil: 'networkidle0', timeout: 25*1000})
-        page.setViewport({width: 960, height: 1040})
+        await job.updateProgress(20)
 
         const dropdown = await page.waitForSelector('button.dropdown-btn', {timeout: 500})
-        await dropdown?.scrollIntoView()
+        // await dropdown?.scrollIntoView()
 
         const menuAvailable = await clickButton(page)
 
-        if (!menuAvailable) return "Unable to get chapter list!"
+        if (!menuAvailable) throw new Error('Manga: Unable to get chapter list!')
 
         //prevents dropdown from being closes be click
         await page.evaluate(() => {
@@ -87,47 +82,41 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         const chapterLinks:string[] = await page.evaluate(() =>  Array.from(document.querySelectorAll('div.dropdown-content > a'), element => `${(window as any).__ENV.NEXT_PUBLIC_FRONTEND_URL}${element.getAttribute('href')}`).reverse())
         const chapterText:string[] = await page.evaluate(() =>  Array.from(document.querySelectorAll('div.dropdown-content > a > h2'), element => element.innerHTML).reverse())
 
-        if (chapterLinks.length == 0 || chapterLinks.length != chapterText.length) return 'Issue fetching Chapters'
+        if (chapterLinks.length == 0 || chapterLinks.length != chapterText.length) throw new Error('Manga: Issue fetching Chapters')
 
         const title = await page.evaluate(() => document.querySelector("a.items-center:nth-child(2) > h3:nth-child(1)")?.innerHTML, {timeout: 500})
 
-        if (config.verboseLogging) {
+        if (config.logging.verboseLogging) {
             console.log(chapterLinks)
             console.log(chapterText)
             console.log(title)
         }
+
+        await job.updateProgress(40)
         
         var resizedImage:Buffer|null = null
         if (icon) {
             const overViewURL = await page.evaluate(() => `${(window as any).__ENV.NEXT_PUBLIC_FRONTEND_URL}${document.querySelector("a.items-center:nth-child(2)")?.getAttribute('href')}`, {timeout: 500})
-            if (config.verboseLogging) console.log(overViewURL)
+            if (config.logging.verboseLogging) console.log(overViewURL)
             await page.goto(overViewURL)
                                                   
             const photoSelect = await page.waitForSelector('img.rounded', {timeout:1000}) // issue
-            const iconPage = await browser.newPage()
-            
-            const blockRequestsImg = ['.css', 'facebook', 'fbcdn.net', 'bidgear', '.svg', 'disqus', ]
-            iconPage.on('request', (request) => {
-                const u = request.url()
-    
-                if (match(u, blockRequestsImg)) {
-                    request.abort()
-                    return
-                }
-                request.continue()
-            })
-
             const photo = await photoSelect?.evaluate(el => el.getAttribute('src'))
+            
             // console.log(photo)
             
-            const icon = await iconPage.goto(photo!)
+            allowAllRequests = true
+            const icon = await page.goto(photo!)
+            await job.updateProgress(60)
             // await new Promise((resolve) => {setTimeout(resolve, 10*60*1000)}) // 10 min delay for testing
             let iconBuffer = await icon?.buffer()
             resizedImage = await sharp(iconBuffer)
                 .resize(480, 720)
                 .toBuffer()
         }
-        await browser.close()
+
+        await job.updateProgress(80)
+        await page.close()
         
 
         //match index by chapter number as asura frequently changes id in url 
@@ -135,15 +124,18 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         const currIndex = endChapUrls.indexOf(url.split('/chapter/').at(-1))
 
         if (currIndex == -1 && !ignoreIndex) {
-            return "unable to find current chapter. Please retry or contact Admin!"
+            throw new Error('Manga: unable to find current chapter. Please retry or contact Admin!')
         }
-
+        await job.updateProgress(100)
         return {"mangaName": title, "chapterUrlList": chapterLinks.join(','), "chapterTextList": chapterText.join(','), "currentIndex": currIndex, "iconBuffer": resizedImage}
     } catch (err) {
         console.warn(`Unable to fetch data for: ${url}`)
-        if (config.verboseLogging) console.warn(err)
-        await browser.close()
-        return "Unknown Error occurred"
+        if (config.logging.verboseLogging) console.warn(err)
+        await page.close()
+        
+        //ensure only custom error messages gets sent to user
+        if (err.message.startsWith('Manga:')) throw new Error(err.message)
+        throw new Error('Unable to fetch Data! maybe invalid Url?')
     }
 }
 
@@ -155,7 +147,7 @@ async function clickButton(page) {
             await page.waitForSelector('div.dropdown-content', { visible: true, timeout:500 })
             return true
         } catch (error) {
-            if (config.verboseLogging) console.log('Dropdown menu did not appear retrying')
+            if (config.logging.verboseLogging) console.log('Dropdown menu did not appear retrying')
         }
     }
     return false

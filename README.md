@@ -12,6 +12,28 @@ the first 2 are required while the text command and utils are optional. Each fol
 
 # **Change Logs**
 
+## Change Log 1.1.4
+- addUtils getManga no longer sends param for fetching icon
+- puppeteer server now uses bullMQ
+- puppeteer server can now run multiple instances
+- puppeteer server no longer opens and closes browser for each page increasing performance
+- default host for puppeteer server is now 0.0.0.0 
+- new config options including clearing queue at start, 
+- puppeteer config has been restructured
+- cleaned puppeteer server imports
+- added job progress reporting
+- new tab is no longer opened for fetching cover images
+- better error reporting for puppeteer server
+- database metrics are now only sent to clients in development or staging builds
+- resolved manganato getting to an endless loading state when cover image wasn't loadable
+- updated puppeteer server readme to match new config
+- puppeteer server update collector has been rebuilt resolving potential issues(not saving updates, getting data from multiple updates combined if it took longer than updateInterval)
+- puppeteer now returns a fetchId that is used to poll fetch status of manga info
+- slash Command bot has been fixed and now uses userInfo rather than userData
+
+## Change Log 1.1.3
+- fixed type errors in settings
+
 ## Change Log 1.1.2
 - Side bar can now be collapsed 
 - Loading screen now has centered spinning wheal with loading text underneath

@@ -1,13 +1,29 @@
 {
-    "updateDelay": 7200000,
-    "updateAtStart": true, 
-    "allowManganatoScans": true,
-    "allowMangaDex": true,
-    "allowReaperScans": true,
-    "allowReaperScansFake": true,
-    "allowAsura": true,
-    "serverUrl": "enter_url_here",
-    "redisIp": "127.0.0.1",
-    "serverPassWord": "secret_Password_Change_Me",
-    "verboseLogging": false
+    "sites": {
+        "allowManganatoScans": true,
+        "allowMangaDex": true,
+        "allowReaperScans": true,
+        "allowReaperScansFake": true,
+        "allowAsura": true
+    },
+    "queue": {
+        "redisIp": "127.0.0.1",
+        "instances": 3,
+        "clearQueuesAtStart": false,
+        "instantClearJob": true,
+        "removeCompleted": 1000,
+        "removeFailed": 5000
+    },
+    "logging": {
+        "autoUpdateInfo": true,
+        "verboseLogging": false
+    },
+    "serverCom": {
+        "serverUrl": "enter_url_here",
+        "serverPassWord": "secret_Password_Change_Me"
+    },
+    "updateSettings": {
+        "updateDelay": 7200000,
+        "updateAtStart": true
+    }
 }

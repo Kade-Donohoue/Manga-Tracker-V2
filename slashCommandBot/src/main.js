@@ -77,10 +77,10 @@ async function mangaListUpdate(interaction, client) {
                 "userCat": "%"
             }),
         })
-        if (resp.status!=200) return console.log('Issue fetching Manga')
+        if (!resp.ok) return console.log('Issue fetching Manga')
         const data = await resp.json()
         
-        const names = data.userData.map(data => data = {"mangaName": data.mangaName.substring(0, 100), "mangaId": data.mangaId})
+        const names = data.userInfo.map(data => data = {"mangaName": data.mangaName.substring(0, 100), "mangaId": data.mangaId})
         
         const fuse = new Fuse(names, fuseOptions) //add name, idd dictionary to fuse
         fuseRes = fuse.search(search).slice(0,25) //fuzzy search best 25 results from user input

@@ -20,6 +20,7 @@ export async function updateCurrentIndex(access_token:string, authId:string, new
     }
 }
 
+//Broken
 export async function updateManga(access_token:string, authId:string, url:string, env:Env) { // should base off id instead of name needs completly changed
     try {
         const validationRes = await verifyUserAuth(access_token, authId, env)

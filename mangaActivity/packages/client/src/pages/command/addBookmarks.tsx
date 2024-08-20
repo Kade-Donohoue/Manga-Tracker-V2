@@ -116,7 +116,7 @@ export default function addBookmarks() {
       }
 
 
-      var errorLog = []
+      var errorLog:string[] = []
       let addedCount = 0
       for (var i = 0; i < currentUrls.length; i++) {
         const reply = await fetch('/api/data/add/addManga', {

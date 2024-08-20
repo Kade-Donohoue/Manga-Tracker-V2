@@ -1,3 +1,4 @@
+import { Message } from '@discord/embedded-app-sdk/output/schema/common'
 import {Env, userDataRow, mangaDataRowReturn, user, mangaReturn} from '../types'
 import {verifyUserAuth} from '../utils'
 import { v4 as uuidv4 } from 'uuid'
@@ -10,12 +11,12 @@ export async function saveManga(access_token:string, authId:string, url:string, 
         if (validationRes instanceof Response) return validationRes
         authId = validationRes
 
-        const mangaReq:any = await fetch(`${env.PUPPETEER_SERVER}/getManga?url=${url}&icon=true&pass=${env.SERVER_PASSWORD}`, {//authToken=${authToken}&userCat=${userCat}&
+        const mangaReq:any = await fetch(`${env.PUPPETEER_SERVER}/getManga?url=${url}&pass=${env.SERVER_PASSWORD}`, {
             method: 'GET'
         })
         // console.log(mangaReq)
-        
-        if (mangaReq.status!=200) { 
+
+        if (!mangaReq.ok) {
             const errorResp = await mangaReq.json()
             return new Response(JSON.stringify({
                 message: errorResp.message,
@@ -23,7 +24,33 @@ export async function saveManga(access_token:string, authId:string, url:string, 
             }), {status:mangaReq.status})
         }
 
-        const mangaInfo:mangaReturn = await mangaReq.json()
+        const {fetchId} = await mangaReq.json()
+
+        let mangaInfo:mangaReturn|null = null 
+        let waiting = true
+        while (waiting) {
+            await new Promise((resolve) => setTimeout(resolve, 5000))
+
+            let currentStatusRes = await fetch(`${env.PUPPETEER_SERVER}/checkStatus/get?fetchId=${fetchId}&pass=${env.SERVER_PASSWORD}`)
+
+            if (currentStatusRes.status==200) {
+                waiting = false
+
+                mangaInfo = await currentStatusRes.json()
+            } else if (currentStatusRes.status==500) { //forward error to user
+                const errorResp:{message:string} = await currentStatusRes.json()
+                return new Response(JSON.stringify({
+                    message: errorResp.message,
+                    url: url
+                }), {status:currentStatusRes.status})
+            } else if (currentStatusRes.status==404) { //send internal server error if fetchId isnt found
+                return new Response(JSON.stringify({Message: 'Internal Server Error!'}), {status:500})
+            }
+        }
+
+        if (!mangaInfo) return new Response(JSON.stringify({Message: 'Internal Server Error!'}), {status:500})
+
+        // const mangaInfo:mangaReturn = await mangaReq.json()
         const mangaRowTest:mangaDataRowReturn|null|undefined = await env.DB.prepare(
             "SELECT * FROM mangaData WHERE mangaName = ?"
         ) 
@@ -80,7 +107,9 @@ export async function saveManga(access_token:string, authId:string, url:string, 
             userStmt
         ])
 
-        return new Response(JSON.stringify({message: mangaId, metric: metric, img: imgMetric}))
+        //If environment isn't prod send collected metrics for debugging
+        if (env.ENVIRONMENT != 'production') return new Response(JSON.stringify({message: mangaId, metric: metric, img: imgMetric}))
+        return new Response(JSON.stringify({message: mangaId}))
     } catch (error) {
         console.error("Error:", error);
         return new Response(JSON.stringify({message: 'an unknown error occured' + error}), {status:500});

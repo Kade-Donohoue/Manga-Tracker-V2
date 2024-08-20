@@ -97,7 +97,7 @@ module.exports = class mangaFeedSubCommand extends BaseSubcommandExecutor {
         //     respData.mangaData[i].chapterTextList = respData.mangaData[i].chapterTextList.split(',')
         // }
 
-        manageCardHandler(interaction, respData.mangaData, respData.userData)
+        manageCardHandler(interaction, respData.mangaData, respData.userInfo)
     }
 }
 

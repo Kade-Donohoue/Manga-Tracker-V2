@@ -1,15 +1,8 @@
-import puppeteer from "puppeteer-extra"
 import {match} from '../util'
 import config from '../config.json'
-// const config = require('../config.json')
-import stealthPlugin from "puppeteer-extra-plugin-stealth"
-puppeteer.use(stealthPlugin())
-import AdblockerPlugin from 'puppeteer-extra-plugin-adblocker'
 import sharp from 'sharp'
-const adblocker = AdblockerPlugin({
-  blockTrackers: true // default: false
-})
-puppeteer.use(adblocker)
+import { getBrowser } from "../jobQueue"
+import { Job } from 'bullmq'
 
 /**
  * Gets the chapter list from ChapManganato
@@ -22,21 +15,23 @@ puppeteer.use(adblocker)
  *  "iconBuffer": base64 icon for manga
  * }
  */
-export async function getManga(url:string, icon:boolean = true, ignoreIndex = false) {
-    // if (!config.allowManganatoScans) return -2
-    if (config.verboseLogging) console.log('ReaperScans')
+export async function getManga(url:string, icon:boolean = true, ignoreIndex = false, job:Job) {
+    if (config.logging.verboseLogging) console.log('ReaperScans')
     
-    const browser = await puppeteer.launch({headless: true, devtools: false, ignoreHTTPSErrors: true, //"new"
-            args: ['--enable-features=NetworkService', '--no-sandbox', '--disable-setuid-sandbox','--mute-audio']})
+    const browser = await getBrowser()
+    const page = await browser.newPage()
+
     try {
-        const page = await browser.newPage()
         page.setDefaultNavigationTimeout(25*1000) // timeout nav after 25 sec
         page.setRequestInterception(true)
 
+        let allowAllRequests:boolean = false
         const allowRequests = ['reaperscans.com']
         const bypassAllowReqs = ['jquery.min.js', 'function.js', 'webpack', 'rocket']
         const blockRequests = ['.css', 'facebook', 'fbcdn.net', 'bidgear', '.png', '.svg', 'disqus', '.js', '.ico']
         page.on('request', (request) => {
+            if (allowAllRequests) return request.continue()
+
             const u = request.url()
             if (!match(u, allowRequests)) {
                 request.abort()
@@ -61,7 +56,7 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         })
         
         await page.goto(url, {waitUntil: 'load', timeout: 10*1000})
-        page.setViewport({width: 960, height: 1040})
+        await job.updateProgress(20)
 
         // await new Promise((resolve) => {setTimeout(resolve, 5*60*1000)})
 
@@ -69,7 +64,7 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         
         let chapResponse = await fetch(`https://api.reaperscans.com/chapter/all/${seriesSlug}`)
 
-        if (!chapResponse.ok) return 'Unable to get Chapter List'
+        if (!chapResponse.ok) throw new Error('Manga: Unable to get Chapter List. Contact an admin or try again later!')
 
         let chapterLinks:string[] = []
         let chapterText:string[] = []
@@ -84,59 +79,56 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         chapterText.reverse()
 
 
-        if (chapterLinks.length == 0 || chapterLinks.length != chapterText.length) return 'Issue fetching Chapters'
+        if (chapterLinks.length == 0 || chapterLinks.length != chapterText.length) throw new Error('Manga: Issue fetching Chapters')
 
         const title = await page.evaluate(() => document.querySelector("h2.font-semibold")?.innerHTML, {timeout: 500})
 
-        if (config.verboseLogging) {
+        if (config.logging.verboseLogging) {
             console.log(chapterLinks)
             console.log(chapterText)
             console.log(title)
         }
+
+        await job.updateProgress(40)
         
         var resizedImage:Buffer|null = null
         if (icon) {
             // await new Promise((resolve) => {setTimeout(resolve, 5*60*1000)}) // 10 min delay for testing
 
             const photoSelect = await page.waitForSelector('img.rounded', {timeout:1000})
-            const iconPage = await browser.newPage()
-            
-            const blockRequestsImg = ['.css', 'facebook', 'fbcdn.net', 'bidgear', '.svg', 'disqus', '.js']
-            iconPage.on('request', (request) => {
-                const u = request.url()
-    
-                if (match(u, blockRequestsImg)) {
-                    request.abort()
-                    return
-                }
-                request.continue()
-            })
-
             const photo = (await photoSelect?.evaluate(el => el.getAttribute('src'))).replace('w=48', 'w=384')
-            if (config.verboseLogging) console.log(`https://reaperscans.com${photo}`)
+            if (config.logging.verboseLogging) console.log(`https://reaperscans.com${photo}`)
             
-            const icon = await iconPage.goto(`https://reaperscans.com${photo!}`)
+            allowAllRequests = true
+            const icon = await page.goto(`https://reaperscans.com${photo!}`)
+            await job.updateProgress(75)
+
             let iconBuffer = await icon?.buffer()
             resizedImage = await sharp(iconBuffer)
                 .resize(480, 720)
                 .toBuffer()
         }
-        await browser.close()
+        await job.updateProgress(90)
+        await page.close()
         
         const currIndex = chapterLinks.indexOf(url)
 
         if (currIndex == -1 && !ignoreIndex) {
-            return "unable to find current chapter. Please retry or contact Admin!"
+            throw new Error("Manga: unable to find current chapter. Please retry or contact Admin!")
         }
 
+        await job.updateProgress(100)
         return {"mangaName": title, "chapterUrlList": chapterLinks.join(','), "chapterTextList": chapterText.join(','), "currentIndex": currIndex, "iconBuffer": resizedImage}
     } catch (err) {
         console.warn(`Unable to fetch data for: ${url}`)
-        if (config.verboseLogging) console.warn(err)
-        await browser.close()
+        if (config.logging.verboseLogging) console.warn(err)
+        await page.close()
         if (err.name === 'TimeoutError') {
-            return "Exceeded Timeout please try again later!"
+            throw new Error("Exceeded Timeout please try again later!")
         }
-        return "Unknown Error occurred"
+
+        //ensure only custom error messages gets sent to user
+        if (err.message.startsWith('Manga:')) throw new Error(err.message)
+        throw new Error('Unable to fetch Data! maybe invalid Url?')
     }
 }

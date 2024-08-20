@@ -88,7 +88,7 @@ export default function addManga() {
       const urlList:string[] = url.split(',')
 
 
-      var errorLog = []
+      var errorLog:string[] = []
       for (var i = 0; i < urlList.length; i++) {
         const reply = await fetch('/api/data/add/addManga', {
           method: 'POST',
