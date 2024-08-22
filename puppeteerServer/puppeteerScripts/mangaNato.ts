@@ -17,13 +17,12 @@ import { Job } from 'bullmq'
  */
 export async function getManga(url:string, icon:boolean = true, ignoreIndex = false, job:Job) {
     
+    let lastTimestamp:number = Date.now()
     const browser = await getBrowser()
     const page = await browser.newPage()
-
-    // await new Promise((resolve) => {setTimeout(resolve, 10*1000)}) // 10 min delay for testing 
     
     try {
-        page.setDefaultNavigationTimeout(25*1000) // timeout nav after 25 sec
+        page.setDefaultNavigationTimeout(1000) // timeout nav after 1 sec
         page.setRequestInterception(true)
 
         let allowAllRequests:boolean = false
@@ -61,41 +60,40 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
             request.continue()
         })
 
-        await page.goto(url, {waitUntil: 'load', timeout: 25*1000})
+        job.log(logWithTimestamp('Loading Chapter Page'))
+        await page.goto(url, {waitUntil: 'load', timeout: 10*1000})
         await job.updateProgress(20)
+        job.log(logWithTimestamp('Chapter Page Loaded. Fetching Data'))
 
         const chapterDropdown = await page.waitForSelector('body > div.body-site > div:nth-child(1) > div.panel-navigation > select', {timeout: 500})
 
-        const chapters = await chapterDropdown?.evaluate(() => Array.from(
+        const chapterUrlList = await chapterDropdown?.evaluate(() => Array.from(
             document.querySelectorAll('body > div.body-site > div:nth-child(1) > div.panel-navigation > select > option'),
-            a => a.getAttribute('data-c')
-        ))
+            a => `${(window as any).$navi_change_chapter_address}${a.getAttribute('data-c')}`
+        ).reverse())
 
-        let urlArgs = url.split("/")
-        urlArgs.pop()
-        let mangaURL = urlArgs.join("/")
+        const chapterTextList = await chapterDropdown?.evaluate(() => Array.from(
+            document.querySelectorAll('body > div.body-site > div:nth-child(1) > div.panel-navigation > select > option'),
+            a => `Chapter ${a.getAttribute('data-c')}`
+        ).reverse())
 
-        let chapterUrlList:string[] = []
-        let chapterTextList:string[] = []
-        for (var i = chapters!.length-1; i >= 0; i--) {
-        // for (const chap of chapters) {
-            chapterUrlList.push(`${mangaURL}/chapter-${chapters![i]}`)
-            chapterTextList.push(`Chapter ${chapters![i]}`)
-        }
-
+        
         if (chapterUrlList.length <= 0 || chapterUrlList.length != chapterTextList.length) throw new Error('Manga: Issue fetching chapters! Please Contact and Admin!')
 
         const titleSelect = await page.waitForSelector('body > div.body-site > div:nth-child(1) > div.panel-breadcrumb > a:nth-child(3)')
         const mangaName = await titleSelect?.evaluate(el => el.innerText)
 
+        job.log(logWithTimestamp('Chapter Data Fetched'))
         await job.updateProgress(40)
 
         var resizedImage:Buffer|null = null
         var iconBuffer:Buffer|null|undefined = null
         if (icon) {
+            job.log(logWithTimestamp('Loading Overview Page'))
             await page.setJavaScriptEnabled(false)
-            await page.goto(mangaURL)
+            await page.goto(await titleSelect?.evaluate(el => el.getAttribute('href')), {timeout: 10000})
 
+            job.log(logWithTimestamp('Overview page loaded'))
             await job.updateProgress(60)
 
             await page.evaluate(() => {
@@ -103,14 +101,15 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
                 images.forEach(img => img.onerror = null)
             })
 
-            await new Promise((resolve) => {setTimeout(resolve, 15*1000)}) // 10 min delay for testing 
-
             const photoPage = await page.waitForSelector('body > div.body-site > div.container.container-main > div.container-main-left > div.panel-story-info > div.story-info-left > span.info-image > img')
             const photo = await photoPage?.evaluate(el => el.src)
 
+            job.log(logWithTimestamp('Loading Cover Image'))
             allowAllRequests = true
-            const icon = await page.goto(photo!)
+            const icon = await page.goto(photo!, {timeout: 10000})
+            job.log(logWithTimestamp('Cover Image Loaded saving now!'))
             await job.updateProgress(80)
+
             iconBuffer = await icon?.buffer()
             resizedImage = await sharp(iconBuffer!)
                 .resize(480, 720)
@@ -118,6 +117,7 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         }
         await job.updateProgress(90)
         await page.close()
+        job.log(logWithTimestamp('All Data Fetched processing now'))
         
         const currIndex = chapterUrlList.indexOf(url)
 
@@ -125,9 +125,11 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
             throw new Error("Manga: Unable to find current chapter. Please retry or contact Admin!")
         }
 
+        job.log(logWithTimestamp('Done'))
         await job.updateProgress(100)
         return {"mangaName": mangaName, "chapterUrlList": chapterUrlList.join(','), "chapterTextList": chapterTextList.join(','), "currentIndex": currIndex, "iconBuffer": resizedImage}
     } catch (err) {
+        job.log(logWithTimestamp(`Error: ${err}`))
         console.warn('Unable to fetch data for: ' + url)
         if (config.logging.verboseLogging) console.warn(err)
         await page.close()
@@ -135,5 +137,31 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         //ensure only custom error messages gets sent to user
         if (err.message.startsWith('Manga:')) throw new Error(err.message)
         throw new Error('Unable to fetch Data! maybe invalid Url?')
+    }
+
+    function logWithTimestamp(message: string): string {
+        const currentTimestamp = Date.now();
+        let timeDiffMessage = "";
+    
+        if (lastTimestamp !== null) {
+            const diff = currentTimestamp - lastTimestamp;
+            timeDiffMessage = formatTimeDifference(diff);
+        }
+    
+        lastTimestamp = currentTimestamp;
+        const timestamp = new Date(currentTimestamp).toISOString();
+        return `[${timestamp}] ${message}${timeDiffMessage}`;
+    }
+    
+    function formatTimeDifference(diff: number): string {
+        if (diff >= 60000) {
+            const minutes = (diff / 60000).toFixed(2);
+            return ` (Took ${minutes} min)`;
+        } else if (diff >= 1000) {
+            const seconds = (diff / 1000).toFixed(2);
+            return ` (Took ${seconds} sec)`;
+        } else {
+            return ` (Took ${diff} ms)`;
+        }
     }
 }

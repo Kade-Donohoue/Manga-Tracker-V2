@@ -12,6 +12,14 @@ the first 2 are required while the text command and utils are optional. Each fol
 
 # **Change Logs**
 
+## Change Log 1.1.5
+- Asura Scans script has been upgraded to improve performance
+- all scraping default load time is limited to 1 sec and page loading time is 10 sec
+- job.log no is used to have logs showing where a job is at with timestamps
+- added a util called queue viewer that gives insight into the job queue
+- mangaNato now pulls manga url from website instead of splicing provided url
+- site loading timeout is now 10 seconds while selection timeouts is now 1 second
+
 ## Change Log 1.1.4
 - addUtils getManga no longer sends param for fetching icon
 - puppeteer server now uses bullMQ

@@ -20,11 +20,12 @@ import { Job } from "bullmq"
 
 export async function getManga(url:string, icon:boolean = true, ignoreIndex = false, job:Job) {
     
+    let lastTimestamp:number = Date.now()
     const browser = await getBrowser()
     const page = await browser.newPage()
     
     try {
-        page.setDefaultNavigationTimeout(25*1000) // timeout nav after 25 sec
+        page.setDefaultNavigationTimeout(1000) // timeout nav after 1 sec
         page.setRequestInterception(true)
 
         let allowAllRequests:boolean = false
@@ -51,7 +52,9 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
             request.continue()
         })
 
-        await page.goto(url, {waitUntil: 'networkidle0', timeout: 25*1000})
+        job.log(logWithTimestamp('Loading Chapter Page'))
+        await page.goto(url, {waitUntil: 'networkidle0', timeout: 10*1000})
+        job.log(logWithTimestamp('Chapter Page Loaded. Starting Data Collection'))
         await job.updateProgress(20)
 
         const chapterDropdown = await page.waitForSelector('#chapter', {timeout: 500})
@@ -83,26 +86,32 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
 
         if (chapterUrlList.length <= 0 || chapterTextList.length != chapterUrlList.length) throw new Error('Manga: Issue fetching Chapters Contact an Admin!')
 
-        const titleSelect = await page.waitForSelector('#content > div > div > div > div.ts-breadcrumb.bixbox > div > span:nth-child(2) > a > span', {timeout: 5000})
+        const titleSelect = await page.waitForSelector('#content > div > div > div > div.ts-breadcrumb.bixbox > div > span:nth-child(2) > a > span', {timeout: 1000})
         let mangaName = await titleSelect.evaluate(el => el.innerText)
 
+        job.log(logWithTimestamp('Chapter Data Fetched'))
         await job.updateProgress(40)
 
         var resizedImage = null
         var iconData = null
         if (icon) {
-            const mangaURLButton = await page.waitForSelector('#content > div > div > div > div.ts-breadcrumb.bixbox > div > span:nth-child(2) > a', {timeout: 5000})
+            job.log(logWithTimestamp('Starting Icon Save'))
+            const mangaURLButton = await page.waitForSelector('#content > div > div > div > div.ts-breadcrumb.bixbox > div > span:nth-child(2) > a', {timeout: 1000})
             const mangaURL = await mangaURLButton.evaluate(el => el.getAttribute('href'))
 
             if (config.logging.verboseLogging) console.log("starting Icon Save")
-            await page.goto(mangaURL)
+            job.log(logWithTimestamp('Loading Overview page'))
+            await page.goto(mangaURL, {timeout: 10000})
             await job.updateProgress(60)
+            job.log(logWithTimestamp('Overview Page Loaded'))
 
-            const photo = await page.waitForSelector('div.thumb > img.wp-post-image', {timeout: 5000})
+            const photo = await page.waitForSelector('div.thumb > img.wp-post-image', {timeout: 1000})
             const photoURL = await photo.evaluate(el => el.src)
 
             allowAllRequests = true
-            const icon = await page.goto(photoURL)
+            job.log(logWithTimestamp('Loading Cover Image'))
+            const icon = await page.goto(photoURL, {timeout: 10000})
+            job.log(logWithTimestamp('Cover Image Loaded'))
             await job.updateProgress(80)
             const iconBuffer = await icon.buffer()
             resizedImage = await sharp(iconBuffer)
@@ -111,6 +120,7 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         }
         await job.updateProgress(90)
         await page.close()
+        job.log(logWithTimestamp('All Data Fetched'))
 
         const currIndex = chapterUrlList.indexOf(url)
 
@@ -118,10 +128,12 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
             throw new Error("Manga: unable to find current chapter. Please retry or contact Admin!")
         }
 
+        job.log(logWithTimestamp('Done'))
         await job.updateProgress(100)
         return {"mangaName": mangaName, "chapterUrlList": chapterUrlList.join(','), "chapterTextList": chapterTextList.join(','), "currentIndex": currIndex, "iconBuffer": resizedImage}
         
     } catch (err) {
+        job.log(logWithTimestamp(`Error: ${err}`))
         console.warn("Unable to fetch: " + url)
         if (config.logging.verboseLogging) console.warn(err)
         await page.close()
@@ -129,5 +141,31 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         //ensure only custom error messages gets sent to user
         if (err.message.startsWith('Manga:')) throw new Error(err.message)
         throw new Error('Unable to fetch Data! maybe invalid Url?')
+    }
+
+    function logWithTimestamp(message: string): string {
+        const currentTimestamp = Date.now();
+        let timeDiffMessage = "";
+    
+        if (lastTimestamp !== null) {
+            const diff = currentTimestamp - lastTimestamp;
+            timeDiffMessage = formatTimeDifference(diff);
+        }
+    
+        lastTimestamp = currentTimestamp;
+        const timestamp = new Date(currentTimestamp).toISOString();
+        return `[${timestamp}] ${message}${timeDiffMessage}`;
+    }
+    
+    function formatTimeDifference(diff: number): string {
+        if (diff >= 60000) {
+            const minutes = (diff / 60000).toFixed(2);
+            return ` (Took ${minutes} min)`;
+        } else if (diff >= 1000) {
+            const seconds = (diff / 1000).toFixed(2);
+            return ` (Took ${seconds} sec)`;
+        } else {
+            return ` (Took ${diff} ms)`;
+        }
     }
 }

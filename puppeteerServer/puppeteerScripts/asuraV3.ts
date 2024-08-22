@@ -18,11 +18,12 @@ import { Job } from 'bullmq'
 export async function getManga(url:string, icon:boolean = true, ignoreIndex = false, job:Job) {
     if (config.logging.verboseLogging) console.log('Asura')
     
+    let lastTimestamp:number = Date.now()
     const browser = await getBrowser()
     const page = await browser.newPage()
 
     try {
-        page.setDefaultNavigationTimeout(25*1000) // timeout nav after 25 sec
+        page.setDefaultNavigationTimeout(1000) // timeout nav after 1 sec
         page.setRequestInterception(true)
 
         let allowAllRequests:boolean = false
@@ -60,27 +61,65 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
             request.continue()
         })
         
-        await page.goto(url, {waitUntil: 'networkidle0', timeout: 25*1000})
+        job.log(logWithTimestamp('Starting Loading Chapter'))
+        await page.goto(url, {waitUntil: 'networkidle0', timeout: 10*1000})
         await job.updateProgress(20)
+        job.log(logWithTimestamp('Chapter Loaded, starting retrial of overview URL and chapterData'))
 
-        const dropdown = await page.waitForSelector('button.dropdown-btn', {timeout: 500})
-        // await dropdown?.scrollIntoView()
-
-        const menuAvailable = await clickButton(page)
-
-        if (!menuAvailable) throw new Error('Manga: Unable to get chapter list!')
-
-        //prevents dropdown from being closes be click
-        await page.evaluate(() => {
-            const dropdownContent = document.querySelector('div.dropdown-content');
-            dropdownContent?.addEventListener('click', (event) => {
-              event.stopPropagation()
+        const stringData = await page.evaluate(() => {
+            let foundData = ''
+            let foundStart = false;
+            (window as any).__next_f.some((bigArray:any[]) => {
+                if (bigArray[0] != 1) return false
+                let str:string = bigArray[1] as any
+                if (!foundStart && str.indexOf('\n2f:') >= 0) {// '\n2f:' is the start of the chapter list in next_f  
+                    foundStart = true
+                    if (str.indexOf('\n2e') == -1) {
+                        foundData += str.slice(str.indexOf('\n2f:'))
+                    } else {
+                        foundData += str.slice(str.indexOf('\n2f:'), str.indexOf('\n2e'))
+                        return true
+                    }
+                } else if (foundStart) { // '\n2e:' is the end of the chapter list in next_f  
+                    if (str.indexOf('\n2e:') != -1) {
+                        foundData += str.slice(0, str.indexOf('\n2e'))
+                        return true
+                    } else {
+                        foundData += str
+                    } 
+                }
+                return false
             })
+            return foundData
         })
+        await job.updateProgress(30)
 
-        //extracts chapter links as well as the text for each chapter
-        const chapterLinks:string[] = await page.evaluate(() =>  Array.from(document.querySelectorAll('div.dropdown-content > a'), element => `${(window as any).__ENV.NEXT_PUBLIC_FRONTEND_URL}${element.getAttribute('href')}`).reverse())
-        const chapterText:string[] = await page.evaluate(() =>  Array.from(document.querySelectorAll('div.dropdown-content > a > h2'), element => element.innerHTML).reverse())
+        const overViewURL = await page.evaluate(() => {
+            let foundData = '';
+            (window as any).__next_f.some((bigArray:any[]) => {
+                if (bigArray[0] != 1) return false
+                let str:string = bigArray[1] as any
+                if (str.indexOf('"slug":"') >= 0) {
+                    foundData = `${(window as any).__ENV.NEXT_PUBLIC_FRONTEND_URL}/series/${str.slice(str.indexOf('"slug":"')+8, str.indexOf('","name":'))}/`
+                } 
+                return false
+            })
+            return foundData
+        })
+        await job.updateProgress(35)
+        
+        job.log(logWithTimestamp('Data Retried! processing Data'))
+        let dataRows = stringData.trim().split('\n')
+
+        let chapterLinks = []
+        let chapterText = []
+        dataRows.reverse().forEach((row) => {
+            if (!row) return
+            const parsedValues = JSON.parse(row.slice(row.indexOf(':')+1))
+            chapterText.push(parsedValues.label)
+            chapterLinks.push(overViewURL+'chapter/'+parsedValues.value)
+        })
+        job.log(logWithTimestamp('Chapter Data Processed'))
 
         if (chapterLinks.length == 0 || chapterLinks.length != chapterText.length) throw new Error('Manga: Issue fetching Chapters')
 
@@ -91,30 +130,32 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
             console.log(chapterText)
             console.log(title)
         }
+        job.log(logWithTimestamp('Info Gathered'))
 
         await job.updateProgress(40)
         
         var resizedImage:Buffer|null = null
         if (icon) {
-            const overViewURL = await page.evaluate(() => `${(window as any).__ENV.NEXT_PUBLIC_FRONTEND_URL}${document.querySelector("a.items-center:nth-child(2)")?.getAttribute('href')}`, {timeout: 500})
+            job.log(logWithTimestamp('Starting Icon Fetch'))
             if (config.logging.verboseLogging) console.log(overViewURL)
-            await page.goto(overViewURL)
+            await page.goto(overViewURL, {timeout: 10000})
+            job.log(logWithTimestamp('Overview Page loaded'))
                                                   
             const photoSelect = await page.waitForSelector('img.rounded', {timeout:1000}) // issue
             const photo = await photoSelect?.evaluate(el => el.getAttribute('src'))
             
             // console.log(photo)
-            
+            job.log(logWithTimestamp('Going to Photo'))
             allowAllRequests = true
-            const icon = await page.goto(photo!)
+            const icon = await page.goto(photo!, {timeout: 10000})
             await job.updateProgress(60)
-            // await new Promise((resolve) => {setTimeout(resolve, 10*60*1000)}) // 10 min delay for testing
+
             let iconBuffer = await icon?.buffer()
             resizedImage = await sharp(iconBuffer)
                 .resize(480, 720)
                 .toBuffer()
         }
-
+        job.log(logWithTimestamp('Data fetched'))
         await job.updateProgress(80)
         await page.close()
         
@@ -129,6 +170,7 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         await job.updateProgress(100)
         return {"mangaName": title, "chapterUrlList": chapterLinks.join(','), "chapterTextList": chapterText.join(','), "currentIndex": currIndex, "iconBuffer": resizedImage}
     } catch (err) {
+        job.log(logWithTimestamp(`Error: ${err}`))
         console.warn(`Unable to fetch data for: ${url}`)
         if (config.logging.verboseLogging) console.warn(err)
         await page.close()
@@ -137,18 +179,30 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         if (err.message.startsWith('Manga:')) throw new Error(err.message)
         throw new Error('Unable to fetch Data! maybe invalid Url?')
     }
-}
 
-async function clickButton(page) {
-    for (let attempt = 0; attempt <= 4; attempt++) {
-        try {
-            await page.click('button.dropdown-btn')
-
-            await page.waitForSelector('div.dropdown-content', { visible: true, timeout:500 })
-            return true
-        } catch (error) {
-            if (config.logging.verboseLogging) console.log('Dropdown menu did not appear retrying')
+    function logWithTimestamp(message: string): string {
+        const currentTimestamp = Date.now()
+        let timeDiffMessage = ""
+    
+        if (lastTimestamp !== null) {
+            const diff = currentTimestamp - lastTimestamp
+            timeDiffMessage = formatTimeDifference(diff)
+        }
+    
+        lastTimestamp = currentTimestamp;
+        const timestamp = new Date(currentTimestamp).toISOString()
+        return `[${timestamp}] ${message}${timeDiffMessage}`
+    }
+    
+    function formatTimeDifference(diff: number): string {
+        if (diff >= 60000) {
+            const minutes = (diff / 60000).toFixed(2)
+            return ` (Took ${minutes} min)`
+        } else if (diff >= 1000) {
+            const seconds = (diff / 1000).toFixed(2)
+            return ` (Took ${seconds} sec)`
+        } else {
+            return ` (Took ${diff} ms)`
         }
     }
-    return false
 }

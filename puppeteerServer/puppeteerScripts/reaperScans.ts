@@ -18,11 +18,12 @@ import { Job } from 'bullmq'
 export async function getManga(url:string, icon:boolean = true, ignoreIndex = false, job:Job) {
     if (config.logging.verboseLogging) console.log('ReaperScans')
     
+    let lastTimestamp:number = Date.now()
     const browser = await getBrowser()
     const page = await browser.newPage()
 
     try {
-        page.setDefaultNavigationTimeout(25*1000) // timeout nav after 25 sec
+        page.setDefaultNavigationTimeout(1000) // timeout nav after 1 sec
         page.setRequestInterception(true)
 
         let allowAllRequests:boolean = false
@@ -55,14 +56,16 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
             request.continue()
         })
         
+        job.log(logWithTimestamp('Loading Chapter Page'))
         await page.goto(url, {waitUntil: 'load', timeout: 10*1000})
+        job.log(logWithTimestamp('Chapter Page Loaded. Starting Data Collection'))
         await job.updateProgress(20)
-
-        // await new Promise((resolve) => {setTimeout(resolve, 5*60*1000)})
 
         let seriesSlug = url.replace('//', '').split('/')[2]
         
+        job.log(logWithTimestamp('Starting Chapter Request'))
         let chapResponse = await fetch(`https://api.reaperscans.com/chapter/all/${seriesSlug}`)
+        job.log(logWithTimestamp('Fetch Complete'))
 
         if (!chapResponse.ok) throw new Error('Manga: Unable to get Chapter List. Contact an admin or try again later!')
 
@@ -89,19 +92,21 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
             console.log(title)
         }
 
+        job.log(logWithTimestamp('Data Collected'))
         await job.updateProgress(40)
         
         var resizedImage:Buffer|null = null
         if (icon) {
-            // await new Promise((resolve) => {setTimeout(resolve, 5*60*1000)}) // 10 min delay for testing
 
             const photoSelect = await page.waitForSelector('img.rounded', {timeout:1000})
             const photo = (await photoSelect?.evaluate(el => el.getAttribute('src'))).replace('w=48', 'w=384')
             if (config.logging.verboseLogging) console.log(`https://reaperscans.com${photo}`)
             
             allowAllRequests = true
-            const icon = await page.goto(`https://reaperscans.com${photo!}`)
+            job.log(logWithTimestamp('Loading Cover Image'))
+            const icon = await page.goto(`https://reaperscans.com${photo!}`, {timeout: 10000})
             await job.updateProgress(75)
+            job.log(logWithTimestamp('Cover Image Loaded'))
 
             let iconBuffer = await icon?.buffer()
             resizedImage = await sharp(iconBuffer)
@@ -110,6 +115,7 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         }
         await job.updateProgress(90)
         await page.close()
+        job.log(logWithTimestamp('All Data Fetched Processing'))
         
         const currIndex = chapterLinks.indexOf(url)
 
@@ -117,9 +123,11 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
             throw new Error("Manga: unable to find current chapter. Please retry or contact Admin!")
         }
 
+        job.log(logWithTimestamp('Done'))
         await job.updateProgress(100)
         return {"mangaName": title, "chapterUrlList": chapterLinks.join(','), "chapterTextList": chapterText.join(','), "currentIndex": currIndex, "iconBuffer": resizedImage}
     } catch (err) {
+        job.log(logWithTimestamp(`Error: ${err}`))
         console.warn(`Unable to fetch data for: ${url}`)
         if (config.logging.verboseLogging) console.warn(err)
         await page.close()
@@ -130,5 +138,31 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         //ensure only custom error messages gets sent to user
         if (err.message.startsWith('Manga:')) throw new Error(err.message)
         throw new Error('Unable to fetch Data! maybe invalid Url?')
+    }
+
+    function logWithTimestamp(message: string): string {
+        const currentTimestamp = Date.now();
+        let timeDiffMessage = "";
+    
+        if (lastTimestamp !== null) {
+            const diff = currentTimestamp - lastTimestamp;
+            timeDiffMessage = formatTimeDifference(diff);
+        }
+    
+        lastTimestamp = currentTimestamp;
+        const timestamp = new Date(currentTimestamp).toISOString();
+        return `[${timestamp}] ${message}${timeDiffMessage}`;
+    }
+    
+    function formatTimeDifference(diff: number): string {
+        if (diff >= 60000) {
+            const minutes = (diff / 60000).toFixed(2);
+            return ` (Took ${minutes} min)`;
+        } else if (diff >= 1000) {
+            const seconds = (diff / 1000).toFixed(2);
+            return ` (Took ${seconds} sec)`;
+        } else {
+            return ` (Took ${diff} ms)`;
+        }
     }
 }

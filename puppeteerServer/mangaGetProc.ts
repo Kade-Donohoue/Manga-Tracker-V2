@@ -3,7 +3,7 @@ import { Job } from 'bullmq'
 import config from './config.json'
 import {getManga as getManganato} from './puppeteerScripts/mangaNato'
 import {getManga as getFakeReaper} from './puppeteerScripts/reaper-scans'
-import {getManga as getAsura} from './puppeteerScripts/asuraV2'
+import {getManga as getAsura} from './puppeteerScripts/asuraV3'
 import {getManga as getMangadex} from './puppeteerScripts/mangadex'
 import {getManga as getReaperScans} from './puppeteerScripts/reaperScans'
 

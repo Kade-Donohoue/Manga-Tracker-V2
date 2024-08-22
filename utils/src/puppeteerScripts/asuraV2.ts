@@ -30,7 +30,7 @@ async function getManga(url:string, icon:boolean = true) {
             args: ['--enable-features=NetworkService', '--no-sandbox', '--disable-setuid-sandbox','--mute-audio']})
     try {
         const page = await browser.newPage()
-        page.setDefaultNavigationTimeout(25*1000) // timeout nav after 25 sec
+        page.setDefaultNavigationTimeout(1000) // timeout nav after 1 sec
         page.setRequestInterception(true)
 
         const allowRequests = ['asura']
@@ -60,7 +60,7 @@ async function getManga(url:string, icon:boolean = true) {
             request.continue()
         })
         
-        await page.goto(url, {waitUntil: 'networkidle0', timeout: 25*1000})
+        await page.goto(url, {waitUntil: 'networkidle0', timeout: 10*1000})
         page.setViewport({width: 960, height: 1040})
 
         const dropdown = await page.waitForSelector('button.dropdown-btn', {timeout: 500})
@@ -96,7 +96,7 @@ async function getManga(url:string, icon:boolean = true) {
         if (icon) {
             const overViewURL = await page.evaluate(() => `${(window as any).__ENV.NEXT_PUBLIC_FRONTEND_URL}${document.querySelector("a.items-center:nth-child(2)")?.getAttribute('href')}`, {timeout: 500})
             if (config.verboseLogging) console.log(overViewURL)
-            await page.goto(overViewURL)
+            await page.goto(overViewURL, {timeout: 10000})
 
             const photoSelect = await page.waitForSelector('::-p-xpath(/html/body/div[5]/div/div/div/div[1]/div/div[1]/div[1]/div[2]/div[1]/div[1]/img)')
             const iconPage = await browser.newPage()
@@ -115,8 +115,8 @@ async function getManga(url:string, icon:boolean = true) {
             const photo = await photoSelect?.evaluate(el => el.getAttribute('src'))
             // console.log(photo)
             
-            const icon = await iconPage.goto(photo!)
-            // await new Promise((resolve) => {setTimeout(resolve, 10*60*1000)}) // 10 min delay for testing
+            const icon = await iconPage.goto(photo!, {timeout: 10000})
+            
             let iconBuffer = await icon?.buffer()
             resizedImage = await sharp(iconBuffer)
                 .resize(480, 720)

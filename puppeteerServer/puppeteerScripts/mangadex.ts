@@ -18,11 +18,12 @@ import { Job } from 'bullmq'
 export async function getManga(url:string, icon:boolean = true, ignoreIndex = false, job:Job) {
     if (config.logging.verboseLogging) console.log('mangaDex')
     
+    let lastTimestamp:number = Date.now()
     const browser = await getBrowser()
     const page = await browser.newPage()
 
     try {
-        page.setDefaultNavigationTimeout(25*1000) // timeout nav after 25 sec
+        page.setDefaultNavigationTimeout(1000) // timeout nav after 1 sec
         page.setRequestInterception(true)
 
         const allowRequests = ['mangadex']
@@ -56,9 +57,10 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
             }
             request.continue()
         })
-        
-        await page.goto(url, {waitUntil: 'networkidle0', timeout: 25*1000})
+        job.log(logWithTimestamp('Loading Chapter Page'))
+        await page.goto(url, {waitUntil: 'networkidle0', timeout: 10*1000})
         await job.updateProgress(20)
+        job.log(logWithTimestamp('Chapter Page Loaded, fetching data'))
 
         //extracts chapter links as well as the text for each chapter
         const chapterLinks:string[] = await page.evaluate(() =>  Array.from(document.querySelectorAll('div.reader--menu > div#chapter-selector > div > div > div > ul > li > ul > li'), element => `${(window as any).__NUXT__.config.public.baseUrl}/chapter/${element.getAttribute('data-value')}`).reverse())
@@ -74,21 +76,26 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
             console.log(title)
         }
 
+        job.log(logWithTimestamp('Data fetched'))
         await job.updateProgress(40)
 
         var resizedImage:Buffer|null = null
         if (icon) {
+            job.log(logWithTimestamp('Starting Icon Fetch'))
             const overViewURL = await page.evaluate(() => `${(window as any).__NUXT__.config.public.baseUrl}${document.querySelector("div.reader--menu > div > div > a.text-primary")?.getAttribute('href')}`, {timeout: 500})
             if (config.logging.verboseLogging) console.log(overViewURL)
-            await page.goto(overViewURL)
+            job.log(logWithTimestamp('Loading overview page'))
+            await page.goto(overViewURL, {timeout: 10000})
             await job.updateProgress(60)
+            job.log(logWithTimestamp('Overview page loaded'))
             
-            const photoSelect = await page.waitForSelector('img.rounded', {timeout:1000}) // issue
+            const photoSelect = await page.waitForSelector('img.rounded', {timeout:1000})
 
             const photo = (await photoSelect?.evaluate(el => el.getAttribute('src'))).replace('https://', 'https://uploads.').replace('.512.jpg', '')
             if (config.logging.verboseLogging) console.log(photo)
-
-            const icon = await page.goto(photo)
+            job.log(logWithTimestamp('Loading Icon'))
+            const icon = await page.goto(photo, {timeout: 10000})
+            job.log(logWithTimestamp('Icon Loaded'))
             await job.updateProgress(80)
             console.log(icon)
             let iconBuffer = await icon?.buffer()
@@ -98,7 +105,7 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
                 .toBuffer()
         }
         await page.close()
-
+        job.log(logWithTimestamp('All Data fetch. processing data.'))
         await job.updateProgress(90)
         
         const currIndex = chapterLinks.indexOf(url)
@@ -107,9 +114,11 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
             throw new Error("Manga: unable to find current chapter. Please retry or contact Admin!")
         }
 
+        job.log(logWithTimestamp('done'))
         await job.updateProgress(100)
         return {"mangaName": title, "chapterUrlList": chapterLinks.join(','), "chapterTextList": chapterText.join(','), "currentIndex": currIndex, "iconBuffer": resizedImage}
     } catch (err) {
+        job.log(logWithTimestamp(`Error: ${err}`))
         console.warn(`Unable to fetch data for: ${url}`)
         if (config.logging.verboseLogging) console.warn(err)
         await page.close()
@@ -117,5 +126,31 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         //ensure only custom error messages gets sent to user
         if (err.message.startsWith('Manga:')) throw new Error(err.message)
         throw new Error('Unable to fetch Data! maybe invalid Url?')
+    }
+
+    function logWithTimestamp(message: string): string {
+        const currentTimestamp = Date.now();
+        let timeDiffMessage = "";
+    
+        if (lastTimestamp !== null) {
+            const diff = currentTimestamp - lastTimestamp;
+            timeDiffMessage = formatTimeDifference(diff);
+        }
+    
+        lastTimestamp = currentTimestamp;
+        const timestamp = new Date(currentTimestamp).toISOString();
+        return `[${timestamp}] ${message}${timeDiffMessage}`;
+    }
+    
+    function formatTimeDifference(diff: number): string {
+        if (diff >= 60000) {
+            const minutes = (diff / 60000).toFixed(2);
+            return ` (Took ${minutes} min)`;
+        } else if (diff >= 1000) {
+            const seconds = (diff / 1000).toFixed(2);
+            return ` (Took ${seconds} sec)`;
+        } else {
+            return ` (Took ${diff} ms)`;
+        }
     }
 }
