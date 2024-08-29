@@ -33,7 +33,6 @@ export async function getBrowser() {
     return browser
 }
 
-getBrowser()//called to initiate browser to help prevent multiple being opened
 
 //cleanup on program termination
 process.on('SIGTERM', shutdown)

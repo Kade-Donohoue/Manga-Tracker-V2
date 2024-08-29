@@ -21,3 +21,12 @@ export interface updateCollector {
         }[]
     }
 }
+
+export type mangaUrlCheck = {
+    success: true, 
+    value:string
+} | {
+    success: false, 
+    value:string, 
+    statusCode: number
+}

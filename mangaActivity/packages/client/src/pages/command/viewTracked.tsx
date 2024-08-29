@@ -1,6 +1,6 @@
 import discordSdk from '../../discordSdk'
 import {authStore} from '../../stores/authStore'
-import {mangaInfo, dropdownOption, } from '../../types'
+import {dropdownOption, mangaDetails, } from '../../types'
 import {customStyles} from '../../styled/index'
 import {LoadingScreen} from '../../components/LoadingScreen'
 import React, { useEffect } from "react"
@@ -28,11 +28,22 @@ import { catOptions } from '../../vars'
 import './viewTracker.css'
 import {modalStyle} from '../../AppStyles'
 
+const sortOptions:{label:string,value:keyof mangaDetails}[] = [
+    {label: "Title", value: "mangaName"},
+    {label: "Updated", value: "updateTime"},
+    {label: "Interacted", value: "interactTime"},
+    {label: "Read Chapters", value: "currentIndex"}
+]
+
 export default function tracked() {
-    const [mangaInfo, setMangaInfo] = React.useState<mangaInfo|null>(null);
+    const [mangaInfo, setMangaInfo] = React.useState<mangaDetails[]>([]);
     const [modalIndex, SetModalIndex] = React.useState<number>(-1)
     const [newCat, setNewCat] = React.useState<dropdownOption | null>(catOptions[0])
     const [newChapter, setChapter] = React.useState<dropdownOption | null>(null)
+
+    const [filterOption, setFilterOption] = React.useState<dropdownOption | null>(catOptions[7])
+    const [methodOption, setMethodOption] = React.useState<{label:string,value:keyof mangaDetails} | null>(sortOptions[2])
+    const [orderOption, setOrderOption] = React.useState<{value:string, label:string}>({value:"1", label:"Ascending"})
 
     const auth = authStore.getState();
     // console.log(auth)
@@ -43,7 +54,7 @@ export default function tracked() {
 
     async function getUserManga() {
         
-        const response = await fetch("/api/data/pull/getUserManga", {
+        const response = await fetch('/.proxy/api/data/pull/getUserManga', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -59,13 +70,14 @@ export default function tracked() {
             toast.error(errorData.message)
             return 
         }
-        const results:mangaInfo = await response.json()
-        if (results.mangaData.length <= 0) toast.info("No Manga!")
-        setMangaInfo(results)
+        const results:{mangaDetails:mangaDetails[]} = await response.json()
+        if (results.mangaDetails.length <= 0) toast.info("No Manga!")
+        setMangaInfo(results.mangaDetails)
     }
 
-    async function openMangaOverview(mangaIndex:number) {
+    async function openMangaOverview(mangaId:string) {
         console.log('opening')
+        let mangaIndex = mangaInfo.findIndex(manga => manga.mangaId === mangaId)
         SetModalIndex(mangaIndex)
         handleOpen()
     }
@@ -93,7 +105,7 @@ export default function tracked() {
             return
         }
 
-            const reply = await fetch('/api/data/remove/deleteUserManga', {
+            const reply = await fetch('/.proxy/api/data/remove/deleteUserManga', {
                 method: 'POST',
                 headers: {
                 'Content-Type': 'application/json',
@@ -117,10 +129,10 @@ export default function tracked() {
                 progress: 0
                 })
 
-                let newList:mangaInfo = {...mangaInfo} as mangaInfo
+                let newList:mangaDetails[] = [...mangaInfo] as mangaDetails[]
 
-                newList.mangaData?.splice(modalIndex, 1)
-                newList.userInfo?.splice(modalIndex, 1)
+                newList.splice(modalIndex, 1)
+                newList.splice(modalIndex, 1)
 
                 SetModalIndex(-1) // close modal
                 close()
@@ -167,7 +179,7 @@ export default function tracked() {
             progress: 0
           })
 
-        const reply = await fetch('/api/data/update/changeMangaCat', {
+        const reply = await fetch('/.proxy/api/data/update/changeMangaCat', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -181,8 +193,8 @@ export default function tracked() {
         })
 
         if (reply.ok) {
-            const tempInfo:mangaInfo = {...mangaInfo} as mangaInfo
-            tempInfo.userInfo[modalIndex].userCat = newCat.value
+            const tempInfo:mangaDetails[] = [...mangaInfo] as mangaDetails[]
+            tempInfo[modalIndex].userCat = newCat.value
             setMangaInfo(tempInfo)
 
             toast.update(notif, {
@@ -227,7 +239,7 @@ export default function tracked() {
             progress: 0
           })
 
-        const newIndex = mangaInfo?.mangaData[modalIndex].chapterTextList.indexOf(newChapter.label)
+        const newIndex = mangaInfo[modalIndex].chapterTextList.indexOf(newChapter.label)
         if (!newIndex || newIndex == -1) return toast.update(notif, {
             render: "Internal Error Updating Chapter!", 
             type: "error", 
@@ -239,7 +251,7 @@ export default function tracked() {
             progress: 0
         })
 
-        const reply = await fetch('/api/data/update/updateCurrentIndex', {
+        const reply = await fetch('/.proxy/api/data/update/updateCurrentIndex', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -253,8 +265,8 @@ export default function tracked() {
         })
 
         if (reply.ok) {
-            const tempInfo:mangaInfo = {...mangaInfo} as mangaInfo
-            tempInfo.userInfo[modalIndex].currentIndex = newIndex
+            const tempInfo:mangaDetails[] = [...mangaInfo] as mangaDetails[]
+            tempInfo[modalIndex].currentIndex = newIndex
             setMangaInfo(tempInfo)
 
             return toast.update(notif, {
@@ -310,7 +322,7 @@ export default function tracked() {
                 <DialogActions sx={{bgcolor: "#1f1f1f"}}>
                     <Button onClick={handleRemoveClose} autoFocus>Cancel</Button>
                     <Button onClick={(e) => {
-                        removeManga(mangaInfo!.userInfo[modalIndex].mangaId)
+                        removeManga(mangaInfo[modalIndex].mangaId)
                         handleRemoveClose()
                         handleClose()
                         }} sx={{color:"#ffffff"}} variant='contained' color="error">
@@ -341,7 +353,7 @@ export default function tracked() {
                     styles={customStyles} 
                 />
                 <Button onClick={(e) => {
-                    changeUserCat(mangaInfo!.userInfo[modalIndex].mangaId)
+                    changeUserCat(mangaInfo[modalIndex].mangaId)
                     handleCatClose()
                 }}>Submit</Button>
                 <SvgIcon onClick={handleCatClose} sx={{position: "absolute", top: 10, right: 10}}>
@@ -350,6 +362,15 @@ export default function tracked() {
                 </Box>
             </Modal>
         )
+    }
+
+    function checkFilter(manga:mangaDetails) {
+
+        if (!filterOption || filterOption.value === "%") return true
+
+        if (manga.userCat === filterOption.value) return true
+
+        return false
     }
 
     function changeChapterModal() {
@@ -368,13 +389,13 @@ export default function tracked() {
                     className="chapSelect" 
                     value={newChapter} 
                     onChange={setChapter} 
-                    options={mangaInfo?.mangaData[modalIndex].chapterTextList.toReversed().map((text, i) => {
+                    options={mangaInfo[modalIndex].chapterTextList.toReversed().map((text, i) => {
                         return {value: text, label: text}
                     })} 
                     styles={customStyles} 
                 />
                 <Button onClick={(e) => {
-                    changeCurrChapter(mangaInfo!.userInfo[modalIndex].mangaId)
+                    changeCurrChapter(mangaInfo[modalIndex].mangaId)
                     handleChapterClose()
                 }}>Submit</Button>
                 <SvgIcon onClick={handleChapterClose} sx={{position: "absolute", top: 10, right: 10}}>
@@ -415,7 +436,7 @@ export default function tracked() {
 
     if (!mangaInfo) return LoadingScreen()
     return (
-    <div className='viewTrackerContainer' style={{display:"flex", justifyContent:"center"}}>
+    <div className='viewTrackerContainer' style={{display:"flex", justifyContent:"center", flexDirection: "column"}}>
         <div className='mangaOverviewModal' id="overviewModal">
             <Modal
                 open={open}
@@ -425,23 +446,23 @@ export default function tracked() {
             >
                 <Box sx={{width: "80vw", height: "65vh", ...modalStyle}}>
                     <div style={{display: 'flex', flexDirection: 'row'}}>
-                        <img className="modalImage" src={`/image/${modalIndex >= 0 ? mangaInfo.userInfo[modalIndex].mangaId: "mangaNotFoundImage"}`}></img>
+                        <img className="modalImage" src={`/image/${modalIndex >= 0 ? mangaInfo[modalIndex].mangaId: "mangaNotFoundImage"}`}></img>
                         <div style={{paddingLeft: "20px"}}>
                             
 
-                            <Tooltip title={<h1>{modalIndex >= 0 ? mangaInfo.mangaData[modalIndex].mangaName:"Unknown"}</h1>} enterDelay={700}>
+                            <Tooltip title={<h1>{modalIndex >= 0 ? mangaInfo[modalIndex].mangaName:"Unknown"}</h1>} enterDelay={700}>
                                 <Typography gutterBottom variant="h3" component="h3" style={{"display": "-webkit-box",
                                     "WebkitBoxOrient": "vertical",
                                     "WebkitLineClamp": 1,
                                     "overflow": "hidden",
                                     "textOverflow": "ellipsis",}}
                                 >
-                                    {modalIndex >= 0 ? mangaInfo.mangaData[modalIndex].mangaName:"Unknown"}
+                                    {modalIndex >= 0 ? mangaInfo[modalIndex].mangaName:"Unknown"}
                                 </Typography>
                                 </Tooltip>
                             <Typography id="modal-chapter-list" sx={{overflowY: "scroll", height: 256, color:"blue", textDecoration:'underline'}}>
                                 <ul>
-                                {modalIndex >= 0 ? mangaInfo.mangaData[modalIndex].chapterTextList.toReversed().map((chapText, i) => <li><a onClick={(e) => {discordSdk.commands.openExternalLink({url:mangaInfo.mangaData[modalIndex].urlList.toReversed()[i]})}}>{chapText}</a></li>):<div/>}
+                                {modalIndex >= 0 ? mangaInfo[modalIndex].chapterTextList.toReversed().map((chapText, i) => <li><a onClick={(e) => {discordSdk.commands.openExternalLink({url:mangaInfo[modalIndex].urlList.toReversed()[i]})}}>{chapText}</a></li>):<div/>}
                                 </ul>
                             </Typography>
                         </div>
@@ -467,10 +488,39 @@ export default function tracked() {
 
 
 
+        <div className='cardControls' style={{display:"flex", justifyContent:"center", justifyItems:"center"}}>
+            <Select
+                value={filterOption}
+                onChange={setFilterOption}
+                options={catOptions}
+                styles={customStyles}
+            />
+            <Select
+                value={methodOption}
+                onChange={setMethodOption}
+                options={sortOptions}
+                styles={customStyles}
+            />
+            <Select
+                value={orderOption}
+                onChange={setOrderOption}
+                options={[{value:"1", label:"Ascending"}, {value:"-1", label:"Descending"}]}
+                styles={customStyles}
+            />
+        </div>
         <div className='cardContainer' style={{display:"flex", justifyContent:"center", justifyItems:"center"}}>
-            {mangaInfo.mangaData.map((data, i) => 
+            {mangaInfo.filter(manga => checkFilter(manga)).sort((a, b) => {
+                let key = methodOption?.value
+                let orderVal = parseInt(orderOption.value)
+
+                if (!key || !orderVal) return 0
+
+                if (a[key] > b[key]) return 1*orderVal
+                if (a[key] < b[key]) return -1*orderVal
+                return 0
+            }).map((data, i) => 
                 <Card sx={{ width: 320, height: 350, backgroundColor: "black", color: "white"}}>
-                <CardActionArea onClick={(e) => openMangaOverview(i)}>
+                <CardActionArea onClick={(e) => openMangaOverview(data.mangaId)}>
                   <CardMedia
                     component="img"
                     height="200"
@@ -493,11 +543,11 @@ export default function tracked() {
                       <table>
                         <tr> 
                           <td>Chapter:</td>
-                          <td>{`${data.chapterTextList[checkIndexInRange(mangaInfo.userInfo[i].currentIndex, data.chapterTextList.length)].match(/[0-9.]+/g)}/${data.chapterTextList[data.chapterTextList.length-1].match(/[0-9.]+/g)}`}</td>
+                          <td>{`${data.chapterTextList[checkIndexInRange(data.currentIndex, data.chapterTextList.length)].match(/[0-9.]+/g)}/${data.chapterTextList[data.chapterTextList.length-1].match(/[0-9.]+/g)}`}</td>
                         </tr>
                         <tr>
                           <td>Category: </td>
-                          <td>{findCatLabel(mangaInfo.userInfo[i].userCat)}</td>
+                          <td>{findCatLabel(data.userCat)}</td>
                         </tr>
                       </table>
                     </Typography>

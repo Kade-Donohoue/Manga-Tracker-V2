@@ -97,7 +97,7 @@ module.exports = class mangaFeedSubCommand extends BaseSubcommandExecutor {
         //     respData.mangaData[i].chapterTextList = respData.mangaData[i].chapterTextList.split(',')
         // }
 
-        manageCardHandler(interaction, respData.mangaData, respData.userInfo)
+        manageCardHandler(interaction, respData.mangaDetails)
     }
 }
 
@@ -111,22 +111,22 @@ module.exports = class mangaFeedSubCommand extends BaseSubcommandExecutor {
  * @returns Nothing 
  */
 // async function manageCardHandler(names, nexts, nextChaps, currentChaps, interaction, userCat) {
-async function manageCardHandler(interaction, mangaData, userData) {
+async function manageCardHandler(interaction, mangaDetails) {
     var currentIndex = 0
-    console.log(userData)
-    var currentMangaChapIndex = parseInt(userData[currentIndex].currentIndex)
+    console.log(mangaDetails)
+    var currentMangaChapIndex = parseInt(mangaDetails[currentIndex].currentIndex)
     var msg = await feedCardMaker(
-        mangaData[currentIndex].mangaName, 
-        mangaData[currentIndex].urlList[currentMangaChapIndex], 
-        mangaData[currentIndex].urlList[currentMangaChapIndex+1], 
-        mangaData[currentIndex].chapterTextList[currentMangaChapIndex], 
-        mangaData[currentIndex].chapterTextList[currentMangaChapIndex+1], 
-        mangaData[currentIndex].chapterTextList.at(-1), 
-        mangaData[currentIndex].chapterTextList.length, 
-        mangaData[currentIndex].updateTime,
-        mangaData[currentIndex].mangaId
+        mangaDetails[currentIndex].mangaName, 
+        mangaDetails[currentIndex].urlList[currentMangaChapIndex], 
+        mangaDetails[currentIndex].urlList[currentMangaChapIndex+1], 
+        mangaDetails[currentIndex].chapterTextList[currentMangaChapIndex], 
+        mangaDetails[currentIndex].chapterTextList[currentMangaChapIndex+1], 
+        mangaDetails[currentIndex].chapterTextList.at(-1), 
+        mangaDetails[currentIndex].chapterTextList.length, 
+        mangaDetails[currentIndex].updateTime,
+        mangaDetails[currentIndex].mangaId
     )
-    msg.content = `${currentIndex+1} / ${userData.length} Unread Manga`
+    msg.content = `${currentIndex+1} / ${mangaDetails.length} Unread Manga`
     response = await interaction.editReply(msg)
 
 
@@ -153,27 +153,27 @@ async function manageCardHandler(interaction, mangaData, userData) {
                 body: JSON.stringify({
                     "access_token": config.serverPassword,
                     "authId": interaction.user.id,
-                    "mangaId": mangaData[currentIndex].mangaId,
+                    "mangaId": mangaDetails[currentIndex].mangaId,
                     "interactionTime": Date.now()
                 }),
             })
-            // dataUtils.userInteractTime(interaction.user.id, mangaData[currentIndex].mangaName) // needs reimplemented
+            // dataUtils.userInteractTime(interaction.user.id, mangaDetails[currentIndex].mangaName) // needs reimplemented
             currentIndex += 1
             // console.log(currentMangaChapIndex)
-            if (currentIndex < mangaData.length) {
-                currentMangaChapIndex = parseInt(userData[currentIndex].currentIndex)
+            if (currentIndex < mangaDetails.length) {
+                currentMangaChapIndex = parseInt(mangaDetails[currentIndex].currentIndex)
                 const cardMessage = await feedCardMaker(
-                    mangaData[currentIndex].mangaName, 
-                    mangaData[currentIndex].urlList[currentMangaChapIndex], 
-                    mangaData[currentIndex].urlList[currentMangaChapIndex+1], 
-                    mangaData[currentIndex].chapterTextList[currentMangaChapIndex], 
-                    mangaData[currentIndex].chapterTextList[currentMangaChapIndex+1], 
-                    mangaData[currentIndex].chapterTextList.at(-1), 
-                    mangaData[currentIndex].chapterTextList.length, 
-                    mangaData[currentIndex].updateTime,
-                    mangaData[currentIndex].mangaId
+                    mangaDetails[currentIndex].mangaName, 
+                    mangaDetails[currentIndex].urlList[currentMangaChapIndex], 
+                    mangaDetails[currentIndex].urlList[currentMangaChapIndex+1], 
+                    mangaDetails[currentIndex].chapterTextList[currentMangaChapIndex], 
+                    mangaDetails[currentIndex].chapterTextList[currentMangaChapIndex+1], 
+                    mangaDetails[currentIndex].chapterTextList.at(-1), 
+                    mangaDetails[currentIndex].chapterTextList.length, 
+                    mangaDetails[currentIndex].updateTime,
+                    mangaDetails[currentIndex].mangaId
                 )
-                cardMessage.content = `${currentIndex+1} / ${mangaData.length} Unread Manga`
+                cardMessage.content = `${currentIndex+1} / ${mangaDetails.length} Unread Manga`
                 console.log(cardMessage)
                 await interact.editReply(cardMessage)
             } else  {
@@ -190,36 +190,36 @@ async function manageCardHandler(interaction, mangaData, userData) {
                 body: JSON.stringify({
                     "access_token": config.serverPassword,
                     "authId": interaction.user.id,
-                    "mangaId": mangaData[currentIndex].mangaId,
+                    "mangaId": mangaDetails[currentIndex].mangaId,
                     "interactionTime": Date.now()
                 }),
             })
             currentIndex += -1
             if (currentIndex >= 0) {
-                currentMangaChapIndex = parseInt(userData[currentIndex].currentIndex)
+                currentMangaChapIndex = parseInt(mangaDetails[currentIndex].currentIndex)
                 const cardMessage = await feedCardMaker(
-                    mangaData[currentIndex].mangaName, 
-                    mangaData[currentIndex].urlList[currentMangaChapIndex], 
-                    mangaData[currentIndex].urlList[currentMangaChapIndex+1], 
-                    mangaData[currentIndex].chapterTextList[currentMangaChapIndex], 
-                    mangaData[currentIndex].chapterTextList[currentMangaChapIndex+1], 
-                    mangaData[currentIndex].chapterTextList.at(-1), 
-                    mangaData[currentIndex].chapterTextList.length, 
-                    mangaData[currentIndex].updateTime,
-                    mangaData[currentIndex].mangaId
+                    mangaDetails[currentIndex].mangaName, 
+                    mangaDetails[currentIndex].urlList[currentMangaChapIndex], 
+                    mangaDetails[currentIndex].urlList[currentMangaChapIndex+1], 
+                    mangaDetails[currentIndex].chapterTextList[currentMangaChapIndex], 
+                    mangaDetails[currentIndex].chapterTextList[currentMangaChapIndex+1], 
+                    mangaDetails[currentIndex].chapterTextList.at(-1), 
+                    mangaDetails[currentIndex].chapterTextList.length, 
+                    mangaDetails[currentIndex].updateTime,
+                    mangaDetails[currentIndex].mangaId
                 )
-                cardMessage.content = `${currentIndex+1} / ${mangaData.length} Unread Manga`
+                cardMessage.content = `${currentIndex+1} / ${mangaDetails.length} Unread Manga`
                 await interact.editReply(cardMessage)
                 // dataUtils.userInteractTime(interaction.user.id, names[currentIndex])
             } else  {
                 currentIndex = 0
-                currentMangaChapIndex = parseInt(userData[currentIndex].currentIndex)
+                currentMangaChapIndex = parseInt(mangaDetails[currentIndex].currentIndex)
                 await interact.editReply({ content: "Nothing Before this one!", components: [navigationRow, manageHomeRow]})
             }    
         }
 
         if (interact.customId == 'read') { // replace buttons with dropdown to select current chap(limited to next 25 chaps)
-            const nextList = dataUtils.getNextList(mangaData[currentIndex].chapterTextList, currentMangaChapIndex, 25)
+            const nextList = dataUtils.getNextList(mangaDetails[currentIndex].chapterTextList, currentMangaChapIndex, 25)
             // console.log(nextList)
             mangeReadSelection.setOptions(nextList)
             const row = new ActionRowBuilder()
@@ -231,35 +231,35 @@ async function manageCardHandler(interaction, mangaData, userData) {
 
         if (interact.customId == 'backPrev') { // returns buttons
             const cardMessage = await feedCardMaker(
-                mangaData[currentIndex].mangaName, 
-                mangaData[currentIndex].urlList[currentMangaChapIndex], 
-                mangaData[currentIndex].urlList[currentMangaChapIndex+1], 
-                mangaData[currentIndex].chapterTextList[currentMangaChapIndex], 
-                mangaData[currentIndex].chapterTextList[currentMangaChapIndex+1], 
-                mangaData[currentIndex].chapterTextList.at(-1), 
-                mangaData[currentIndex].chapterTextList.length, 
-                mangaData[currentIndex].updateTime,
-                mangaData[currentIndex].mangaId
+                mangaDetails[currentIndex].mangaName, 
+                mangaDetails[currentIndex].urlList[currentMangaChapIndex], 
+                mangaDetails[currentIndex].urlList[currentMangaChapIndex+1], 
+                mangaDetails[currentIndex].chapterTextList[currentMangaChapIndex], 
+                mangaDetails[currentIndex].chapterTextList[currentMangaChapIndex+1], 
+                mangaDetails[currentIndex].chapterTextList.at(-1), 
+                mangaDetails[currentIndex].chapterTextList.length, 
+                mangaDetails[currentIndex].updateTime,
+                mangaDetails[currentIndex].mangaId
             )
-            await interact.editReply({ content: `${currentIndex+1} / ${mangaData.length} Unread Manga`, components: cardMessage.components })
+            await interact.editReply({ content: `${currentIndex+1} / ${mangaDetails.length} Unread Manga`, components: cardMessage.components })
         }
 
         if (interact.customId == 'select') { // updates current chap and goes to the next card
             currentIndex+=1
-            currentMangaChapIndex = parseInt(userData[currentIndex].currentIndex)
-            if (currentIndex < mangaData.length) {
+            currentMangaChapIndex = parseInt(mangaDetails[currentIndex].currentIndex)
+            if (currentIndex < mangaDetails.length) {
                 const cardMessage = await feedCardMaker(
-                    mangaData[currentIndex].mangaName, 
-                    mangaData[currentIndex].urlList[currentMangaChapIndex], 
-                    mangaData[currentIndex].urlList[currentMangaChapIndex+1], 
-                    mangaData[currentIndex].chapterTextList[currentMangaChapIndex], 
-                    mangaData[currentIndex].chapterTextList[currentMangaChapIndex+1], 
-                    mangaData[currentIndex].chapterTextList.at(-1), 
-                    mangaData[currentIndex].chapterTextList.length, 
-                    mangaData[currentIndex].updateTime,
-                    mangaData[currentIndex].mangaId
+                    mangaDetails[currentIndex].mangaName, 
+                    mangaDetails[currentIndex].urlList[currentMangaChapIndex], 
+                    mangaDetails[currentIndex].urlList[currentMangaChapIndex+1], 
+                    mangaDetails[currentIndex].chapterTextList[currentMangaChapIndex], 
+                    mangaDetails[currentIndex].chapterTextList[currentMangaChapIndex+1], 
+                    mangaDetails[currentIndex].chapterTextList.at(-1), 
+                    mangaDetails[currentIndex].chapterTextList.length, 
+                    mangaDetails[currentIndex].updateTime,
+                    mangaDetails[currentIndex].mangaId
                 )
-                cardMessage.content = `${currentIndex+1} / ${mangaData.length} Unread Manga`
+                cardMessage.content = `${currentIndex+1} / ${mangaDetails.length} Unread Manga`
                 await interact.editReply(cardMessage)
             } else await interact.editReply({ content: "You are all caught up!!!", files: [], components: []})
 
@@ -272,11 +272,11 @@ async function manageCardHandler(interaction, mangaData, userData) {
                     "access_token": config.serverPassword,
                     "authId": interaction.user.id,
                     "newIndex": interact.values[0],
-                    "mangaId": mangaData[currentIndex-1].mangaId
+                    "mangaId": mangaDetails[currentIndex-1].mangaId
                 }),
             })
 
-            if (res.status!=200) interact.followUp({ content: `An internal system error has occurred updating ${mangaData[currentIndex-1].mangaName}. Please try again or contact the admin`, ephemeral: true })
+            if (res.status!=200) interact.followUp({ content: `An internal system error has occurred updating ${mangaDetails[currentIndex-1].mangaName}. Please try again or contact the admin`, ephemeral: true })
         }
 
         if (interact.customId == 'setCat') { // brings up buttons to allow user to change category
@@ -297,11 +297,11 @@ async function manageCardHandler(interaction, mangaData, userData) {
                     "access_token": config.serverPassword,
                     "authId": interaction.user.id,
                     "newCat": interact.values[0],
-                    "mangaId": mangaData[currentIndex].mangaId
+                    "mangaId": mangaDetails[currentIndex].mangaId
                 }),
             })
 
-            if (res.status!=200) interact.followUp({ content: `An internal system error has occurred updating ${mangaData[currentIndex-1].mangaName}. Please try again or contact the admin`, ephemeral: true })
+            if (res.status!=200) interact.followUp({ content: `An internal system error has occurred updating ${mangaDetails[currentIndex-1].mangaName}. Please try again or contact the admin`, ephemeral: true })
 
             await interact.editReply({ components: [navigationRow, manageHomeRow]  })
         }

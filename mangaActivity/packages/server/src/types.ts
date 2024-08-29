@@ -88,6 +88,17 @@ export interface user {
 	"premium_type": number
 }
 
+export interface mangaDetails {
+  mangaName:string,
+  mangaId:string,
+  urlList: string|string[],
+  chapterTextList: string|string[], 
+  updateTime: string,
+  currentIndex: number,
+  userCat: string,
+  interactTime: number
+}
+
 export interface userDataRow {
   "mangaId": string,
   "userID": string,

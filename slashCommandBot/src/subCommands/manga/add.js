@@ -20,12 +20,16 @@ module.exports = class mangaAddSubCommand extends BaseSubcommandExecutor {
                 "access_token": config.serverPassword,
                 "authId": authID,
                 "userCat": userCat,
-                "url": URL
+                "urls": [URL]
             })
         })
 
-        if (resp.status == 200) return interaction.editReply({content: "Successfully added!"})
+        if (!resp.ok) return interaction.editReply({content: "Internal Server Error!"})
 
-        interaction.editReply({content: "Invalid URL"})
+        // let responseData = await resp.json()
+        console.log(responseData)
+        if (!responseData.results[0].success) return interaction.editReply({content: responseData.results[0].message})
+        return interaction.editReply({content: "Successfully added!"})
+        
     }
 }

@@ -131,7 +131,7 @@ function RootedApp(): React.ReactElement {
       try{
         const auth = authStore.getState()
     
-        const data = await fetch('/api/data/pull/pullUserCategories', {
+        const data = await fetch('/.proxy/api/data/pull/pullUserCategories', {
           method: 'POST',
           headers: {
               'Content-Type': 'application/json',
@@ -144,8 +144,8 @@ function RootedApp(): React.ReactElement {
     
         if (!data.ok) return toast.error("Unable to get User Cats")
           
-        let catStr:{cats:string} = await data.json()
-        setCatOptions(JSON.parse(catStr.cats))
+        let catStr:{message:string, cats:{value:string,label:string}[]} = await data.json()
+        setCatOptions(catStr.cats)
       } catch {
         return toast.error("Unable to get User Cats")
       }

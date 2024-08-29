@@ -4,7 +4,7 @@ import 'react-toastify/dist/ReactToastify.css'
 import React, { useEffect } from "react"
 import Select, { StylesConfig } from 'react-select'
 import './removeManga.css'
-import { mangaInfo } from '../../types'
+import { mangaDetails, mangaInfo } from '../../types'
 
 const customStyles: StylesConfig<dropdownOption, false> = {
   control: (provided, state) => ({
@@ -83,7 +83,7 @@ export default function removeManga() {
       return
     }
 
-        const reply = await fetch('/api/data/remove/deleteUserManga', {
+        const reply = await fetch('/.proxy/api/data/remove/deleteUserManga', {
             method: 'POST',
             headers: {
             'Content-Type': 'application/json',
@@ -139,7 +139,7 @@ export default function removeManga() {
   } 
   
   async function retrieveMangaList() {
-    const resp = await fetch('/api/data/pull/getUserManga', {
+    const resp = await fetch('/.proxy/api/data/pull/getUserManga', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -151,15 +151,15 @@ export default function removeManga() {
         }),
       })
 
-    if (resp.status!=200) {
+    if (!resp.ok) {
       var errData:{message:string, url:string} = await resp.json()
       toast.error(errData.message||"Unable to Fetch Manga! Reload the Page or Contact an Admin!")
       return 
     }
-    const data:mangaInfo = await resp.json()
+    const data:{mangaDetails:mangaDetails[]} = await resp.json()
     var options:dropdownOption[] = []
-    for (var i = data.userInfo.length-1; i >= 0; i--) {
-      options.push({value: data.userInfo[i].mangaId, label: data.userInfo[i].mangaName})
+    for (var i = data.mangaDetails.length-1; i >= 0; i--) {
+      options.push({value: data.mangaDetails[i].mangaId, label: data.mangaDetails[i].mangaName})
     }
     setDropOptions(options)
   }

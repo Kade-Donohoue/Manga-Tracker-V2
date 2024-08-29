@@ -28,10 +28,10 @@ module.exports = class mangaCardSubCommand extends BaseSubcommandExecutor {
         })
         if (resp.status!=200) return await interaction.editReply({ content: "Internal communicator error occurred. Please contact the bot owner or try again!" })
         const data = await resp.json()
-        const chapTextList = data.mangaData.chapterTextList.split(',')
-        const card = await generateCard(data.mangaData.mangaName, chapTextList.at(-1), chapTextList[parseInt(data.userInfo.currentIndex)], chapTextList[parseInt(data.userInfo.currentIndex)+1], `${chapTextList.length} Chapters`, data.mangaData.updateTime, data.mangaData.mangaId)
+        const chapTextList = data.mangaDetails.chapterTextList.split(',')
+        const card = await generateCard(data.mangaDetails.mangaName, chapTextList.at(-1), chapTextList[parseInt(data.mangaDetails.currentIndex)], chapTextList[parseInt(data.mangaDetails.currentIndex)+1], `${chapTextList.length} Chapters`, data.mangaDetails.updateTime, data.mangaDetails.mangaId)
         if (!card) return interaction.editReply({content:"A internal system error has occurred"})
-        const attach = new AttachmentBuilder(card, { name: `${data.mangaData.mangaId}-card.png`})
+        const attach = new AttachmentBuilder(card, { name: `${data.mangaDetails.mangaId}-card.png`})
         interaction.editReply({ content: "", files: [attach], ephemeral: true})
     }
 }

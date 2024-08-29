@@ -1,5 +1,6 @@
 const BaseSubcommandExecutor = require("../../utils/BaseSubCommandExecutor")
 const {hyperlink, hideLinkEmbed} = require('discord.js')
+const config = require('../../../data/config.json')
 
 module.exports = class mangaBulkAddSubCommand extends BaseSubcommandExecutor {
     constructor(baseCommand, group) {
@@ -12,31 +13,26 @@ module.exports = class mangaBulkAddSubCommand extends BaseSubcommandExecutor {
         const userCat = interaction.options.getString('category') ?? 'unsorted'
         await interaction.reply({ content : 'This will take a minute please wait...', ephemeral: true  })
 
-        for (let i = 0; i < URLS.length; i++) {
-            const URL = URLS[i]
-            await new Promise(async (resolve, reject) => {
-                console.log(URL)
-
-                const resp = await fetch(`${config.serverUrl}/api/data/add/addManga`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        "access_token": config.serverPassword,
-                        "authId": authID,
-                        "userCat": userCat,
-                        "url": URL
-                    })
-                })
-        
-                if (resp.status == 200) interaction.followUp({content: `An internal system error has occurred. Please try again or contact the admin!\n${URL}`, ephemeral: true})
-        
-                resolve()
-            }).catch ( () => {
-                interaction.followUp({content: `Invalid URL: \n${hideLinkEmbed(hyperlink(URL))}`, ephemeral: true})
+        const resp = await fetch(`${config.serverUrl}/api/data/add/addManga`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                "access_token": config.serverPassword,
+                "authId": authID,
+                "userCat": userCat,
+                "urls": URLS
             })
-        }    
+        })
+
+        if (!resp.ok) return interaction.editReply('Internal Server Error Ocurred!')
+
+        let respData = await resp.json()
+
+        for (let manga of respData.results) {
+            if (!manga.success) interaction.followUp({content: `${manga.message}: \n${hideLinkEmbed(manga.url)}`, ephemeral: true})
+        }
 
         interaction.editReply("Done!")
   

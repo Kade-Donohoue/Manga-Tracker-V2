@@ -121,7 +121,7 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         job.log(logWithTimestamp(`Error: ${err}`))
         console.warn(`Unable to fetch data for: ${url}`)
         if (config.logging.verboseLogging) console.warn(err)
-        await page.close()
+        if (!page.isClosed()) await page.close()
         
         //ensure only custom error messages gets sent to user
         if (err.message.startsWith('Manga:')) throw new Error(err.message)

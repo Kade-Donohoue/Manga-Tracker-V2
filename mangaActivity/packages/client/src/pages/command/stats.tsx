@@ -13,7 +13,7 @@ export default function stats() {
   }
   
   async function retrieveStats() {
-    const resp = await fetch('/api/data/pull/userStats', {
+    const resp = await fetch('/.proxy/api/data/pull/userStats', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -23,7 +23,7 @@ export default function stats() {
           "authId": null
         }),
       })
-      if (resp.status!=200) return toast.error('Unable to fetch User Stats!')
+      if (!resp.ok) return toast.error('Unable to fetch User Stats!')
       const data:{userStats:{"chaptersRead":number, "chaptersUnread":number, "unreadManga": number, "readManga": number},"globalStats":{"trackedManga":number,"totalTrackedChapters":number,"newMangaCount":number,"newChapterCount":number}} = await resp.json()
 
     document.getElementById('userTrackedMangaCount')!.innerHTML = data.userStats.readManga?.toString()||"???"

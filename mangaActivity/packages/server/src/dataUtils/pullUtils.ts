@@ -1,5 +1,5 @@
-import {Env, userDataRow, mangaDataRowReturn, mangaDataRowProcessed} from '../types'
-import {verifyUserAuth, verifyIndexRange} from '../utils'
+import {Env, userDataRow, mangaDataRowReturn, mangaDataRowProcessed, mangaDetails} from '../types'
+import {verifyUserAuth, verifyIndexRange, validateCategory} from '../utils'
 
 export async function getUnreadManga(access_token:string, authId:string, userCat:string = '%', sortMethod:string = 'interactTime', sortOrd:string = 'ASC', env: Env) {
     try {
@@ -8,54 +8,31 @@ export async function getUnreadManga(access_token:string, authId:string, userCat
         if (validationRes instanceof Response) return validationRes
         authId = validationRes
 
+        const selectedCategory = validateCategory(sortMethod)
+        const selectedSortOrd:'DESC'|'ASC' = sortOrd.toUpperCase() ==='DESC'?'DESC':'ASC'
+
+        if (selectedCategory === "Invalid Category") return new Response(JSON.stringify({message: 'Invalid Category'}), {status: 400}) 
+
         console.log(authId + userCat + sortMethod + sortOrd)
-        var userData:userDataRow[]|null = (await env.DB.prepare(
-            `SELECT * FROM userData WHERE userID = ? AND userCat LIKE ? ORDER BY ${sortMethod} ${sortOrd}`
+        var userManga:mangaDetails[]|null = (await env.DB.prepare(
+            `SELECT mangaData.mangaName, userData.mangaId, mangaData.urlList, mangaData.chapterTextList, mangaData.updateTime, userData.currentIndex, userData.userCat, userData.interactTime FROM userData JOIN mangaData ON (userData.mangaId = mangaData.mangaId) WHERE userData.userId = ? AND userCat LIKE ? ORDER BY ${selectedCategory} ${selectedSortOrd}`
         )
-            .bind(authId, userCat/*`${sortMethod} ${sortOrd}`*/)
+            .bind(authId, userCat)
             .all()).results as any
         
-        console.log(userData)
-        if (!userData) {
+        if (!userManga) {
             console.log(`No user data found for ${authId} with the cat ${userCat}`)
             return new Response(JSON.stringify({message:`No user data found for ${authId} with the cat ${userCat}`}), {status: 404})
         }
 
-        var mangaData:mangaDataRowProcessed[] = []
-        for (var i:number = 0; i < userData.length; i++) {
-            const userManga = userData[i]
-            var mangaInfo:mangaDataRowReturn|null = await env.DB.prepare(
-                `SELECT * FROM mangaData WHERE mangaName = ?`
-            )
-                .bind(userManga.mangaName)
-                .first()
-
-            if (!mangaInfo) {
-                console.log("Could not get manga Data")
-                mangaInfo = {
-                    "mangaId": "null",
-                    "mangaName": "null",
-                    "urlList": "null",
-                    "chapterTextList": "null", 
-                    "updateTime": "null"
-                }
+        for (var manga of userManga) {
+            if ("string" === typeof manga.chapterTextList && "string" === typeof manga.urlList) {
+                manga.chapterTextList = manga.chapterTextList.split(',')
+                manga.urlList = manga.urlList.split(',')
             }
-            const mangaDataProcessed:mangaDataRowProcessed = {
-                "mangaId": mangaInfo.mangaId,
-                "mangaName": mangaInfo.mangaName,
-                "urlList": mangaInfo.urlList.split(','),
-                "chapterTextList": mangaInfo.chapterTextList.split(','), 
-                "updateTime": mangaInfo.updateTime
-            }
-            if (mangaDataProcessed.chapterTextList.length  <= userManga.currentIndex + 1) {
-                userData.splice(i, 1)
-                i--
-                continue
-            }
-            mangaData.push(mangaDataProcessed)
         }
 
-        return new Response(JSON.stringify({"userInfo": userData, "mangaData": mangaData}), {status: 200})
+        return new Response(JSON.stringify({mangaDetails: userManga}), {status: 200})
     } catch (error) {
         console.error("Error:", error);
         return new Response(JSON.stringify({message:'unknown error occured'}), {status: 500})
@@ -69,29 +46,19 @@ export async function getManga(access_token:string, authId:string, mangaId:strin
         if (validationRes instanceof Response) return validationRes
         authId = validationRes
 
-        const userData:userDataRow|null = (await env.DB.prepare(
-            `SELECT * FROM userData WHERE userID = ? AND mangaId = ?`
-        )
-            .bind(authId, mangaId)
-            .first()) as any
-        
-        console.log(userData)
-        if (!userData) {
-            console.log(`No user data found for ${authId}`)
-            return new Response(JSON.stringify({message:`No user data found`}), {status: 404})
-        }
-
-        var mangaInfo:mangaDataRowReturn|null = await env.DB.prepare(
-            `SELECT * FROM mangaData WHERE mangaId = ?`
-        )
-            .bind(mangaId)
-            .first()
-
-        if (!mangaInfo) {
+        let userManga:mangaDetails = ((await env.DB.prepare("SELECT mangaData.mangaName, userData.mangaId, mangaData.urlList, mangaData.chapterTextList, mangaData.updateTime, userData.currentIndex, userData.userCat, userData.interactTime FROM userData JOIN mangaData ON (userData.mangaId = mangaData.mangaId) WHERE userData.userId = ?  AND userData.mangaId = ? LIMIT 1")
+            .bind(authId, mangaId).first()) as any)
+            
+        if (!userManga) {
             return new Response(JSON.stringify({message:'Unable to get Manga Data'}), {status: 500})
         }
 
-        return new Response(JSON.stringify({"userInfo": userData, "mangaData": mangaInfo}), {status: 200})
+        if ("string" === typeof userManga.chapterTextList && "string" === typeof userManga.urlList) {
+            userManga.chapterTextList = userManga.chapterTextList.split(',')
+            userManga.urlList = userManga.urlList.split(',')
+        }
+
+        return new Response(JSON.stringify({mangaDetails: userManga}), {status: 200})
     } catch (error) {
         console.error("Error:", error);
         return new Response(JSON.stringify({message:'unknown error occured'}), {status: 500})
@@ -107,48 +74,23 @@ export async function getUserManga(access_token:string, authId:string, env:Env) 
         authId = validationRes
 
         let queryTimeDebug = 0
-        const userRes = await env.DB.prepare('SELECT * FROM userData WHERE userID = ?')
+        const userRes = await env.DB.prepare('SELECT mangaData.mangaName, userData.mangaId, mangaData.urlList, mangaData.chapterTextList, mangaData.updateTime, userData.currentIndex, userData.userCat, userData.interactTime FROM userData JOIN mangaData ON (userData.mangaId = mangaData.mangaId) WHERE userData.userId = ?')
             .bind(authId)
             .all()
 
         queryTimeDebug+= userRes.meta.duration
-        const userManga:userDataRow[] = userRes.results as any
+        let userManga:mangaDetails[] = userRes.results as any
 
-        let boundMangaDataStmt:D1PreparedStatement[] = []
-        for (const manga of userManga) {
-            boundMangaDataStmt.push(env.DB.prepare(`SELECT * FROM mangaData WHERE mangaId = ? LIMIT 1`).bind(manga.mangaId))
-        }
-
-        const mangaRes = await env.DB.batch(boundMangaDataStmt)
-
-        let mangaData:mangaDataRowProcessed[] = []
-        for (const resRow of mangaRes) {
-            queryTimeDebug+=resRow.meta.duration
-            let results:mangaDataRowReturn = resRow.results[0] as any
-            if (!results) {
-                console.warn('Could not fetch data for Manga Check DB!!!')
-                mangaData.push({
-                    "mangaId": "null",
-                    "mangaName": "null",
-                    "urlList": [],
-                    "chapterTextList": [], 
-                    "updateTime": "null"
-                })
-                continue
-            } else {
-                mangaData.push({
-                    "mangaId": results.mangaId,
-                    "mangaName": results.mangaName,
-                    "urlList": results.urlList.split(','),
-                    "chapterTextList": results.chapterTextList.split(','), 
-                    "updateTime": results.updateTime
-                })
+        for (var manga of userManga) {
+            if ("string" === typeof manga.chapterTextList && "string" === typeof manga.urlList) {
+                manga.chapterTextList = manga.chapterTextList.split(',')
+                manga.urlList = manga.urlList.split(',')
             }
         }
         
         console.log(`Query took ${queryTimeDebug} milliseconds to process`)
 
-        return new Response(JSON.stringify({userInfo: userManga, mangaData: mangaData}), {status:200})
+        return new Response(JSON.stringify({mangaDetails: userManga}), {status:200})
     } catch (err) {
         console.error("Error:", err);
         return new Response(JSON.stringify({message: 'an unknown error occurred'}), {status:500});
@@ -167,8 +109,6 @@ export async function getAllManga(env:Env, pass:string|null) {
     }
 }
 
-//ToDo: Stat for total tracked manga
-//Idea: Stat for new chapters / day?
 export async function userStats(access_token:string, authId:string, env:Env) {
     try{
         const validationRes = await verifyUserAuth(access_token, authId, env)
@@ -264,8 +204,20 @@ export async function pullUserCategories(access_token:string, authId:string, env
         const results = await env.DB.prepare('Select categories FROM userSettings WHERE userID = ?')
                 .bind(authId)
                 .first()
+
+        // return default categories if no categories are found for user
+        if (!results) return new Response(JSON.stringify({message: "No Custom Cats", cats: [
+            {value: "reading", label: "Reading"},
+            {value: "notreading", label: "Not Reading"},
+            {value: "hold", label: "Hold"},
+            {value: "finished", label: "Finished"},
+            {value: "inqueue", label: "In Queue"},
+            {value: "other", label: "Other"},
+            {value: "unsorted", label: "Uncategorized"},
+            {value: "%", label: "Any"}
+        ]}), {status:200})
         
-        return new Response(JSON.stringify({message:"Success", cats: results?.categories}), {status:200})
+        return new Response(JSON.stringify({message:"Success", cats: JSON.parse(results.categories as string)}), {status:200})
 
     } catch (err) {
         console.warn("Error with updateInteractTime: " + err)

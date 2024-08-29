@@ -1,9 +1,9 @@
-import { Message } from '@discord/embedded-app-sdk/output/schema/common'
-import {Env, userDataRow, mangaDataRowReturn, user, mangaReturn} from '../types'
+import { Status } from '@discord/embedded-app-sdk/output/schema/common'
+import {Env, mangaDataRowReturn, mangaReturn} from '../types'
 import {verifyUserAuth} from '../utils'
 import { v4 as uuidv4 } from 'uuid'
 
-export async function saveManga(access_token:string, authId:string, url:string, userCat:string = 'unsorted', env:Env) {
+export async function saveManga(access_token:string, authId:string, urls:string[], userCat:string = 'unsorted', env:Env) {
     try {
         console.log('starting manga req')
         const validationRes = await verifyUserAuth(access_token, authId, env)
@@ -11,7 +11,9 @@ export async function saveManga(access_token:string, authId:string, url:string, 
         if (validationRes instanceof Response) return validationRes
         authId = validationRes
 
-        const mangaReq:any = await fetch(`${env.PUPPETEER_SERVER}/getManga?url=${url}&pass=${env.SERVER_PASSWORD}`, {
+        if (urls && urls.length <= 0 ) return new Response(JSON.stringify({Message: 'No Urls Provided!'}), {status:500}) 
+
+        const mangaReq:any = await fetch(`${env.PUPPETEER_SERVER}/getManga?urls=${urls.join('&urls=')}&pass=${env.SERVER_PASSWORD}`, {
             method: 'GET'
         })
         // console.log(mangaReq)
@@ -19,97 +21,82 @@ export async function saveManga(access_token:string, authId:string, url:string, 
         if (!mangaReq.ok) {
             const errorResp = await mangaReq.json()
             return new Response(JSON.stringify({
-                message: errorResp.message,
-                url: url
+                message: errorResp.message
             }), {status:mangaReq.status})
         }
 
-        const {fetchId} = await mangaReq.json()
+        const {addedManga, errors}:{addedManga:{fetchId:string,url:string}[], errors:{message:string, url:string, success:false}[]} = await mangaReq.json()
 
-        let mangaInfo:mangaReturn|null = null 
-        let waiting = true
-        while (waiting) {
+        const waitingManga = new Map<string, string>( addedManga.map(item => [item.fetchId, item.url]))
+
+        let newMangaInfo:mangaReturn[] = [] 
+        let userReturn:{url:string, message:string, success:boolean}[] = [...errors]
+        while (waitingManga.size >= 1) {
             await new Promise((resolve) => setTimeout(resolve, 5000))
 
-            let currentStatusRes = await fetch(`${env.PUPPETEER_SERVER}/checkStatus/get?fetchId=${fetchId}&pass=${env.SERVER_PASSWORD}`)
+            let currentStatusRes = await fetch(`${env.PUPPETEER_SERVER}/checkStatus/get?fetchIds=${Array.from(waitingManga.keys()).join('&fetchIds=')}&pass=${env.SERVER_PASSWORD}`)
 
-            if (currentStatusRes.status==200) {
-                waiting = false
+            if (!currentStatusRes.ok) continue
 
-                mangaInfo = await currentStatusRes.json()
-            } else if (currentStatusRes.status==500) { //forward error to user
-                const errorResp:{message:string} = await currentStatusRes.json()
-                return new Response(JSON.stringify({
-                    message: errorResp.message,
-                    url: url
-                }), {status:currentStatusRes.status})
-            } else if (currentStatusRes.status==404) { //send internal server error if fetchId isnt found
-                return new Response(JSON.stringify({Message: 'Internal Server Error!'}), {status:500})
+            let { currentStatus }:{currentStatus:{fetchId:string,status:string,statusCode:number,data:any}[]}= await currentStatusRes.json() 
+
+            for (let currentJobStatus of currentStatus) {
+                if (currentJobStatus.statusCode === 202) { //still processing
+                    continue
+                } else if (currentJobStatus.statusCode === 200) { //Finished
+                    newMangaInfo.push(currentJobStatus.data)
+                    userReturn.push({url: waitingManga.get(currentJobStatus.fetchId) as string, message: 'Successfully added', success: true})
+                    waitingManga.delete(currentJobStatus.fetchId)
+                } else if (currentJobStatus.statusCode === 500) {//failed
+                    userReturn.push({url: waitingManga.get(currentJobStatus.fetchId) as string, message: currentJobStatus.data, success: false})
+                    waitingManga.delete(currentJobStatus.fetchId)
+                } else if (currentJobStatus.statusCode === 404) {//Job Lost?
+                    userReturn.push({url: waitingManga.get(currentJobStatus.fetchId) as string, message: "Internal Server Error!", success: false})
+                    waitingManga.delete(currentJobStatus.fetchId)
+                } else { //unknown
+                    userReturn.push({url: waitingManga.get(currentJobStatus.fetchId) as string, message: "An unknown Error occurred please contact an admin!", success: false})
+                    waitingManga.delete(currentJobStatus.fetchId)
+                }
             }
         }
 
-        if (!mangaInfo) return new Response(JSON.stringify({Message: 'Internal Server Error!'}), {status:500})
+        if (userReturn.length <= 0) return new Response(JSON.stringify({Message: 'Internal Server Error!'}), {status:500})
 
-        // const mangaInfo:mangaReturn = await mangaReq.json()
-        const mangaRowTest:mangaDataRowReturn|null|undefined = await env.DB.prepare(
-            "SELECT * FROM mangaData WHERE mangaName = ?"
-        ) 
-            .bind(mangaInfo.mangaName)
-            .first()
+        if (newMangaInfo.length <= 0) return new Response(JSON.stringify({results: userReturn}), {status: 200})
 
+        const mangaRowTestStmts:D1PreparedStatement[] = newMangaInfo.map(mangaInfo => env.DB.prepare("SELECT * FROM mangaData WHERE mangaName = ? LIMIT 1") //check if manga has matching name
+            .bind(mangaInfo.mangaName))
+
+        let mangaTestResults:{results:mangaDataRowReturn[]}[] = await env.DB.batch(mangaRowTestStmts) as any
         // console.log(mangaRowTest)
         
         const currentTime = new Date().toLocaleDateString("en-US", {year: "numeric", month: "numeric", day: "numeric", timeZone: "America/Los_Angeles", timeZoneName: "short", hour: "numeric", minute: "numeric", hour12: true })
         
-        var mangaId = ''
-        var mangaStmt
-        // if manga isnt in database insert data otherwise update it
-        if (!mangaRowTest) {
-            console.log('not already in db')
+        let boundAddStmts:D1PreparedStatement[] = (mangaTestResults).flatMap((testResult:{results:mangaDataRowReturn[]}, index:number) => {
+            let newBoundStmt:D1PreparedStatement[] = []
 
-            //track new manga being added to DB
-            await env.DB.prepare('INSERT INTO stats (timestamp, type, stat_value) VALUES (CURRENT_TIMESTAMP, "mangaCount", ?)').bind(1).run()
+            let mangaId = testResult?.results?.[0]?.mangaId||uuidv4().toString() //use existing id or create new one if not exist
 
-            mangaId = uuidv4().toString() //generate manga ID if manga isn't already in DB
-            // console.log(mangaId)
-            mangaStmt = env.DB.prepare('INSERT INTO mangaData (mangaId,mangaName,urlList,chapterTextList,updateTime) VALUES(?,?,?,?,?)')
-                .bind(mangaId, mangaInfo.mangaName, mangaInfo.chapterUrlList, mangaInfo.chapterTextList, currentTime)
-            // }
-        } else {
+            newBoundStmt.push(env.DB.prepare(
+                'INSERT INTO mangaData (mangaId,mangaName,urlList,chapterTextList,updateTime) VALUES (?,?,?,?,?) ON CONFLICT(mangaId) DO UPDATE SET urlList = excluded.urlList, chapterTextList = excluded.chapterTextList, updateTime = excluded.updateTime'
+            ).bind(mangaId, newMangaInfo[index].mangaName, newMangaInfo[index].chapterUrlList, newMangaInfo[index].chapterTextList, currentTime))
 
-            console.log('already in db' + mangaRowTest.mangaId)
-            mangaId = mangaRowTest.mangaId
+            newBoundStmt.push(env.DB.prepare(
+                'Insert INTO userData (userId, mangaName, mangaId, currentIndex, userCat, interactTime) VALUES (?,?,?,?,?,?) ON CONFLICT(userID, mangaId) DO UPDATE SET currentIndex = excluded.currentIndex, userCat = excluded.userCat, interactTime = excluded.interactTime'
+            ).bind(validationRes, newMangaInfo[index].mangaName, mangaId, newMangaInfo[index].currentIndex, userCat, Date.now()))
+            
+            env.IMG.put(mangaId, new Uint8Array(newMangaInfo[index].iconBuffer.data).buffer, {httpMetadata:{contentType:"image/jpeg"}}) //Save Cover Image with title as mangaId
 
-            mangaStmt = env.DB.prepare('Update mangaData SET urlList = ?, chapterTextList = ?, updateTime = ? WHERE mangaName = ? AND mangaId = ?')
-                .bind(mangaInfo.chapterUrlList, mangaInfo.chapterTextList, currentTime, mangaInfo.mangaName, mangaId)
-        }
+            return newBoundStmt
+        })
 
-        const bufferData = new Uint8Array(mangaInfo.iconBuffer.data).buffer//convert json buffer to arrayBuffer and saves it to r2 database using mangaId as the keyu
-        const imgMetric = await env.IMG.put(mangaId, bufferData, {httpMetadata:{contentType:"image/jpeg"}})
-
-        const userRowTest:string|null = await env.DB.prepare(
-            'SELECT userCat FROM userData WHERE userID = ? AND mangaId = ?') 
-            .bind(authId, mangaId)
-            .first()
-
-        var userStmt
-        //test if user is already tracking manga and if they are update entry. otherwise add a new one
-        if (!userRowTest) {
-            userStmt = env.DB.prepare('INSERT INTO userData (userID,mangaName,mangaId,currentIndex,userCat,interactTime) VALUES(?,?,?,?,?,?)')
-            .bind(authId, mangaInfo.mangaName, mangaId, mangaInfo.currentIndex, userCat, Date.now())
-        } else {
-            userStmt = env.DB.prepare('UPDATE userData SET currentIndex = ?, userCat = ?, interactTime = ? WHERE userID = ? AND mangaName = ? AND mangaId = ?')
-            .bind(mangaInfo.currentIndex, userCat, Date.now(), authId, mangaInfo.mangaName, mangaId)
-        }
+        boundAddStmts.push(env.DB.prepare('INSERT INTO stats (timestamp, type, stat_value) VALUES (CURRENT_TIMESTAMP, "mangaCount", ?)').bind(newMangaInfo.length))
         
-        const metric = await env.DB.batch([
-            mangaStmt,
-            userStmt
-        ])
+        const dbMetrics = await env.DB.batch(boundAddStmts)
 
         //If environment isn't prod send collected metrics for debugging
-        if (env.ENVIRONMENT != 'production') return new Response(JSON.stringify({message: mangaId, metric: metric, img: imgMetric}))
-        return new Response(JSON.stringify({message: mangaId}))
+        if (env.ENVIRONMENT != 'production') return new Response(JSON.stringify({results: userReturn, metric: dbMetrics}))
+        return new Response(JSON.stringify({results: userReturn}))
     } catch (error) {
         console.error("Error:", error);
         return new Response(JSON.stringify({message: 'an unknown error occured' + error}), {status:500});

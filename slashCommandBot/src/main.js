@@ -80,7 +80,7 @@ async function mangaListUpdate(interaction, client) {
         if (!resp.ok) return console.log('Issue fetching Manga')
         const data = await resp.json()
         
-        const names = data.userInfo.map(data => data = {"mangaName": data.mangaName.substring(0, 100), "mangaId": data.mangaId})
+        const names = data.mangaDetails.map(manga => manga = {"mangaName": data.mangaName.substring(0, 100), "mangaId": data.mangaId})
         
         const fuse = new Fuse(names, fuseOptions) //add name, idd dictionary to fuse
         fuseRes = fuse.search(search).slice(0,25) //fuzzy search best 25 results from user input
@@ -116,18 +116,30 @@ async function main() {
         if (config.globalCommands) {
             console.log("Registering Global Commands")
             await rest.put(Routes.applicationCommands(token.appID), {
-                body: [/*...slashCommandsJson, */...slashSubCommandsJson],
+                body: [/*...slashCommandsJson, */...slashSubCommandsJson, 
+                    {
+                        "name": "KMangaTest5911",
+                        "description": "Launch Manga Tracker",
+                        "type": 4,
+                        "handler": 2
+                    }
+                ],
             })
-            await rest.put(Routes.applicationGuildCommands(token.appID, token.guildID), {
-                body: [],
-            })
+            // await rest.put(Routes.applicationGuildCommands(token.appID, token.guildID), {
+            //     body: [],
+            // })
         } else {
             console.log("Registering Guild Commands")
             await rest.put(Routes.applicationGuildCommands(token.appID, token.guildID), {
                 body: [/*...slashCommandsJson, */...slashSubCommandsJson],
             })
             await rest.put(Routes.applicationCommands(token.appID), {
-                body: [],
+                body: [{
+                    "name": "Launch",
+                    "description": "Launch Manga Tracker",
+                    "type": 4,
+                    "handler": 2
+                }],
             })
         }
         console.log('Slash Commands Registered')

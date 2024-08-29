@@ -118,27 +118,39 @@ export default function addBookmarks() {
 
       var errorLog:string[] = []
       let addedCount = 0
-      for (var i = 0; i < currentUrls.length; i++) {
-        const reply = await fetch('/api/data/add/addManga', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            "access_token": auth.access_token,
-            "authId": null,
-            "userCat": selectedCat?.value,
-            "url": currentUrls[i]
-          }),
-        })
+      // for (var i = 0; i < currentUrls.length; i++) {
+      const reply = await fetch('/.proxy/api/data/add/addManga', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          "access_token": auth.access_token,
+          "authId": null,
+          "userCat": selectedCat?.value,
+          "urls": currentUrls
+        }),
+      })
 
-        if (!reply.ok) {
-          // console.log(await reply.json())
-          const data:{message:string, url:string} = await reply.json()
-          errorLog.push(`${data.url}: ${data.message}`)
-        } else {
-          addedCount++
-        }
+      if (!reply.ok) {
+        toast.update(notif, {
+          render: "A internal Server Error Ocurred!", 
+          type: "error", 
+          isLoading: false,
+          autoClose: 5000, 
+          hideProgressBar: false, 
+          closeOnClick: true, 
+          draggable: true,
+          progress: 0
+        })
+        return
+      }
+      // }
+      let {results}:{results:{message:String,url:string,success:boolean}[]} = await reply.json()
+
+      for (let manga of results) {
+        if (!manga.success) errorLog.push(`${manga.url}: ${manga.message}`)
+        else addedCount++
       }
 
       setAddedMangaCount(addedCount)

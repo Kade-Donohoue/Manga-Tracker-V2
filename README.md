@@ -12,6 +12,11 @@ the first 2 are required while the text command and utils are optional. Each fol
 
 # **Change Logs**
 
+## Change Log 1.1.6
+ - Moved initial getManga into fastify start function with await to ensure it starts before auto update
+ - manga Url checks for puppeteer server have been moved to dedicated function
+ - Auto Update jobs are now added in bulk rather than one at a time
+
 ## Change Log 1.1.5
 - Asura Scans script has been upgraded to improve performance
 - all scraping default load time is limited to 1 sec and page loading time is 10 sec

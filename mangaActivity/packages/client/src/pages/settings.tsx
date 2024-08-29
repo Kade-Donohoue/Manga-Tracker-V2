@@ -22,6 +22,8 @@ import SaveIcon from '@mui/icons-material/Save'
 import CancelIcon from '@mui/icons-material/Cancel'
 import EditIcon from '@mui/icons-material/Edit';
 import Box from '@mui/material/Box';
+import Modal from '@mui/material/Modal';
+import { modalStyle } from '../AppStyles';
 
 interface dataGridRow {
   id:string,
@@ -40,6 +42,10 @@ export default function settings() {
   const [rows, setRows] = React.useState<GridRowsProp>(convertToDataGrid(catOptions))
   const [rowModesModel, setRowModesModel] = React.useState<GridRowModesModel>({})
   const auth = authStore.getState()
+
+  const [openDeleteUserModal, setOpenDeleteUserModal] = React.useState(false);
+  const handleOpenDeleteModal = () => setOpenDeleteUserModal(true);
+  const handleCloseDeleteModal = () => setOpenDeleteUserModal(false);
 
 
 
@@ -81,7 +87,7 @@ export default function settings() {
   async function postCats( newCats:dropdownOption[] ) {
     setCatOptions(newCats)
     console.log(newCats)
-    let resp = await fetch('/api/data/update/updateUserCategories', {
+    let resp = await fetch('/.proxy/api/data/update/updateUserCategories', {
       method: 'POST',
           headers: {
               'Content-Type': 'application/json',
@@ -97,6 +103,23 @@ export default function settings() {
 
   }
 
+  async function deleteUserData() {
+    const resp = await fetch(`/api/data/remove/forgetUser`, {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+          "access_token": auth.access_token,
+          "authId": null,
+      })
+    })
+
+    handleCloseDeleteModal()
+    if (!resp.ok) return toast.error('Unable to remove user Data Please Contact an Admin!')
+    toast.success('All User Data Removed!')
+  }
+
   async function removeCategory(i:number) {
     let tempOptions = [...catOptions]
     tempOptions.splice(i, 1)
@@ -106,7 +129,7 @@ export default function settings() {
 
     // removeRow(i)
 
-    fetch('/api/data/update/updateUserCategories', {
+    fetch('/.proxy/api/data/update/updateUserCategories', {
         method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -321,6 +344,27 @@ export default function settings() {
             </Box>
           </AccordionDetails>
         </Accordion>
+        <Accordion sx={{backgroundColor:'#1e1e1e', color:'#ffffff', width:"80%"}}>
+          <AccordionSummary expandIcon={<ExpandMoreIcon sx={{color:'#ffffff'}}/>} id='panel-category-header'>User Data</AccordionSummary>
+          <AccordionDetails>
+            <Box>
+              <Button startIcon={<DeleteIcon/>} onClick={handleOpenDeleteModal}>Remove User Data</Button>
+            </Box>
+          </AccordionDetails>
+        </Accordion>
+
+        <Modal
+          open={openDeleteUserModal}
+          onClose={handleCloseDeleteModal}
+        >
+          <Box sx={{width: "80vw", height: "25vh", ...modalStyle}}>
+            <h1>Are you Sure?</h1>
+            <div style={{position: "absolute", bottom: 10, right: 10}}>
+              <Button onClick={(e) => {handleCloseDeleteModal()}}>Cancel</Button>
+              <Button variant="outlined" color="error" onClick={() => deleteUserData()}>Delete My Data!</Button>
+            </div>
+          </Box>
+        </Modal>
       </div>
     </div>
   );

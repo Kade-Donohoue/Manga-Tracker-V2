@@ -8,9 +8,11 @@ export async function forgetUser(access_token:string|null=null, authId:string, e
         if (validationRes instanceof Response) return validationRes
         authId = validationRes
 
-        await env.DB.prepare('DELETE FROM userData WHERE userID = ?')
-                .bind(authId)
-                .run()
+        await env.DB.batch([
+            env.DB.prepare('DELETE FROM userData WHERE userID = ?').bind(authId),
+            env.DB.prepare('DELETE FROM userSettings WHERE userID = ?').bind(authId)
+        ])
+
         return new Response(JSON.stringify({message: "Success"}), {status:200})
     } catch (err) {
         console.error("Error:", err);

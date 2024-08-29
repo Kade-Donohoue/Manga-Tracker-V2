@@ -90,3 +90,12 @@ export function verifyIndexRange(index:number, listLength:number) {
   if (index < listLength) return index
   return listLength-1
 }
+
+export function validateCategory(category:string):string {
+  if (category.toLowerCase() === "manganame") return "mangaData.mangaName"
+  if (category.toLowerCase() === "mangaid") return "userData.mangaId"
+  if (category.toLowerCase() === "updatetime") return "mangaData.updateTime"
+  if (category.toLowerCase() === "interacttime") return "userData.interactTime"
+  return "Invalid Category"
+  
+}

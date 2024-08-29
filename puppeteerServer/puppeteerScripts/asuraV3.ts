@@ -67,30 +67,15 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         job.log(logWithTimestamp('Chapter Loaded, starting retrial of overview URL and chapterData'))
 
         const stringData = await page.evaluate(() => {
-            let foundData = ''
-            let foundStart = false;
-            (window as any).__next_f.some((bigArray:any[]) => {
+            let foundData:string = ''
+            let foundStart:boolean = false
+            let str:string
+
+            (window as any).__next_f.forEach((bigArray:any[]) => {
                 if (bigArray[0] != 1) return false
-                let str:string = bigArray[1] as any
-                if (!foundStart && str.indexOf('\n2f:') >= 0) {// '\n2f:' is the start of the chapter list in next_f  
-                    foundStart = true
-                    if (str.indexOf('\n2e') == -1) {
-                        foundData += str.slice(str.indexOf('\n2f:'))
-                    } else {
-                        foundData += str.slice(str.indexOf('\n2f:'), str.indexOf('\n2e'))
-                        return true
-                    }
-                } else if (foundStart) { // '\n2e:' is the end of the chapter list in next_f  
-                    if (str.indexOf('\n2e:') != -1) {
-                        foundData += str.slice(0, str.indexOf('\n2e'))
-                        return true
-                    } else {
-                        foundData += str
-                    } 
-                }
-                return false
+                str += (bigArray[1] as any)
             })
-            return foundData
+            return str.slice(str.indexOf('\n2f:'), str.indexOf('\n2e:'))
         })
         await job.updateProgress(30)
 
@@ -173,7 +158,7 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         job.log(logWithTimestamp(`Error: ${err}`))
         console.warn(`Unable to fetch data for: ${url}`)
         if (config.logging.verboseLogging) console.warn(err)
-        await page.close()
+        if (!page.isClosed()) await page.close()
         
         //ensure only custom error messages gets sent to user
         if (err.message.startsWith('Manga:')) throw new Error(err.message)

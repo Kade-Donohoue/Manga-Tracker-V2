@@ -5,7 +5,7 @@ import {LoadingScreen} from '../../components/LoadingScreen'
 import Select from 'react-select'
 import React from "react"
 import './feed.css'
-import { mangaInfo, dropdownOption } from '../../types'
+import { mangaDetails, dropdownOption } from '../../types'
 import { catOptions, ordOptions, methodOptions } from '../../vars'
 import { RPCCloseCodes } from '@discord/embedded-app-sdk'
 import Box from '@mui/material/Box'
@@ -18,12 +18,7 @@ import CancelIcon from '@mui/icons-material/Cancel'
 import {modalStyle} from '../../AppStyles'
 
 export default function feed():JSX.Element {
-  const [response, setResponse] = React.useState<mangaInfo | null>(
-    {
-      "userInfo": [],
-      "mangaData": []
-    }
-  );
+  const [mangaDetails, setMangaDetails] = React.useState<mangaDetails[]>([]);
   const [currentCard, setCurrentCard] = React.useState(0)
   const [isLoadingStart, setIsLoadingStart] = React.useState(false)
   const [showError,setShowError] = React.useState(true)
@@ -38,7 +33,7 @@ export default function feed():JSX.Element {
     try {
       setIsLoadingStart(true)
 
-      const resp = await fetch("/api/data/pull/getUnread", {
+      const resp = await fetch('/.proxy/api/data/pull/getUnread', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -53,19 +48,19 @@ export default function feed():JSX.Element {
       })
 
       console.log(resp)
-      if (resp.status!=200) {
+      if (!resp.ok) {
         const errorData:{message:string} = await resp.json()
         setIsLoadingStart(false)
         return setError(errorData.message) 
       }
       setCurrentCard(0)
       setIsLoadingStart(false)
-      const data:mangaInfo = await resp.json();
+      const data:{mangaDetails:mangaDetails[]} = await resp.json();
       console.log(data)
-      setResponse(data)
+      setMangaDetails(data.mangaDetails)
       
       
-      if (response!.userInfo.length < 1) setError("No Manga Found") 
+      if (data.mangaDetails.length < 1) setError("No Manga Found") 
       else setShowError(false) 
     }
     catch (error) {
@@ -93,12 +88,12 @@ export default function feed():JSX.Element {
       body: JSON.stringify({
           "access_token": auth.access_token,
           "authId": null,
-          "mangaId": response!.mangaData[currentCard].mangaId,
+          "mangaId": mangaDetails[currentCard].mangaId,
           "interactionTime": Date.now()
       }),
     })
 
-    if (!response) return LoadingScreen
+    if (!mangaDetails) return LoadingScreen
     setCurrentCard(currentCard+increment)
     setChapter(null)
 
@@ -108,7 +103,7 @@ export default function feed():JSX.Element {
   async function submitManga(mangaId:string) {
     console.log(mangaId)
     let notif = toast.loading("Updating Chapter!")
-    const newIndex = response?.mangaData[currentCard].chapterTextList.indexOf(newChapter!.label)
+    const newIndex = mangaDetails[currentCard].chapterTextList.indexOf(newChapter!.label)
     if (!newIndex || newIndex == -1) return toast.update(notif, {
         render: "Internal Error Updating Chapter!", 
         type: "error", 
@@ -120,7 +115,7 @@ export default function feed():JSX.Element {
         progress: 0
     })
 
-    const reply:any = await fetch('/api/data/update/updateCurrentIndex', {
+    const reply:any = await fetch('/.proxy/api/data/update/updateCurrentIndex', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -133,11 +128,11 @@ export default function feed():JSX.Element {
       }),
     })
 
-    if (reply.ok && response) {
-      var tmp = {...response}
-      tmp.userInfo[currentCard].interactTime = Date.now()
-      tmp.userInfo[currentCard].currentIndex = newIndex
-      setResponse(tmp)
+    if (reply.ok && mangaDetails) {
+      var tmp = {...mangaDetails}
+      tmp[currentCard].interactTime = Date.now()
+      tmp[currentCard].currentIndex = newIndex
+      setMangaDetails(tmp)
       setChapter(null)
 
       return toast.update(notif, {
@@ -171,17 +166,17 @@ export default function feed():JSX.Element {
     discordSdk.close(RPCCloseCodes.TOKEN_REVOKED, "Restart Activity to Continue!")
     return <div>Restart Activity</div>
   }
-  if (!response || !response.userInfo) {
-    console.log(response)
-    return <></>
-  }
+  // if (mangaDetails.length<=0) {
+  //   console.log(mangaDetails)
+  //   return <></>
+  // }
 
   const [chapterOpen, setChapterOpen] = React.useState(false)
   const handleChapterOpen = () => setChapterOpen(true)
   const handleChapterClose = () => setChapterOpen(false)
 
   // console.log(response)
-  if (response.userInfo.length <= 0) return (
+  if (mangaDetails.length <= 0) return (
     <div className="feedOptionContainer">
       <label htmlFor="cat-select">Choose a Category: </label>
       <Select name="categories" 
@@ -221,36 +216,36 @@ export default function feed():JSX.Element {
   )
   return (
     <div style={{padding: 32}}>
-      <label className='feedMangaTitle'>{response!.userInfo[currentCard].mangaName}</label>
+      <label className='feedMangaTitle'>{mangaDetails[currentCard].mangaName}</label>
       <div className='mangaContainer'>
-        {response ? <img src={`/image/${response!.userInfo[currentCard].mangaId}`} alt="Manga Icon" className='cover-image' /> : <p>Loading...</p>}
+        {mangaDetails ? <img src={`/image/${mangaDetails[currentCard].mangaId}`} alt="Manga Icon" className='cover-image' /> : <p>Loading...</p>}
         <div className="button-container">
           <div className="button-wrapper">
             <button className="action-button" 
               onClick={(e) => {
-              const links = response.mangaData[currentCard].urlList
-              console.log(links[response.userInfo[currentCard].currentIndex])
-              discordSdk.commands.openExternalLink({url: links[response.userInfo[currentCard].currentIndex+1]});
+              const links = mangaDetails[currentCard].urlList
+              console.log(links[mangaDetails[currentCard].currentIndex])
+              discordSdk.commands.openExternalLink({url: links[mangaDetails[currentCard].currentIndex+1]});
             }}
             >Read Next</button>
             <span className="chapter-number">{ 
-            ( response.userInfo[currentCard].currentIndex+1 < response.mangaData[currentCard].chapterTextList.length ) ? response.mangaData[currentCard].chapterTextList[response.userInfo[currentCard].currentIndex+1] : response.mangaData[currentCard].chapterTextList[response.mangaData[currentCard].chapterTextList.length-1]
+            ( mangaDetails[currentCard].currentIndex+1 < mangaDetails[currentCard].chapterTextList.length ) ? mangaDetails[currentCard].chapterTextList[mangaDetails[currentCard].currentIndex+1] : mangaDetails[currentCard].chapterTextList[mangaDetails[currentCard].chapterTextList.length-1]
             }</span>
           </div>
           <div className="button-wrapper">
             <button className="action-button" 
               onClick={(e) => {
-              const links = response.mangaData[currentCard].urlList
+              const links = mangaDetails[currentCard].urlList
               discordSdk.commands.openExternalLink({url: links[links.length-1]!});
             }}>Read Latest</button>
-            <span className="chapter-number">{response.mangaData[currentCard].chapterTextList[response.mangaData[currentCard].chapterTextList.length-1]}</span>
+            <span className="chapter-number">{mangaDetails[currentCard].chapterTextList[mangaDetails[currentCard].chapterTextList.length-1]}</span>
           </div>
           <div className="button-wrapper">
             <button className="action-button" 
               onClick={(e) => {
-              discordSdk.commands.openExternalLink({url: response.mangaData[currentCard].urlList[response.userInfo[currentCard].currentIndex]});
+              discordSdk.commands.openExternalLink({url: mangaDetails[currentCard].urlList[mangaDetails[currentCard].currentIndex]});
             }}>Read Current</button>
-            <span className="chapter-number">{response.mangaData[currentCard].chapterTextList[response.userInfo[currentCard].currentIndex]}</span>
+            <span className="chapter-number">{mangaDetails[currentCard].chapterTextList[mangaDetails[currentCard].currentIndex]}</span>
           </div>
         </div>
       </div>
@@ -268,13 +263,13 @@ export default function feed():JSX.Element {
               className="chapSelect" 
               value={newChapter} 
               onChange={setChapter} 
-              options={response?.mangaData[currentCard].chapterTextList.toReversed().map((text, i) => {
+              options={mangaDetails[currentCard].chapterTextList.toReversed().map((text, i) => {
                   return {value: text, label: text}
               })} 
               styles={customStyles} 
           />
           <Button onClick={(e) => {
-              submitManga(response!.userInfo[currentCard].mangaId)
+              submitManga(mangaDetails[currentCard].mangaId)
               handleChapterClose()
           }}>Submit</Button>
           <SvgIcon onClick={handleChapterClose} sx={{position: "absolute", top: 10, right: 10}}>
@@ -297,10 +292,10 @@ export default function feed():JSX.Element {
           }}>Mark As Read
         </button>
         <button className='next mangaFeedControlButton' onClick={(e) => {
-          if (currentCard < response.mangaData.length - 1) updateCardIndex(1)
+          if (currentCard < mangaDetails.length - 1) updateCardIndex(1)
           console.log(currentCard)
           }}
-          disabled={(response.mangaData.length <= currentCard+1)}
+          disabled={(mangaDetails.length <= currentCard+1)}
           >Next
         </button>
       </div>
@@ -308,12 +303,7 @@ export default function feed():JSX.Element {
       <br></br>
       <button className='feedChangeOptionButton' onClick={(e) => {
         //remove response data 
-        setResponse(
-          {
-            "userInfo": [],
-            "mangaData": []
-          }
-        )
+        setMangaDetails([])
       }}>Change Options</button>
     </div>
   )

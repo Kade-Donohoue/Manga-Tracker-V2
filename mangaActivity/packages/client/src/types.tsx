@@ -291,6 +291,17 @@ export interface mangaInfo {
   }[]
 }
 
+export interface mangaDetails {
+  mangaName:string,
+  mangaId:string,
+  urlList: string[],
+  chapterTextList: string[], 
+  updateTime: string,
+  currentIndex: number,
+  userCat: string,
+  interactTime: number
+}
+
 export interface dropdownOption {
   "value":string, 
   "label": string

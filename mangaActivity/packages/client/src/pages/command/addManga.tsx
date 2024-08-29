@@ -68,10 +68,10 @@ export default function addManga() {
       setShowError(false)
 
       const urlBox = document.getElementById("chapURL") as HTMLTextAreaElement|null
-      var url:string|null = null
-      if (urlBox) url = urlBox.value.replace(" ", "")
+      var urls:string|null = null
+      if (urlBox) urls = urlBox.value.replace(" ", "")
 
-      if (!url) {
+      if (!urls) {
          toast.update(notif, {
         render: "No Manga Provided!", 
         type: "error", 
@@ -85,29 +85,45 @@ export default function addManga() {
        setIsLoading(false)
        return
       }
-      const urlList:string[] = url.split(',')
+      const urlList:string[] = urls.split(',')
 
 
       var errorLog:string[] = []
-      for (var i = 0; i < urlList.length; i++) {
-        const reply = await fetch('/api/data/add/addManga', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            "access_token": auth.access_token,
-            "authId": null,
-            "userCat": selectedCat?.value,
-            "url": urlList[i]
-          }),
-        })
+      // for (var i = 0; i < urlList.length; i++) {
+      const reply = await fetch('/.proxy/api/data/add/addManga', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          "access_token": auth.access_token,
+          "authId": null,
+          "userCat": selectedCat?.value,
+          "urls": urlList
+        }),
+      })
 
-        if (reply.status!=200) {
+      if (!reply.ok) {
+        toast.update(notif, {
+          render: "A internal Server Error Ocurred!", 
+          type: "error", 
+          isLoading: false,
+          autoClose: 5000, 
+          hideProgressBar: false, 
+          closeOnClick: true, 
+          draggable: true,
+          progress: 0
+        })
+        return
           // console.log(await reply.json())
-          const data:{message:string, url:string} = await reply.json()
-          errorLog.push(`${data.url}: ${data.message}`)
-        }
+        // const data:{message:string, url:string} = await reply.json()
+        // errorLog.push(`${data.url}: ${data.message}`)
+      }
+      // }
+      let {results}:{results:{message:String,url:string,success:boolean}[]} = await reply.json()
+
+      for (let manga of results) {
+        if (!manga.success) errorLog.push(`${manga.url}: ${manga.message}`)
       }
 
 
@@ -142,7 +158,7 @@ export default function addManga() {
       setIsLoading(false)
     } catch (error) {
       toast.update(notif, {
-        render: "An Unknown Error has Occured", 
+        render: "An Unknown Error has Occurred", 
         type: "error", 
         isLoading: false,
         autoClose: 5000, 

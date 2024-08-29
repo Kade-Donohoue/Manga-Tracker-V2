@@ -1,6 +1,7 @@
 import { Job, Queue, QueueEvents } from 'bullmq'
-import {getQueue, updateQueue} from './jobQueue'
+import {getQueue, updateQueue, getBrowser} from './jobQueue'
 import {updateCollector} from './types'
+import {validMangaCheck} from './util'
 import './mangaGetProc'
 import fastify from 'fastify'
 import config from './config.json'
@@ -8,7 +9,7 @@ import config from './config.json'
 const app = fastify()
 const port = 80
 const host = '0.0.0.0' //1.1.1.1 for local host only 0.0.0.0 for any interface
-app.listen({port: port, host: host}, function(err, address) {
+app.listen({port: port, host: host}, async function(err, address) {
     if (err) {
         console.error(err)
         process.exit(1)
@@ -16,9 +17,10 @@ app.listen({port: port, host: host}, function(err, address) {
 
     if (config.queue.clearQueuesAtStart) {
         console.log('Clearing Queue! If this isn\'t the behavior you want change it in config.json')
-        getQueue.obliterate({force:true})
-        updateQueue.obliterate({force:true})
+        await getQueue.obliterate({force:true})
+        await updateQueue.obliterate({force:true})
     }
+    await getBrowser()//called to initiate browser to help prevent multiple being opened
 
     if (config.updateSettings.updateAtStart) updateAllManga()
     console.log(`Puppeteer server listening at: ${address}`)
@@ -28,18 +30,14 @@ app.listen({port: port, host: host}, function(err, address) {
 app.get('/updateManga', async function(req, res) {
     let {pass, url} = req.query as {pass: string, url: string}
 
-    console.log(pass)
+    // console.log(pass)
     if (pass != config.serverCom.serverPassWord) return res.status(401).send({message: "Unauthorized"})
 
-    var webSite
-    if (!url.includes('http')) return res.status(422).send({message: "Invalid URL!"})
-    if (url.includes('manganato')) webSite = "manganato"
-    else if (url.includes('reaperscan')) webSite = "reaper"
-    else if (url.includes('reaper-scan')) webSite = "reaper-scans-fake"
-    else return res.status(422).send({message: "Unsupported WebPage"})
+    const webSite = validMangaCheck(url)
+    if (webSite.success === false) return res.status(webSite.statusCode).send({message: webSite.value})
 
     const job = await getQueue.add('User Update Manga', {
-        type: webSite,
+        type: webSite.value,
         url: url, 
         getIcon: false,
         update: false
@@ -50,53 +48,84 @@ app.get('/updateManga', async function(req, res) {
     res.send(response)
 })
 
-app.get('/getManga', async function(req, res) {
-    let {pass, url} = req.query as {pass: string, url: string}
+const getOpts = {
+    schema: {
+        querystring: {
+            urls: {type: 'array'},
+            pass: {type: 'string'}
+        }
+    }
+}
+app.get('/getManga', getOpts, async function(req, res) {
+    let {pass, urls} = req.query as {pass: string, urls: string[]}
+
+    console.log(urls)
 
     if (pass != config.serverCom.serverPassWord) return res.status(401).send({message: "Unauthorized"})
 
-    var webSite:string
-    if (!url.includes('http')) return res.status(422).send({message: "Invalid URL!"})
-    if (url.includes('manganato') && config.sites.allowManganatoScans) webSite = "manganato"
-    else if (url.includes('mangadex') && config.sites.allowMangaDex) webSite = "mangadex"
-    else if (url.includes('reaperscans') && config.sites.allowReaperScans) webSite = "reaperScans"
-    else if (url.includes('reaper-scan') && config.sites.allowReaperScansFake) webSite = "reaper-scans-fake"
-    else if (url.includes('asura') && config.sites.allowAsura) webSite = "asura"
-    else return res.status(422).send({message: "Unsupported WebPage"})
-    if (!url.includes('chapter') && !url.includes('ch-')) return res.status(422).send({message: "link provided is for an overview page. Please provide a link to a specific chapter page!"})
+    let errors:{message:string, url:string}[] = []
+    let batchedJobs:{name:string,data:any,opts:any}[] = []
+    for (const url of urls) {
+        const webSite = validMangaCheck(url)
+        if (webSite.success === false) {
+            errors.push({message: webSite.value, url:url})
+            continue
+        }
 
-    const job = await getQueue.add('User Full Fetch', {
-        type: webSite,
-        url: url.trim(), 
-        getIcon: true,
-        update: false
-    }, {priority: 1, removeOnComplete: config.queue.removeCompleted, removeOnFail: config.queue.removeFailed})
+        batchedJobs.push({
+            name: 'User Full Fetch', 
+            data: {
+            type: webSite.value,
+            url: url.trim(), 
+            getIcon: true,
+            update: false
+            }, 
+            opts: {priority: 1, removeOnComplete: config.queue.removeCompleted, removeOnFail: config.queue.removeFailed}
+        })
+    }
 
-    const response = {fetchId: job.id}
-    // console.log(typeof response)
-    // if (typeof response === "string") return res.status(500).send({message: response})
+    const jobs = await getQueue.addBulk(batchedJobs)
+
+    const response = {addedManga: jobs.map(job => {return {fetchId: job.id, url:job.data.url}}), errors: errors}
     res.send(response)
 })
 
-app.get('/checkStatus/get', async function(req, res) {
-    let {pass, fetchId} = req.query as {pass: string, fetchId: string}
+
+const checkOpts = {
+    schema: {
+        querystring: {
+            fetchIds: {type: 'array'},
+            pass: {type: 'string'}
+        }
+    }
+}
+app.get('/checkStatus/get', checkOpts, async function(req, res) {
+    let {pass, fetchIds} = req.query as {pass: string, fetchIds: string[]}
+    // console.log(fetchIds)
 
     if (pass != config.serverCom.serverPassWord) return res.status(401).send({message: "Unauthorized"})
 
-    const job = await getQueue.getJob(fetchId)
+    let data:{fetchId:string,status:string,statusCode:number,data:any}[] = []
+    for (const fetchId of fetchIds) {
+        let job = await getQueue.getJob(fetchId)
+        if (!job) {
+            data.push({fetchId:fetchId, status:"Not Found", statusCode:404,data:null}) 
+            continue
+        }
+        
+        if (await job.isCompleted()) data.push({fetchId:fetchId,status:"Completed",statusCode:200,data:job.returnvalue})
+        else if (await job.isFailed()) data.push({fetchId:fetchId,status:"Failed",statusCode:500,data:job.failedReason})
+        else {
+            data.push({fetchId:fetchId,status:"Still Processing",statusCode:202,data:null})
+            continue
+        }
 
-    if (!job) return res.status(404).send({message:'Not Found'})
+        //if job is completed or failed and client requests status check remove job from queue to clean it up
+        if (config.queue.instantClearJob) await job.remove()
+    }
 
-    if (config.logging.verboseLogging) console.log(job, await job.isFailed())
-
-    if (await job.isCompleted()) res.send(await job.returnvalue)
-    else if (await job.isFailed()) res.status(500).send({message: job.failedReason})
-    else return res.status(202).send({message: 'Still Processing'})
-
-    //if job is completed or failed and client requests status check remove job from queue to clean it up
-    if (config.queue.instantClearJob) await job.remove()
+    res.status(200).send({currentStatus: data})    
 })
-
 
 async function updateAllManga() {
     if (config.logging.autoUpdateInfo) console.log(`Updating all manga at ${Date.now()}`)
@@ -113,6 +142,7 @@ async function updateAllManga() {
     if (config.logging.verboseLogging) console.log(returnData.length)
     // console.log(returnData)
     let batchId = Date.now()
+    let batchedJobs:{data:any,name:string,opts:any}[] = []
     for (var i = 0; i < returnData.length; i++) {
 
         let firstChapUrl = ''
@@ -128,29 +158,32 @@ async function updateAllManga() {
             firstChapUrl = returnData[i].urlList.substring(0, returnData[i].urlList.indexOf(','))
         }
         if (config.logging.verboseLogging) console.log(firstChapUrl)
-        var webSite:string
-        if (!firstChapUrl.includes('http')) return
-        if (firstChapUrl.includes('manganato') && config.sites.allowManganatoScans) webSite = "manganato"
-        else if (firstChapUrl.includes('mangadex') && config.sites.allowMangaDex) webSite = "mangadex"
-        else if (firstChapUrl.includes('reaperscans') && config.sites.allowReaperScans) webSite = "reaperScans"
-        else if (firstChapUrl.includes('reaper-scan') && config.sites.allowReaperScansFake) webSite = "reaper-scans-fake"
-        else if (firstChapUrl.includes('asura') && config.sites.allowAsura) webSite = "asura"
-        else {
-            console.log(`unknown id db skipping: id: ${returnData[i].mangaId}, url: ${firstChapUrl}`)
+
+        const webSite = validMangaCheck(firstChapUrl)
+        if (webSite.success === false) {
+            console.log(`Disabled or Invalid URL in database! Check your config and the database Skipping for now. mangaId:${returnData[i].mangaId}`)
             continue
         }
         if (config.logging.verboseLogging) console.log(returnData[i])
-        getQueue.add('Auto Update Manga', {
-            type: webSite,
-            url: firstChapUrl,
-            mangaId: returnData[i].mangaId, 
-            getIcon: false,
-            update: true,    
-            length: returnData.length,
-            oldUrlList: returnData[i].urlList,
-            batchId: batchId
-        }, {priority: 2, removeOnComplete: config.queue.removeCompleted, removeOnFail: config.queue.removeFailed, attempts: 2})
+
+        batchedJobs.push({
+            name: 'Auto Update Manga',
+            data: {
+                type: webSite.value,
+                url: firstChapUrl,
+                mangaId: returnData[i].mangaId, 
+                getIcon: false,
+                update: true,    
+                length: returnData.length,
+                oldUrlList: returnData[i].urlList,
+                batchId: batchId
+            },
+            opts: {priority: 2, removeOnComplete: config.queue.removeCompleted, removeOnFail: config.queue.removeFailed, attempts: 2}
+        })
     }
+    await getQueue.addBulk(batchedJobs)
+
+    if (config.logging.verboseLogging) console.log('Jobs Added to Queue')
 }
 
 let dataCollector:updateCollector[] = []

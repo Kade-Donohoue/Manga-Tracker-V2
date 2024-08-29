@@ -120,7 +120,7 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         const currIndex = chapterLinks.indexOf(url)
 
         if (currIndex == -1 && !ignoreIndex) {
-            throw new Error("Manga: unable to find current chapter. Please retry or contact Admin!")
+            throw new Error("Manga: unable to find current chapter. Try opening page and copying URL or contact an Admin!")
         }
 
         job.log(logWithTimestamp('Done'))
@@ -130,7 +130,7 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         job.log(logWithTimestamp(`Error: ${err}`))
         console.warn(`Unable to fetch data for: ${url}`)
         if (config.logging.verboseLogging) console.warn(err)
-        await page.close()
+        if (!page.isClosed()) await page.close()
         if (err.name === 'TimeoutError') {
             throw new Error("Exceeded Timeout please try again later!")
         }

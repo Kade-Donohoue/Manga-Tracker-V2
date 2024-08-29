@@ -20,6 +20,7 @@ export const start = async () => {
     prompt: 'none',
     // More info on scopes here: https://discord.com/developers/docs/topics/oauth2#shared-resources-oauth2-scopes
     scope: [
+      'applications.commands',
       // "applications.builds.upload",
       // "applications.builds.read",
       // "applications.store.update",
@@ -43,8 +44,10 @@ export const start = async () => {
     ].filter((scope) => scope != null) as Types.OAuthScopes[],
   });
 
+  // console.log(`Authorized with client: ${code}`)
+
   // Retrieve an access_token from your embedded app's server
-  const response = await fetch('/api/token', {
+  const response = await fetch('/.proxy/api/token', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
