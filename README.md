@@ -12,6 +12,24 @@ the first 2 are required while the text command and utils are optional. Each fol
 
 # **Change Logs**
 
+## Change Log 1.1.8
+- resolved typeError in viewTracker
+
+## Change Log 1.1.7
+ - Updates Discord SDK
+ - changed all fetch for activity to comply with discord content security policy
+ - changed oauth2 to include application commands
+ - added support to launch activity in text channel
+ - Changed server response format for all pull requests
+ - added ability to add multiple manga in a single request
+ - Filters are now available for view tracked
+ - added setting for user options that allows for deleting all user data
+ - forgot user endpoint now also removes user categories
+ - fixed blank schema to create tables with correct name instead of _Copy
+ - added validation to getUserManga to prevent potential SQL injection
+ - updated asura script to work when chapterData was spread across arrays at end markers
+ - added check to puppeteer scripts to prevent trying to close page when its already closed
+
 ## Change Log 1.1.6
  - Moved initial getManga into fastify start function with await to ensure it starts before auto update
  - manga Url checks for puppeteer server have been moved to dedicated function

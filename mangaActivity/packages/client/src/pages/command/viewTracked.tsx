@@ -42,8 +42,8 @@ export default function tracked() {
     const [newChapter, setChapter] = React.useState<dropdownOption | null>(null)
 
     const [filterOption, setFilterOption] = React.useState<dropdownOption | null>(catOptions[7])
-    const [methodOption, setMethodOption] = React.useState<{label:string,value:keyof mangaDetails} | null>(sortOptions[2])
-    const [orderOption, setOrderOption] = React.useState<{value:string, label:string}>({value:"1", label:"Ascending"})
+    const [methodOption, setMethodOption] = React.useState<{label:string,value:string} | null>(sortOptions[2])
+    const [orderOption, setOrderOption] = React.useState<{value:string, label:string} | null>({value:"1", label:"Ascending"})
 
     const auth = authStore.getState();
     // console.log(auth)
@@ -510,8 +510,8 @@ export default function tracked() {
         </div>
         <div className='cardContainer' style={{display:"flex", justifyContent:"center", justifyItems:"center"}}>
             {mangaInfo.filter(manga => checkFilter(manga)).sort((a, b) => {
-                let key = methodOption?.value
-                let orderVal = parseInt(orderOption.value)
+                let key:keyof mangaDetails = methodOption?.value as keyof mangaDetails
+                let orderVal = parseInt(orderOption?orderOption.value:'0')
 
                 if (!key || !orderVal) return 0
 
