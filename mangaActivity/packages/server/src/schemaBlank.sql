@@ -5,7 +5,6 @@ DROP TABLE IF EXISTS stats;
 
 CREATE TABLE IF NOT EXISTS userData (
     userID TEXT NOT NULL,
-    mangaName TEXT NOT NULL,
     mangaId TEXT NOT NULL,
     currentIndex INTEGER NOT NULL,
     userCat TEXT NOT NULL,

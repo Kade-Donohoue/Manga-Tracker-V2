@@ -12,6 +12,15 @@ the first 2 are required while the text command and utils are optional. Each fol
 
 # **Change Logs**
 
+## Change Log 1.2.0
+- Added support for logging in on webbrowser with login with discord button
+- logout button added
+- added env vars for server and client URL
+- removed mangaName from user Table
+- added more catches resolving edge cases that would prevent stats from being generated
+- manga no user is reading is now removed whenever puppeteer server fetches all manga
+- updated asura script to work with new update
+
 ## Change Log 1.1.8
 - resolved typeError in viewTracker
 

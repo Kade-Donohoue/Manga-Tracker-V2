@@ -1,5 +1,5 @@
 import {Env} from './types';
-import tokenHandler from './handlers/tokenHandler';
+import tokenHandler, { refreshHandler } from './handlers/tokenHandler';
 import iapHandler from './handlers/iapHandler';
 import dataHandler from './handlers/dataHandler';
 
@@ -9,6 +9,8 @@ export function handleApiRequest(path: string[], request: Request, env: Env) {
   switch (path[0]) {
     case 'token':
       return tokenHandler(path, request, env);
+    case 'refresh': 
+      return refreshHandler(path, request, env);
     case 'iap':
       return iapHandler(path, request, env);
     case 'data':

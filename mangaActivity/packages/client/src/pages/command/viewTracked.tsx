@@ -23,7 +23,7 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
 import { CardActionArea } from '@mui/material'
-import { catOptions } from '../../vars'
+import { catOptions, fetchPath } from '../../vars'
 
 import './viewTracker.css'
 import {modalStyle} from '../../AppStyles'
@@ -54,7 +54,7 @@ export default function tracked() {
 
     async function getUserManga() {
         
-        const response = await fetch('/.proxy/api/data/pull/getUserManga', {
+        const response = await fetch(`${fetchPath}/api/data/pull/getUserManga`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -105,7 +105,7 @@ export default function tracked() {
             return
         }
 
-            const reply = await fetch('/.proxy/api/data/remove/deleteUserManga', {
+            const reply = await fetch(`${fetchPath}/api/data/remove/deleteUserManga`, {
                 method: 'POST',
                 headers: {
                 'Content-Type': 'application/json',
@@ -179,7 +179,7 @@ export default function tracked() {
             progress: 0
           })
 
-        const reply = await fetch('/.proxy/api/data/update/changeMangaCat', {
+        const reply = await fetch(`${fetchPath}/api/data/update/changeMangaCat`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -251,7 +251,7 @@ export default function tracked() {
             progress: 0
         })
 
-        const reply = await fetch('/.proxy/api/data/update/updateCurrentIndex', {
+        const reply = await fetch(`${fetchPath}/api/data/update/updateCurrentIndex`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -432,6 +432,7 @@ export default function tracked() {
 
     useEffect(() => {
         getUserManga()
+        console.log(fetchPath==='/.proxy'? '/.proxy/image':'https://img.dev.manga.kdonohoue.com')
     }, [])
 
     if (!mangaInfo) return LoadingScreen()
@@ -446,7 +447,7 @@ export default function tracked() {
             >
                 <Box sx={{width: "80vw", height: "65vh", ...modalStyle}}>
                     <div style={{display: 'flex', flexDirection: 'row'}}>
-                        <img className="modalImage" src={`/image/${modalIndex >= 0 ? mangaInfo[modalIndex].mangaId: "mangaNotFoundImage"}`}></img>
+                        <img className="modalImage" src={`${fetchPath==='/.proxy'? '/.proxy/image':'https://img.dev.manga.kdonohoue.com'}/${modalIndex >= 0 ? mangaInfo[modalIndex].mangaId: "mangaNotFoundImage"}`}></img>
                         <div style={{paddingLeft: "20px"}}>
                             
 
@@ -462,7 +463,7 @@ export default function tracked() {
                                 </Tooltip>
                             <Typography id="modal-chapter-list" sx={{overflowY: "scroll", height: 256, color:"blue", textDecoration:'underline'}}>
                                 <ul>
-                                {modalIndex >= 0 ? mangaInfo[modalIndex].chapterTextList.toReversed().map((chapText, i) => <li><a onClick={(e) => {discordSdk.commands.openExternalLink({url:mangaInfo[modalIndex].urlList.toReversed()[i]})}}>{chapText}</a></li>):<div/>}
+                                {modalIndex >= 0 ? mangaInfo[modalIndex].chapterTextList.toReversed().map((chapText, i) => <li><a onClick={(e) => {if (fetchPath === '/.proxy') {discordSdk.commands.openExternalLink({url:mangaInfo[modalIndex].urlList.toReversed()[i]})} else {window.open(mangaInfo[modalIndex].urlList.toReversed()[i])}}}>{chapText}</a></li>):<div/>}
                                 </ul>
                             </Typography>
                         </div>
@@ -524,7 +525,7 @@ export default function tracked() {
                   <CardMedia
                     component="img"
                     height="200"
-                    image={`/image/${data.mangaId}`}
+                    image={`${fetchPath==='/.proxy'? '/.proxy/image':'https://img.dev.manga.kdonohoue.com'}/${data.mangaId}`}
                     alt={`Cover for ${data.mangaName}`}
                     style={{objectPosition:"top"}}
                   />

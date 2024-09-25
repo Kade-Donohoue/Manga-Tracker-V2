@@ -6,7 +6,7 @@ import Select from 'react-select'
 import React from "react"
 import './feed.css'
 import { mangaDetails, dropdownOption } from '../../types'
-import { catOptions, ordOptions, methodOptions } from '../../vars'
+import { catOptions, ordOptions, methodOptions, fetchPath } from '../../vars'
 import { RPCCloseCodes } from '@discord/embedded-app-sdk'
 import Box from '@mui/material/Box'
 import Modal from '@mui/material/Modal'
@@ -33,7 +33,7 @@ export default function feed():JSX.Element {
     try {
       setIsLoadingStart(true)
 
-      const resp = await fetch('/.proxy/api/data/pull/getUnread', {
+      const resp = await fetch(`${fetchPath}/api/data/pull/getUnread`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -79,8 +79,8 @@ export default function feed():JSX.Element {
   }
 
   async function updateCardIndex(increment:number) {
-
-    const resp = fetch(`/api/data/update/updateInteractTime`, {
+    console.log(increment)
+    const resp = fetch(`${fetchPath}/data/update/updateInteractTime`, {
       method: 'POST',
       headers: {
           'Content-Type': 'application/json',
@@ -115,7 +115,7 @@ export default function feed():JSX.Element {
         progress: 0
     })
 
-    const reply:any = await fetch('/.proxy/api/data/update/updateCurrentIndex', {
+    const reply:any = await fetch(`${fetchPath}/api/data/update/updateCurrentIndex`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -129,9 +129,10 @@ export default function feed():JSX.Element {
     })
 
     if (reply.ok && mangaDetails) {
-      var tmp = {...mangaDetails}
+      var tmp:mangaDetails[] = [...mangaDetails]
       tmp[currentCard].interactTime = Date.now()
       tmp[currentCard].currentIndex = newIndex
+      console.log(tmp)
       setMangaDetails(tmp)
       setChapter(null)
 
@@ -218,14 +219,19 @@ export default function feed():JSX.Element {
     <div style={{padding: 32}}>
       <label className='feedMangaTitle'>{mangaDetails[currentCard].mangaName}</label>
       <div className='mangaContainer'>
-        {mangaDetails ? <img src={`/image/${mangaDetails[currentCard].mangaId}`} alt="Manga Icon" className='cover-image' /> : <p>Loading...</p>}
+        {mangaDetails ? <img src={`${fetchPath==='/.proxy'? '/.proxy/image':'https://img.dev.manga.kdonohoue.com'}/${mangaDetails[currentCard].mangaId}`} alt="Manga Icon" className='cover-image' /> : <p>Loading...</p>}
         <div className="button-container">
           <div className="button-wrapper">
             <button className="action-button" 
               onClick={(e) => {
               const links = mangaDetails[currentCard].urlList
               console.log(links[mangaDetails[currentCard].currentIndex])
-              discordSdk.commands.openExternalLink({url: links[mangaDetails[currentCard].currentIndex+1]});
+               if (fetchPath === '/.proxy') {
+                discordSdk.commands.openExternalLink({url: links[mangaDetails[currentCard].currentIndex+1]})
+               } else {
+                window.open(links[mangaDetails[currentCard].currentIndex+1])
+               }
+                
             }}
             >Read Next</button>
             <span className="chapter-number">{ 
@@ -236,14 +242,24 @@ export default function feed():JSX.Element {
             <button className="action-button" 
               onClick={(e) => {
               const links = mangaDetails[currentCard].urlList
-              discordSdk.commands.openExternalLink({url: links[links.length-1]!});
+              if (fetchPath === '/.proxy') {
+                discordSdk.commands.openExternalLink({url: links[links.length-1]!});
+               } else {
+                window.open(links[links.length-1]!)
+               }
+              
             }}>Read Latest</button>
             <span className="chapter-number">{mangaDetails[currentCard].chapterTextList[mangaDetails[currentCard].chapterTextList.length-1]}</span>
           </div>
           <div className="button-wrapper">
             <button className="action-button" 
               onClick={(e) => {
-              discordSdk.commands.openExternalLink({url: mangaDetails[currentCard].urlList[mangaDetails[currentCard].currentIndex]});
+                if (fetchPath === '/.proxy') {
+                  discordSdk.commands.openExternalLink({url: mangaDetails[currentCard].urlList[mangaDetails[currentCard].currentIndex]});
+                } else {
+                  window.open(mangaDetails[currentCard].urlList[mangaDetails[currentCard].currentIndex])
+                }
+              
             }}>Read Current</button>
             <span className="chapter-number">{mangaDetails[currentCard].chapterTextList[mangaDetails[currentCard].currentIndex]}</span>
           </div>
@@ -293,6 +309,7 @@ export default function feed():JSX.Element {
         </button>
         <button className='next mangaFeedControlButton' onClick={(e) => {
           if (currentCard < mangaDetails.length - 1) updateCardIndex(1)
+          else console.log('end of range', currentCard, mangaDetails.length)
           console.log(currentCard)
           }}
           disabled={(mangaDetails.length <= currentCard+1)}

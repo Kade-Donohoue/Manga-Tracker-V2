@@ -5,6 +5,7 @@ export interface Env {
   BOT_TOKEN: string;
   VITE_DISCORD_API_BASE: string;
   VITE_SERVER_URL: string,
+  VITE_CLIENT_URL: string,
   CF_ACCESS_CLIENT_ID?: string;
   CF_ACCESS_CLIENT_SECRET?: string;
   DB: D1Database;
@@ -15,6 +16,8 @@ export interface Env {
 
 export interface IGetOAuthToken {
   access_token: string;
+  expires_in: number;
+  refresh_token: string;
 }
 
 export enum SKUAccessTypes {

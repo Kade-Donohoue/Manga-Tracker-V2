@@ -6,7 +6,7 @@ import * as Scrollable from './components/Scrollable'
 import {AuthProvider} from './components/AuthProvider'
 import { authStore } from './stores/authStore';
 import DesignSystemProvider from './components/DesignSystemProvider'
-import { setCatOptions, catOptions } from './vars';
+import { setCatOptions, catOptions, fetchPath } from './vars';
 
 
 import Home from './pages/Home'
@@ -131,7 +131,7 @@ function RootedApp(): React.ReactElement {
       try{
         const auth = authStore.getState()
     
-        const data = await fetch('/.proxy/api/data/pull/pullUserCategories', {
+        const data = await fetch(`${fetchPath}/api/data/pull/pullUserCategories`, {
           method: 'POST',
           headers: {
               'Content-Type': 'application/json',

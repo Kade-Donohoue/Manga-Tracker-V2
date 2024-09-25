@@ -5,6 +5,7 @@ import React, { useEffect } from "react"
 import Select, { StylesConfig } from 'react-select'
 import './removeManga.css'
 import { mangaDetails, mangaInfo } from '../../types'
+import { fetchPath } from '../../vars'
 
 const customStyles: StylesConfig<dropdownOption, false> = {
   control: (provided, state) => ({
@@ -83,7 +84,7 @@ export default function removeManga() {
       return
     }
 
-        const reply = await fetch('/.proxy/api/data/remove/deleteUserManga', {
+        const reply = await fetch(`${fetchPath}/api/data/remove/deleteUserManga`, {
             method: 'POST',
             headers: {
             'Content-Type': 'application/json',
@@ -139,7 +140,7 @@ export default function removeManga() {
   } 
   
   async function retrieveMangaList() {
-    const resp = await fetch('/.proxy/api/data/pull/getUserManga', {
+    const resp = await fetch(`${fetchPath}/api/data/pull/getUserManga`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

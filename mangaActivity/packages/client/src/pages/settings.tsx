@@ -12,6 +12,7 @@ import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import { authStore } from '../stores/authStore';
 import { dropdownOption } from '../types';
 import { toast } from 'react-toastify';
+import { fetchPath } from '../vars';
 
 import Accordion from '@mui/material/Accordion'
 import AccordionSummary from '@mui/material/AccordionSummary'
@@ -20,10 +21,12 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { DataGrid, GridActionsCellItem, GridFooterContainer, GridFooter, GridRowModes, GridEventListener, GridRowEditStopReasons, GridRowProps, GridRowModesModel, GridRowId, GridRowModel, GridRowsProp, GridSlots, renderEditInputCell, GridRenderEditCellParams, GridColDef } from '@mui/x-data-grid'
 import SaveIcon from '@mui/icons-material/Save'
 import CancelIcon from '@mui/icons-material/Cancel'
+import LogoutIcon from '@mui/icons-material/Logout';
 import EditIcon from '@mui/icons-material/Edit';
 import Box from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
 import { modalStyle } from '../AppStyles';
+import { Cookies } from 'react-cookie';
 
 interface dataGridRow {
   id:string,
@@ -87,7 +90,7 @@ export default function settings() {
   async function postCats( newCats:dropdownOption[] ) {
     setCatOptions(newCats)
     console.log(newCats)
-    let resp = await fetch('/.proxy/api/data/update/updateUserCategories', {
+    let resp = await fetch(`${fetchPath}/api/data/update/updateUserCategories`, {
       method: 'POST',
           headers: {
               'Content-Type': 'application/json',
@@ -104,7 +107,7 @@ export default function settings() {
   }
 
   async function deleteUserData() {
-    const resp = await fetch(`/api/data/remove/forgetUser`, {
+    const resp = await fetch(`${fetchPath}/api/data/remove/forgetUser`, {
       method: 'POST',
       headers: {
           'Content-Type': 'application/json',
@@ -120,6 +123,15 @@ export default function settings() {
     toast.success('All User Data Removed!')
   }
 
+  async function logoutUser() {
+    const cookies = new Cookies();
+    cookies.remove('access_token')
+
+    authStore.setState({
+      access_token: undefined, user: undefined,
+    })
+  }
+
   async function removeCategory(i:number) {
     let tempOptions = [...catOptions]
     tempOptions.splice(i, 1)
@@ -129,7 +141,7 @@ export default function settings() {
 
     // removeRow(i)
 
-    fetch('/.proxy/api/data/update/updateUserCategories', {
+    fetch(`${fetchPath}/api/data/update/updateUserCategories`, {
         method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -345,10 +357,11 @@ export default function settings() {
           </AccordionDetails>
         </Accordion>
         <Accordion sx={{backgroundColor:'#1e1e1e', color:'#ffffff', width:"80%"}}>
-          <AccordionSummary expandIcon={<ExpandMoreIcon sx={{color:'#ffffff'}}/>} id='panel-category-header'>User Data</AccordionSummary>
+          <AccordionSummary expandIcon={<ExpandMoreIcon sx={{color:'#ffffff'}}/>} id='panel-category-header'>User</AccordionSummary>
           <AccordionDetails>
             <Box>
               <Button startIcon={<DeleteIcon/>} onClick={handleOpenDeleteModal}>Remove User Data</Button>
+              <Button startIcon={<LogoutIcon/>} onClick={logoutUser}>Logout</Button>
             </Box>
           </AccordionDetails>
         </Accordion>

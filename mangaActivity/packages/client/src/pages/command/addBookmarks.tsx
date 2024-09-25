@@ -4,7 +4,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import React, { useEffect } from "react"
 import Select, { StylesConfig } from 'react-select'
 import './addBookmarks.css'
-import { catOptions } from '../../vars';
+import { catOptions, fetchPath } from '../../vars';
 
 import Button from '@mui/material/Button'
 import ButtonGroup from '@mui/material/ButtonGroup'
@@ -119,7 +119,7 @@ export default function addBookmarks() {
       var errorLog:string[] = []
       let addedCount = 0
       // for (var i = 0; i < currentUrls.length; i++) {
-      const reply = await fetch('/.proxy/api/data/add/addManga', {
+      const reply = await fetch(`${fetchPath}/api/data/add/addManga`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

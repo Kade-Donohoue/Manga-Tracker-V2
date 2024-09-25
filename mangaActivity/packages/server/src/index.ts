@@ -5,7 +5,6 @@ export default {
   async fetch(request: Request, env: Env) {
     return await handleErrors(request, async () => {
       // We have received an HTTP request! Parse the URL and route the request.
-
       const url = await new URL(request.url);
       const path = url.pathname.slice(1).split('/');
 

@@ -75,7 +75,7 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
                 if (bigArray[0] != 1) return false
                 str += (bigArray[1] as any)
             })
-            return str.slice(str.indexOf('\n2f:'), str.indexOf('\n2e:'))
+            return str.slice(str.indexOf('\n31:'), str.indexOf('\n30:'))
         })
         await job.updateProgress(30)
 

@@ -25,11 +25,15 @@ export async function getUnreadManga(access_token:string, authId:string, userCat
             return new Response(JSON.stringify({message:`No user data found for ${authId} with the cat ${userCat}`}), {status: 404})
         }
 
-        for (var manga of userManga) {
-            if ("string" === typeof manga.chapterTextList && "string" === typeof manga.urlList) {
-                manga.chapterTextList = manga.chapterTextList.split(',')
-                manga.urlList = manga.urlList.split(',')
+        for (let i = userManga.length -1; i >= 0; i--) {
+            let manga = userManga[i]
+
+            if (typeof manga.chapterTextList === "string" && typeof manga.urlList === "string") {
+                userManga[i].chapterTextList = manga.chapterTextList.split(',')
+                userManga[i].urlList = manga.urlList.split(',')
             }
+
+            if (userManga[i].urlList.length-1 <= userManga[i].currentIndex) userManga.splice(i,1)
         }
 
         return new Response(JSON.stringify({mangaDetails: userManga}), {status: 200})
@@ -99,6 +103,9 @@ export async function getUserManga(access_token:string, authId:string, env:Env) 
 
 export async function getAllManga(env:Env, pass:string|null) {
     try {
+        //Remove all manga that no user is tracking
+        await env.DB.prepare('DELETE FROM mangaData WHERE mangaId NOT IN (SELECT mangaId FROM userData)').run()
+
         const allManga:[{mangaName:string, mangaId:string}] = (await env.DB.prepare('SELECT mangaName, mangaId FROM mangaData')
                 .all()).results as any
         console.log(allManga)
@@ -142,6 +149,7 @@ export async function userStats(access_token:string, authId:string, env:Env) {
             }
             let currentList:string[] = currentMangaData.chapterTextList.split(',')
             let lastChapNums = currentList[currentList.length-1].match(/[0-9.]+/g)
+            if (!lastChapNums) continue
             let latestChapNumber:number = parseInt(lastChapNums![lastChapNums!.length -1])
 
             totalChapters+=latestChapNumber

@@ -2,6 +2,7 @@ import {authStore} from '../../stores/authStore'
 import { toast } from 'react-toastify'
 import React, { useEffect } from "react"
 import './stats.css'
+import { fetchPath } from '../../vars';
 
 export default function stats() {
 
@@ -13,7 +14,7 @@ export default function stats() {
   }
   
   async function retrieveStats() {
-    const resp = await fetch('/.proxy/api/data/pull/userStats', {
+    const resp = await fetch(`${fetchPath}/api/data/pull/userStats`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -5,7 +5,7 @@ import {authStore} from '../../stores/authStore'
 import Select, { StylesConfig } from 'react-select'
 import React, { useEffect } from "react"
 import './addManga.css'
-import { catOptions } from '../../vars'
+import { catOptions, fetchPath } from '../../vars'
 import { dropdownOption } from '../../types'
 
 const customStyles: StylesConfig<dropdownOption, false> = {
@@ -90,7 +90,7 @@ export default function addManga() {
 
       var errorLog:string[] = []
       // for (var i = 0; i < urlList.length; i++) {
-      const reply = await fetch('/.proxy/api/data/add/addManga', {
+      const reply = await fetch(`${fetchPath}/api/data/add/addManga`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

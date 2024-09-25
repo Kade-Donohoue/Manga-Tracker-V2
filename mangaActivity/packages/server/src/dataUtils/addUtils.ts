@@ -82,8 +82,8 @@ export async function saveManga(access_token:string, authId:string, urls:string[
             ).bind(mangaId, newMangaInfo[index].mangaName, newMangaInfo[index].chapterUrlList, newMangaInfo[index].chapterTextList, currentTime))
 
             newBoundStmt.push(env.DB.prepare(
-                'Insert INTO userData (userId, mangaName, mangaId, currentIndex, userCat, interactTime) VALUES (?,?,?,?,?,?) ON CONFLICT(userID, mangaId) DO UPDATE SET currentIndex = excluded.currentIndex, userCat = excluded.userCat, interactTime = excluded.interactTime'
-            ).bind(validationRes, newMangaInfo[index].mangaName, mangaId, newMangaInfo[index].currentIndex, userCat, Date.now()))
+                'Insert INTO userData (userId, mangaId, currentIndex, userCat, interactTime) VALUES (?,?,?,?,?) ON CONFLICT(userID, mangaId) DO UPDATE SET currentIndex = excluded.currentIndex, userCat = excluded.userCat, interactTime = excluded.interactTime'
+            ).bind(validationRes, mangaId, newMangaInfo[index].currentIndex, userCat, Date.now()))
             
             env.IMG.put(mangaId, new Uint8Array(newMangaInfo[index].iconBuffer.data).buffer, {httpMetadata:{contentType:"image/jpeg"}}) //Save Cover Image with title as mangaId
 

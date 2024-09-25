@@ -27,3 +27,11 @@ export const methodOptions:dropdownOption[] = [
     {value: "currentIndex", label: "Chapters Read"}, 
     {value: "userCat", label: "Category"}
 ]
+
+export let fetchPath:string = "/.proxy"
+
+export function setFetchPath(path:string){
+    console.log(`Changing Path To: ${path}`)
+    fetchPath = path
+    console.log(path)
+}

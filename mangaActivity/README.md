@@ -30,7 +30,7 @@ Steps to manually deploy the embedded app 0. Have access to the Discord Dev clou
 1. Log into cloudflare with your credentials associated with Discord Dev
 
 ```sh
-wrangler login
+npx wrangler login
 ```
 
 2. Create or verify .env.production file
