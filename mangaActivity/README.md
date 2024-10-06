@@ -43,6 +43,9 @@ cd packages/client
 npm run build
 npx wrangler pages deploy dist
 ```
+open dashboard and open project
+go to settings
+and env secret for VITE_SERVER_URL and VITE_CLIENT_URL as well as VITE_IMG_URL
 
 4. Build and deploy the server
 

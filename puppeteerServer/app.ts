@@ -128,7 +128,8 @@ app.get('/checkStatus/get', checkOpts, async function(req, res) {
 })
 
 async function updateAllManga() {
-    if (config.logging.autoUpdateInfo) console.log(`Updating all manga at ${Date.now()}`)
+    let date = new Date()
+    if (config.logging.autoUpdateInfo) console.log(`Updating all manga at ${date.toLocaleString()}`)
     const resp = await fetch(`${config.serverCom.serverUrl}/api/data/pull/getUpdateData`, {
         method: 'GET',
         headers: {
@@ -172,7 +173,7 @@ async function updateAllManga() {
                 type: webSite.value,
                 url: firstChapUrl,
                 mangaId: returnData[i].mangaId, 
-                getIcon: false,
+                getIcon: config.updateSettings.refetchImgs,
                 update: true,    
                 length: returnData.length,
                 oldUrlList: returnData[i].urlList,
@@ -206,26 +207,7 @@ getEvents.on('completed', async ({ jobId }:{jobId:string}) => {
 
         if (config.queue.instantClearJob) await job.remove()
 
-        if (job.data.length <= dataCollector[dataIndex].batchData.completedCount) {
-            if (dataCollector[dataIndex].batchData.newData.length > 0) {
-                const resp = await fetch(`${config.serverCom.serverUrl}/api/data/update/bulkUpdateMangaInfo`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        "access_token": config.serverCom.serverPassWord,
-                        "newData": dataCollector[dataIndex].batchData.newData,
-                        "amountNewChapters": dataCollector[dataIndex].batchData.newChapterCount
-                    }),
-                })
-
-                if (!resp.ok) console.warn(await resp.json())
-                else if (config.logging.autoUpdateInfo) console.log(`${dataCollector[dataIndex].batchData.newData.length} / ${dataCollector[dataIndex].batchData.completedCount} Manga Update Saved With ${dataCollector[dataIndex].batchData.newChapterCount} New Chapters!`)
-
-            } else if (config.logging.autoUpdateInfo) console.log('Update Complete! No New Chapters Found!')
-            dataCollector.splice(dataIndex, 1)
-        }
+        if (job.data.length <= dataCollector[dataIndex].batchData.completedCount) sendUpdate(dataIndex)
     }
 })
 
@@ -241,8 +223,31 @@ getEvents.on('failed', async ({ jobId }:{jobId:string}) => {
         }
         dataCollector[dataIndex].batchData.completedCount++
 
+        if (job.data.length <= dataCollector[dataIndex].batchData.completedCount) sendUpdate(dataIndex)
+
         if (config.queue.instantClearJob) await job.remove()
     }
 })
+
+async function sendUpdate(dataIndex:number) {
+    if (dataCollector[dataIndex].batchData.newData.length > 0) {
+        const resp = await fetch(`${config.serverCom.serverUrl}/api/data/update/bulkUpdateMangaInfo`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                "access_token": config.serverCom.serverPassWord,
+                "newData": dataCollector[dataIndex].batchData.newData,
+                "amountNewChapters": dataCollector[dataIndex].batchData.newChapterCount
+            }),
+        })
+
+        if (!resp.ok) console.warn(await resp.json())
+        else if (config.logging.autoUpdateInfo) console.log(`${dataCollector[dataIndex].batchData.newData.length} / ${dataCollector[dataIndex].batchData.completedCount} Manga Update Saved With ${dataCollector[dataIndex].batchData.newChapterCount} New Chapters!`)
+
+    } else if (config.logging.autoUpdateInfo) console.log('Update Complete! No New Chapters Found!')
+    dataCollector.splice(dataIndex, 1)
+}
 
 setInterval(updateAllManga, config.updateSettings.updateDelay)

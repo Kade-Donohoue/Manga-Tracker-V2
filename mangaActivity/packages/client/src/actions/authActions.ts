@@ -87,25 +87,20 @@ export const start = async (isEmbedded: boolean) => {
   }
 
   async function externalAuth(cookies: Cookies): Promise<boolean> {
-    setFetchPath(""/*import.meta.env.VITE_SERVER_URL*/);
+    setFetchPath(""/*import.meta.env.VITE_SERVER_URL*/);//remove empty string and uncomment VITE_SERVER_URL for prod env
 
     // Check if code is stored in cookie
     let access_token:string = await cookies.get('access_token');
     const refresh_token:string = await cookies.get('refresh_token');
     console.log(access_token);
 
-    if (!access_token || !refresh_token) {
+    if (!access_token /*|| !refresh_token*/) {
       console.log('No Token Saved');
       const code: string = new URLSearchParams(window.location.search).get('code') as string;
       // console.log(!code && !refresh_token)
       if (!code && !refresh_token) return false;
       
-      let body
-      if (refresh_token) {
-        body = JSON.stringify({refresh_token})
-      } else {
-        body = JSON.stringify({code})
-      }
+      let body = JSON.stringify(refresh_token ? { refresh_token } : { code });
 
       const response = await fetch(`${fetchPath}/api/${refresh_token?'refresh':'token'}`, {
         method: 'POST',
@@ -123,6 +118,7 @@ export const start = async (isEmbedded: boolean) => {
 
       if (!responseData.access_token || responseData.access_token === 'mock_token') return false;
 
+      access_token = responseData.access_token
       cookies.set('access_token', responseData.access_token, {
         path: '/',
         secure: true,

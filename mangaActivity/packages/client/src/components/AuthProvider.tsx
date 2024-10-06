@@ -20,7 +20,7 @@ export function AuthProvider({children}: {children: React.ReactNode}) {
       return (
         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", width: "100%", height: "100vh", backgroundColor: "#151718", color: "#ffffff", flexDirection: "column" }}>
           <Button 
-          href='https://discord.com/oauth2/authorize?client_id=1213553872635699240&response_type=code&redirect_uri=https%3A%2F%2Fdevmanga.kdonohoue.com&integration_type=1&scope=identify+applications.commands'
+          href={`https://discord.com/oauth2/authorize?client_id=${import.meta.env.VITE_CLIENT_ID}&response_type=code&redirect_uri=${import.meta.env.VITE_CLIENT_URL}&integration_type=1&scope=identify+applications.commands`}
           >
             Sign In With Discord
           </Button>

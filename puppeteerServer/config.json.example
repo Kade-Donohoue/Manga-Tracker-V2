@@ -24,6 +24,7 @@
     },
     "updateSettings": {
         "updateDelay": 7200000,
-        "updateAtStart": true
+        "updateAtStart": true,
+        "refetchImgs": false
     }
 }

@@ -12,6 +12,20 @@ the first 2 are required while the text command and utils are optional. Each fol
 
 # **Change Logs**
 
+## Changle Log 1.2.1
+ - default auth link now uses environmental vars to create link
+ - when authorizing with code or refresh token it now gets saved propperly
+ - feed now saves interact time again
+ - removed vite.config.ts.example as you no longer need to config anything
+ - icons are now being saved again
+ - added option to enable / disable saving icons on update
+ - OPTIONS requests to servers now get a response
+ - CORS headers are added to responses now
+ - Update terminal message time updates to human readable format
+ - resolved update manga not saving if last manga in batch failed
+ - updated README.md for magnaActivity to match new requirements 
+ - image URL is now env var instead of hard coded value
+
 ## Change Log 1.2.0
 - Added support for logging in on webbrowser with login with discord button
 - logout button added

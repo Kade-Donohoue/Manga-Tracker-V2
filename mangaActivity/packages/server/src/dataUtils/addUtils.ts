@@ -25,6 +25,7 @@ export async function saveManga(access_token:string, authId:string, urls:string[
             }), {status:mangaReq.status})
         }
 
+        //response from puppeteer server with ids to check
         const {addedManga, errors}:{addedManga:{fetchId:string,url:string}[], errors:{message:string, url:string, success:false}[]} = await mangaReq.json()
 
         const waitingManga = new Map<string, string>( addedManga.map(item => [item.fetchId, item.url]))
@@ -72,7 +73,8 @@ export async function saveManga(access_token:string, authId:string, urls:string[
         
         const currentTime = new Date().toLocaleDateString("en-US", {year: "numeric", month: "numeric", day: "numeric", timeZone: "America/Los_Angeles", timeZoneName: "short", hour: "numeric", minute: "numeric", hour12: true })
         
-        let boundAddStmts:D1PreparedStatement[] = (mangaTestResults).flatMap((testResult:{results:mangaDataRowReturn[]}, index:number) => {
+        let boundAddStmtsArrs:D1PreparedStatement[][] = await Promise.all(mangaTestResults.map(async (testResult:{results:mangaDataRowReturn[]}, index:number) => {
+            
             let newBoundStmt:D1PreparedStatement[] = []
 
             let mangaId = testResult?.results?.[0]?.mangaId||uuidv4().toString() //use existing id or create new one if not exist
@@ -85,10 +87,12 @@ export async function saveManga(access_token:string, authId:string, urls:string[
                 'Insert INTO userData (userId, mangaId, currentIndex, userCat, interactTime) VALUES (?,?,?,?,?) ON CONFLICT(userID, mangaId) DO UPDATE SET currentIndex = excluded.currentIndex, userCat = excluded.userCat, interactTime = excluded.interactTime'
             ).bind(validationRes, mangaId, newMangaInfo[index].currentIndex, userCat, Date.now()))
             
-            env.IMG.put(mangaId, new Uint8Array(newMangaInfo[index].iconBuffer.data).buffer, {httpMetadata:{contentType:"image/jpeg"}}) //Save Cover Image with title as mangaId
+            await env.IMG.put(mangaId, new Uint8Array(newMangaInfo[index].iconBuffer.data).buffer, {httpMetadata:{contentType:"image/jpeg"}}) //Save Cover Image with title as mangaId
 
             return newBoundStmt
-        })
+        }))
+        
+        let boundAddStmts:D1PreparedStatement[] = boundAddStmtsArrs.flat()
 
         boundAddStmts.push(env.DB.prepare('INSERT INTO stats (timestamp, type, stat_value) VALUES (CURRENT_TIMESTAMP, "mangaCount", ?)').bind(newMangaInfo.length))
         

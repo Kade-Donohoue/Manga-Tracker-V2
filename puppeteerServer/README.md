@@ -27,11 +27,13 @@ This is in charge of fetching all manga data from various sources
  - removeCompleted: max number of completed jobs to store in queue (default: 1000)
  - removeFailed: max number of failed jobs to store in queue (default: 5000)
 <br/><br/>
+ - autoUpdateInfo: When enabled basic auto update information is provided when it finishes/start (default: true)
+ - verboseLogging: When enabled detailed logging for jobs are provided (default: false)
+<br/><br/>
  - serverUrl: url to activities workers (default: "enter_url_here")
  - serverPassword: Password to secure server-server communication (default: "secret_Password_Change_Me")
 <br/><br/>
  - updateDelay: milliseconds between updates (default: 2Hr)
  - updateAtStart: whether or not to update all manga on server start (default: true)
+ - refetchImgs: if all images should be refetched when updating manga. leave at false unless you need images updated (default: false)
 <br/><br/>
- - autoUpdateInfo: When enabled basic auto update information is provided when it finishes/start (default: true)
- - verboseLogging: When enabled detailed logging for jobs are provided (default: false)

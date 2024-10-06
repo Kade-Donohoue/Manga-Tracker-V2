@@ -432,7 +432,7 @@ export default function tracked() {
 
     useEffect(() => {
         getUserManga()
-        console.log(fetchPath==='/.proxy'? '/.proxy/image':'https://img.dev.manga.kdonohoue.com')
+        console.log(fetchPath==='/.proxy'? '/.proxy/image':import.meta.env.VITE_IMG_URL)
     }, [])
 
     if (!mangaInfo) return LoadingScreen()
@@ -447,7 +447,7 @@ export default function tracked() {
             >
                 <Box sx={{width: "80vw", height: "65vh", ...modalStyle}}>
                     <div style={{display: 'flex', flexDirection: 'row'}}>
-                        <img className="modalImage" src={`${fetchPath==='/.proxy'? '/.proxy/image':'https://img.dev.manga.kdonohoue.com'}/${modalIndex >= 0 ? mangaInfo[modalIndex].mangaId: "mangaNotFoundImage"}`}></img>
+                        <img className="modalImage" src={`${fetchPath==='/.proxy'? '/.proxy/image':import.meta.env.VITE_IMG_URL}/${modalIndex >= 0 ? mangaInfo[modalIndex].mangaId: "mangaNotFoundImage"}`}></img>
                         <div style={{paddingLeft: "20px"}}>
                             
 
@@ -525,7 +525,7 @@ export default function tracked() {
                   <CardMedia
                     component="img"
                     height="200"
-                    image={`${fetchPath==='/.proxy'? '/.proxy/image':'https://img.dev.manga.kdonohoue.com'}/${data.mangaId}`}
+                    image={`${fetchPath==='/.proxy'? '/.proxy/image':import.meta.env.VITE_IMG_URL}/${data.mangaId}`}
                     alt={`Cover for ${data.mangaName}`}
                     style={{objectPosition:"top"}}
                   />
