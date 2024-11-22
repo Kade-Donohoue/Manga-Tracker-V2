@@ -12,19 +12,23 @@ the first 2 are required while the text command and utils are optional. Each fol
 
 # **Change Logs**
 
+## Change Log 1.2.3
+ - fixed edge case that would prevent asura from getting data
+ - added observability for new cloudflare logs into example
+
 ## Change Log 1.2.2
  - If adding fails the button is usable after fail
- - fixxed images not loading for feed
+ - fixed images not loading for feed
  - removed categories V1 in favor of the new version
  - updated wrangler to support new logging
  - new manga is now correctly counted and manga already tracked being added again no longer counts towards the statistics
  - bulk Update can now support saving images
- - fixxed CORS response
+ - fixed CORS response
  - Icon buffer now is correct data type
  - reimplemented bulk update to fix some issues and add support for bulk updating all images
- - fixxed asura scans to support latest update
+ - fixed asura scans to support latest update
  - improved asura scans logging
- - fixxed name of launch button
+ - fixed name of launch button
 
 ## Change Log 1.2.1
  - default auth link now uses environmental vars to create link

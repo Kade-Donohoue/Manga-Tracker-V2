@@ -79,10 +79,12 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
             //finds beinging of chapter list from next_f and pulls chapter list returning as json
             let startIndex = str.indexOf('"chapterMapData":[')
             if (startIndex == -1 ) throw new Error('Manga: Unable to find start of chapter list')
-            let endIndex = str.indexOf(']', startIndex)
+            let endIndex = str.indexOf('}]', startIndex)
             if (endIndex == -1) throw new Error('Manga: Ubable to find end of chapter list') 
-            return JSON.parse(`{${str.slice(startIndex, endIndex+1).trim()}}`)
+                // return str.slice(startIndex, endIndex+1).trim()
+            return JSON.parse(`{${str.slice(startIndex, endIndex+2).trim()}}`)
         })
+        if (config.logging.verboseLogging) console.log(chapterData)
         await job.updateProgress(30)
 
         const overViewURL = await page.evaluate(() => {

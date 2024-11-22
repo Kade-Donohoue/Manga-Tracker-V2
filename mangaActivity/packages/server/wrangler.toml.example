@@ -5,6 +5,10 @@ compatibility_date = "2022-05-03"
 workers_dev = false
 route = {pattern = "enter_domain_for_server_worker_here", custom_domain = true}
 
+[observability]
+enabled = true
+head_sampling_rate = 1
+
 [vars]
 ENVIRONMENT = "dev"
 
