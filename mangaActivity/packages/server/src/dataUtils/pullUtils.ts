@@ -13,7 +13,7 @@ export async function getUnreadManga(access_token:string, authId:string, userCat
 
         if (selectedCategory === "Invalid Category") return new Response(JSON.stringify({message: 'Invalid Category'}), {status: 400}) 
 
-        console.log(authId + userCat + sortMethod + sortOrd)
+        console.log({"authId": authId, "userCat": userCat, "sortMethod": sortMethod, "sortOrd":sortOrd})
         var userManga:mangaDetails[]|null = (await env.DB.prepare(
             `SELECT mangaData.mangaName, userData.mangaId, mangaData.urlList, mangaData.chapterTextList, mangaData.updateTime, userData.currentIndex, userData.userCat, userData.interactTime FROM userData JOIN mangaData ON (userData.mangaId = mangaData.mangaId) WHERE userData.userId = ? AND userCat LIKE ? ORDER BY ${selectedCategory} ${selectedSortOrd}`
         )
@@ -21,7 +21,7 @@ export async function getUnreadManga(access_token:string, authId:string, userCat
             .all()).results as any
         
         if (!userManga) {
-            console.log(`No user data found for ${authId} with the cat ${userCat}`)
+            console.log({"message": 'No User data found!', "authId":authId, "userCat":userCat})
             return new Response(JSON.stringify({message:`No user data found for ${authId} with the cat ${userCat}`}), {status: 404})
         }
 
@@ -92,7 +92,7 @@ export async function getUserManga(access_token:string, authId:string, env:Env) 
             }
         }
         
-        console.log(`Query took ${queryTimeDebug} milliseconds to process`)
+        // console.log(`Query took ${queryTimeDebug} milliseconds to process`)
 
         return new Response(JSON.stringify({mangaDetails: userManga}), {status:200})
     } catch (err) {
@@ -108,7 +108,7 @@ export async function getAllManga(env:Env, pass:string|null) {
 
         const allManga:[{mangaName:string, mangaId:string}] = (await env.DB.prepare('SELECT mangaName, mangaId FROM mangaData')
                 .all()).results as any
-        console.log(allManga)
+        // console.log(allManga)
         return new Response(JSON.stringify({allData: allManga}), {status:200})
     } catch (err) {
         console.error("Error:", err);
@@ -134,7 +134,7 @@ export async function userStats(access_token:string, authId:string, env:Env) {
         const mangaCount = await env.DB.prepare('SELECT COUNT(*) AS count FROM mangaData').first()
         //Get new chapter count in last 30 days
         const updateCount = await env.DB.prepare('SELECT SUM(stat_value) AS total FROM stats WHERE type = "chapCount" AND timestamp > datetime("now", "-30 days")').first()
-        const newCount = await env.DB.prepare('SELECT COUNT(stat_value) AS total FROM stats WHERE type = "mangaCount" AND timestamp > datetime("now", "-30 days")').first()
+        const newCount = await env.DB.prepare('SELECT SUM(stat_value) AS total FROM stats WHERE type = "mangaCount" AND timestamp > datetime("now", "-30 days")').first()
 
 
         var unreadChapters:number = 0
@@ -165,12 +165,11 @@ export async function userStats(access_token:string, authId:string, env:Env) {
                     read+= parseInt(currentChapNums![currentChapNums!.length-1])
 
                     const currUnread = (latestChapNumber)-(parseInt(currentChapNums![currentChapNums!.length-1]))
-                    console.log(currUnread)
+                    // console.log(currUnread)
                     if (currUnread!=0) unreadManga++
                     unreadChapters+=currUnread
                 } catch (error) {
-                    console.log(error)
-                    console.log('Issue fetching data for manga: ' + foundUserManga.mangaId)
+                    console.log({"message":'Issue fetching data for manga', "mangaId":foundUserManga.mangaId, "error":error})
                 }
             }
         }
@@ -194,7 +193,7 @@ export async function getUpdateData(env:Env, pass:string|null) {
         
         const allManga:[{mangaId:string, urlList:string}] = (await env.DB.prepare('SELECT urlList, mangaId FROM mangaData')
                 .all()).results as any
-        console.log(allManga)
+        // console.log(allManga)
         return new Response(JSON.stringify({data: allManga}), {status:200})
     } catch (err) {
         console.error("Error:", err);

@@ -9,7 +9,7 @@ export default {
       const path = url.pathname.slice(1).split('/');
 
       if (request.method === 'OPTIONS') {
-        console.log('OPTIONS Request')
+        // console.log('OPTIONS Request')
         // Handle CORS preflight request
         return new Response(null, {
           headers: {
@@ -23,7 +23,7 @@ export default {
       switch (path[0]) {
         case 'api':
           // This is a request for `/api/...`, call the API handler.
-          console.log(path)
+          // console.log(path)
           let newResp = await handleApiRequest(path.slice(1), request, env);
 
           if ( newResp instanceof Response) {
@@ -32,9 +32,9 @@ export default {
             modResp.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
             modResp.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-            return newResp
+            return modResp
           }
-
+          return new Response(JSON.stringify({'message': 'Internal Server Error'}), {status: 500})
         default:
           console.log("Unknown subdirectory tried" + path)
           return new Response('Not found', {status: 404});

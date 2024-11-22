@@ -200,7 +200,7 @@ getEvents.on('completed', async ({ jobId }:{jobId:string}) => {
         }
 
         dataCollector[dataIndex].batchData.completedCount++
-        if (job.returnvalue.chapterUrlList && job.returnvalue.chapterUrlList != job.data.oldUrlList) {
+        if ((job.returnvalue.iconBuffer) || (job.returnvalue.chapterUrlList && job.returnvalue.chapterUrlList != job.data.oldUrlList)) {
             dataCollector[dataIndex].batchData.newChapterCount+=((job.returnvalue.chapterUrlList.match(/,/g) || []).length - (job.data.oldUrlList.match(/,/g) || []).length)
             dataCollector[dataIndex].batchData.newData.push({...job.returnvalue, mangaId: job.data.mangaId})
         }
@@ -231,21 +231,43 @@ getEvents.on('failed', async ({ jobId }:{jobId:string}) => {
 
 async function sendUpdate(dataIndex:number) {
     if (dataCollector[dataIndex].batchData.newData.length > 0) {
-        const resp = await fetch(`${config.serverCom.serverUrl}/api/data/update/bulkUpdateMangaInfo`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                "access_token": config.serverCom.serverPassWord,
-                "newData": dataCollector[dataIndex].batchData.newData,
-                "amountNewChapters": dataCollector[dataIndex].batchData.newChapterCount
-            }),
-        })
+        if (!config.updateSettings.refetchImgs) {
+            const resp = await fetch(`${config.serverCom.serverUrl}/api/data/update/bulkUpdateMangaInfo`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    "access_token": config.serverCom.serverPassWord,
+                    "newData": dataCollector[dataIndex].batchData.newData,
+                    "amountNewChapters": dataCollector[dataIndex].batchData.newChapterCount
+                }),
+            })
 
-        if (!resp.ok) console.warn(await resp.json())
-        else if (config.logging.autoUpdateInfo) console.log(`${dataCollector[dataIndex].batchData.newData.length} / ${dataCollector[dataIndex].batchData.completedCount} Manga Update Saved With ${dataCollector[dataIndex].batchData.newChapterCount} New Chapters!`)
+            if (!resp.ok) console.warn(await resp.json())
+                else if (config.logging.autoUpdateInfo) console.log(`${dataCollector[dataIndex].batchData.newData.length} / ${dataCollector[dataIndex].batchData.completedCount} Manga Update Saved With ${dataCollector[dataIndex].batchData.newChapterCount} New Chapters!`)
+        
+        } else {
+            for (let i = 0; i < dataCollector[dataIndex].batchData.newData.length; i++) {
+                const resp = await fetch(`${config.serverCom.serverUrl}/api/data/update/bulkUpdateMangaInfo`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        "access_token": config.serverCom.serverPassWord,
+                        "newData": [dataCollector[dataIndex].batchData.newData[i]],
+                        "amountNewChapters": 0
+                    }),
+                })
 
+                if (!resp.ok) console.warn(`Failed to save!; ${dataCollector[dataIndex].batchData.newData[i].mangaId}`)
+            }
+            console.log('done, Its recomended to turn of auto update images now!')
+        }
+        
+
+        
     } else if (config.logging.autoUpdateInfo) console.log('Update Complete! No New Chapters Found!')
     dataCollector.splice(dataIndex, 1)
 }

@@ -12,7 +12,21 @@ the first 2 are required while the text command and utils are optional. Each fol
 
 # **Change Logs**
 
-## Changle Log 1.2.1
+## Change Log 1.2.2
+ - If adding fails the button is usable after fail
+ - fixxed images not loading for feed
+ - removed categories V1 in favor of the new version
+ - updated wrangler to support new logging
+ - new manga is now correctly counted and manga already tracked being added again no longer counts towards the statistics
+ - bulk Update can now support saving images
+ - fixxed CORS response
+ - Icon buffer now is correct data type
+ - reimplemented bulk update to fix some issues and add support for bulk updating all images
+ - fixxed asura scans to support latest update
+ - improved asura scans logging
+ - fixxed name of launch button
+
+## Change Log 1.2.1
  - default auth link now uses environmental vars to create link
  - when authorizing with code or refresh token it now gets saved propperly
  - feed now saves interact time again

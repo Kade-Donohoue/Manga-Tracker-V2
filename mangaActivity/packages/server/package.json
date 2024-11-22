@@ -20,7 +20,7 @@
     "service-worker-mock": "^2.0.5",
     "tsm": "^2.2.1",
     "uvu": "^0.5.3",
-    "wrangler": "^3.60.0"
+    "wrangler": "^3.89.0"
   },
   "dependencies": {
     "uuid": "^9.0.1"

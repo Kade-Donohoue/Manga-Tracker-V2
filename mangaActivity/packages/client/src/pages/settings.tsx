@@ -1,14 +1,9 @@
 import React, { ChangeEvent, HTMLAttributes } from 'react';
-import discordSdk from '../discordSdk';
-// import ReactJsonView from '../components/ReactJsonView';
-import {useLocation} from 'react-router-dom';
-import {EventPayloadData} from '@discord/embedded-app-sdk';
 import {catOptions, setCatOptions} from '../vars'
 import Button from '@mui/material/Button';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import IconButton from '@mui/material/IconButton';
 import DeleteIcon from '@mui/icons-material/Delete';
-import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import { authStore } from '../stores/authStore';
 import { dropdownOption } from '../types';
 import { toast } from 'react-toastify';
@@ -60,31 +55,11 @@ export default function settings() {
     return newData as GridRowsProp
   }
 
-  const handleRowChange = (event:ChangeEvent<HTMLInputElement>, i:number) => {
-    let tempEditRows = [...editRows]
-    tempEditRows[i] = event.target.value
-    setEditRows(tempEditRows)
-  }
 
   async function removeRow(i:number) {
     let tempEditRows = [...editRows]
     tempEditRows.splice(i, 1)
     setEditRows(tempEditRows)
-  }
-
-  async function saveCategory(i:number) {
-    let newCat = editRows[i].trim().replace('/‎|​/g', '') //prevent spaces at beg/end and prevent 0 space ascii char
-    if (newCat==='') return toast.error("Enter a name!")
-    if (catOptions.find(cat => cat.label === newCat)) return toast.error("This Category already exists!")
-
-    catOptions.push({value: `user:${newCat}`, label: newCat})
-    setLocalCats(catOptions)
-    setRows(convertToDataGrid(catOptions))
-    console.log(catOptions)
-
-    removeRow(i)
-
-    postCats(catOptions)
   }
 
   async function postCats( newCats:dropdownOption[] ) {
@@ -131,29 +106,6 @@ export default function settings() {
       access_token: undefined, user: undefined,
     })
   }
-
-  async function removeCategory(i:number) {
-    let tempOptions = [...catOptions]
-    tempOptions.splice(i, 1)
-    setCatOptions(tempOptions)
-    setLocalCats(tempOptions)
-    setRows(convertToDataGrid(tempOptions))
-
-    // removeRow(i)
-
-    fetch(`${fetchPath}/api/data/update/updateUserCategories`, {
-        method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                "access_token": auth.access_token,
-                "authId": null,
-                "newCatList": JSON.stringify(catOptions)
-            }),
-    })
-  }
-
 
   //dataGridFeatures
   const customFooter = (props: EditFooterProps) => {
@@ -290,46 +242,8 @@ export default function settings() {
     <div style={{padding: 32, width:'100%'}}>
       <div>
         <h1>Settings</h1> <br/>
-
         <Accordion sx={{backgroundColor:'#1e1e1e', color:'#ffffff', width:"80%"}}>
-          <AccordionSummary expandIcon={<ExpandMoreIcon sx={{color:'#ffffff'}}/>} id='panel-category-header'>Categories V1</AccordionSummary>
-          <AccordionDetails sx={{overflowX:'auto'}}>
-            <table style={{border: 1, borderCollapse: "separate", width:"100%", tableLayout: "fixed" }}>
-              <tr>
-                  <th style={{width: '50%', overflow: 'hidden',
-                                  whiteSpace: 'nowrap',
-                                  textOverflow: 'ellipsis',
-                                  textAlign: 'left', wordWrap:'break-word', fontWeight:'bold'}}>Category Name</th>
-                  <th style={{textAlign:'left', fontWeight:'bold'}}>Remove?</th>
-              </tr>
-              <br/>
-              {localCats.map((category, i) => {
-                  return (
-                  <tr>
-                      <td ><div style={{overflow: 'hidden',
-                                  whiteSpace: 'nowrap',
-                                  textOverflow: 'ellipsis',
-                                  textAlign: 'left', wordWrap:'break-word'}}>{category.label}</div></td>
-                      <td><IconButton disabled={!category.value.includes("user:")} sx={{"&.Mui-disabled": {color:"gray"}}} color="error" onClick={(e) => removeCategory(i)}><DeleteIcon/></IconButton></td>
-                  </tr>)
-              })}
-              {editRows.map((currentVal, i) => {
-                  return (
-                      <tr>
-                          <td><input style={{width:"80%"}} type="text" value={currentVal as string} onChange={(e:ChangeEvent<HTMLInputElement>) => handleRowChange(e, i)}></input></td>
-                          <td>
-                              <IconButton color="primary" onClick={(e) => {saveCategory(i)}}><CheckCircleRoundedIcon/></IconButton>
-                              <IconButton color="error" onClick={(e) => {removeRow(i)}}><DeleteIcon/></IconButton>
-                          </td>
-                    </tr>
-                  )
-              })}
-              <Button startIcon={<AddCircleIcon/>} onClick={(e) => {setEditRows([...editRows, ""])}}>add Category</Button>
-            </table>
-          </AccordionDetails>
-        </Accordion>
-        <Accordion sx={{backgroundColor:'#1e1e1e', color:'#ffffff', width:"80%"}}>
-          <AccordionSummary expandIcon={<ExpandMoreIcon sx={{color:'#ffffff'}}/>} id='panel-category-header'>Categories V2</AccordionSummary>
+          <AccordionSummary expandIcon={<ExpandMoreIcon sx={{color:'#ffffff'}}/>} id='panel-category-header'>Categories</AccordionSummary>
           <AccordionDetails sx={{width:"100%"}}>
             <Box sx={{width:'100%', maxWidth: '100%'}}>
               <DataGrid 

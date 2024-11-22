@@ -118,7 +118,7 @@ async function main() {
             await rest.put(Routes.applicationCommands(token.appID), {
                 body: [/*...slashCommandsJson, */...slashSubCommandsJson, 
                     {
-                        "name": "KMangaTest5911",
+                        "name": "Launch Manga Tracker",
                         "description": "Launch Manga Tracker",
                         "type": 4,
                         "handler": 2

@@ -93,13 +93,22 @@ export async function saveManga(access_token:string, authId:string, urls:string[
         }))
         
         let boundAddStmts:D1PreparedStatement[] = boundAddStmtsArrs.flat()
-
-        boundAddStmts.push(env.DB.prepare('INSERT INTO stats (timestamp, type, stat_value) VALUES (CURRENT_TIMESTAMP, "mangaCount", ?)').bind(newMangaInfo.length))
-        
+ 
         const dbMetrics = await env.DB.batch(boundAddStmts)
 
+        let newMangaCount:number = 0
+        //goes through all mangaData results skipping userData and stats
+        for (let i = 0; i < dbMetrics.length; i+=2) {
+            // console.log(i)
+            if (dbMetrics[i].meta.last_row_id!=0) {
+                newMangaCount++
+            }
+        }
+
+        let statMetric = await env.DB.prepare('INSERT INTO stats (timestamp, type, stat_value) VALUES (CURRENT_TIMESTAMP, "mangaCount", ?)').bind(newMangaCount).run()
+
         //If environment isn't prod send collected metrics for debugging
-        if (env.ENVIRONMENT != 'production') return new Response(JSON.stringify({results: userReturn, metric: dbMetrics}))
+        if (env.ENVIRONMENT != 'production') return new Response(JSON.stringify({results: userReturn, dataMetric: dbMetrics, statMetric: statMetric, newManga: newMangaCount}))
         return new Response(JSON.stringify({results: userReturn}))
     } catch (error) {
         console.error("Error:", error);

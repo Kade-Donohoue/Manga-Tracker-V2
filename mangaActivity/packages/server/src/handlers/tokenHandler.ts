@@ -11,7 +11,7 @@ export default async function tokenHandler(path: string[], request: Request, env
       code: body.code,
       redirect_uri: env.VITE_CLIENT_URL
     });
-    console.log(tokenBody)
+    // console.log(tokenBody)
     const response = await fetch(`${env.VITE_DISCORD_API_BASE}/oauth2/token`, {
       method: 'POST',
       headers: requestHeaders(env, {
@@ -21,7 +21,7 @@ export default async function tokenHandler(path: string[], request: Request, env
     });
     // return new Response(`Internal Error: ${response}`, {status: 500});
     if (response.status != 200) {
-      console.log(tokenBody)
+      // console.log(tokenBody)
       return response;
     }
 
@@ -43,7 +43,7 @@ export async function refreshHandler(path: string[], request: Request, env: Env)
       grant_type: 'refresh_token',
       refresh_token: body.refresh_token,
     });
-    console.log(tokenBody)
+    // console.log(tokenBody)
     const response = await fetch(`${env.VITE_DISCORD_API_BASE}/oauth2/token`, {
       method: 'POST',
       headers: requestHeaders(env, {
@@ -53,7 +53,7 @@ export async function refreshHandler(path: string[], request: Request, env: Env)
     });
     // return new Response(`Internal Error: ${response}`, {status: 500});
     if (response.status != 200) {
-      console.log(tokenBody)
+      // console.log(tokenBody)
       return response;
     }
 

@@ -143,6 +143,9 @@ export interface updateData {
   "chapterUrlList": string,
   "chapterTextList": string,
   "currentIndex": string,
-  "iconBuffer": string|null,
+  "iconBuffer": {
+    "type": string,
+    "data": number[]
+  }|null,
   "mangaId": string
 }

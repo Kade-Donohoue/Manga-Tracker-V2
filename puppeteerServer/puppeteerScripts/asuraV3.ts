@@ -66,7 +66,7 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         await job.updateProgress(20)
         job.log(logWithTimestamp('Chapter Loaded, starting retrial of overview URL and chapterData'))
 
-        const stringData = await page.evaluate(() => {
+        const chapterData:{chapterMapData:[{label:string,value:number}]} = await page.evaluate(() => {
             let foundData:string = ''
             let foundStart:boolean = false
             let str:string
@@ -75,7 +75,13 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
                 if (bigArray[0] != 1) return false
                 str += (bigArray[1] as any)
             })
-            return str.slice(str.indexOf('\n31:'), str.indexOf('\n30:'))
+
+            //finds beinging of chapter list from next_f and pulls chapter list returning as json
+            let startIndex = str.indexOf('"chapterMapData":[')
+            if (startIndex == -1 ) throw new Error('Manga: Unable to find start of chapter list')
+            let endIndex = str.indexOf(']', startIndex)
+            if (endIndex == -1) throw new Error('Manga: Ubable to find end of chapter list') 
+            return JSON.parse(`{${str.slice(startIndex, endIndex+1).trim()}}`)
         })
         await job.updateProgress(30)
 
@@ -84,8 +90,8 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
             (window as any).__next_f.some((bigArray:any[]) => {
                 if (bigArray[0] != 1) return false
                 let str:string = bigArray[1] as any
-                if (str.indexOf('"slug":"') >= 0) {
-                    foundData = `${(window as any).__ENV.NEXT_PUBLIC_FRONTEND_URL}/series/${str.slice(str.indexOf('"slug":"')+8, str.indexOf('","name":'))}/`
+                if (str.indexOf('"seriesSlug\":\"') >= 0) {
+                    foundData = `${(window as any).__ENV.NEXT_PUBLIC_FRONTEND_URL}/series/${str.slice(str.indexOf('"seriesSlug\":\"')+14, str.indexOf('\",\"seriesName\"'))}/`
                 } 
                 return false
             })
@@ -94,19 +100,19 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         await job.updateProgress(35)
         
         job.log(logWithTimestamp('Data Retried! processing Data'))
-        let dataRows = stringData.trim().split('\n')
+        // let dataRows = stringData.trim().split('\n')
+        if (config.logging.verboseLogging) console.log(chapterData)
 
         let chapterLinks = []
         let chapterText = []
-        dataRows.reverse().forEach((row) => {
+        chapterData.chapterMapData.reverse().forEach((row:{label:string, value:number}) => {
             if (!row) return
-            const parsedValues = JSON.parse(row.slice(row.indexOf(':')+1))
-            chapterText.push(parsedValues.label)
-            chapterLinks.push(overViewURL+'chapter/'+parsedValues.value)
+            chapterText.push(row.label)
+            chapterLinks.push(overViewURL+'chapter/'+row.value)
         })
         job.log(logWithTimestamp('Chapter Data Processed'))
 
-        if (chapterLinks.length == 0 || chapterLinks.length != chapterText.length) throw new Error('Manga: Issue fetching Chapters')
+        if (chapterLinks.length == 0 || chapterLinks.length != chapterText.length) throw new Error('Manga: Issue fetching Chapters, lists dont match or no data was found!')
 
         const title = await page.evaluate(() => document.querySelector("a.items-center:nth-child(2) > h3:nth-child(1)")?.innerHTML, {timeout: 500})
 
@@ -126,7 +132,7 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
             await page.goto(overViewURL, {timeout: 10000})
             job.log(logWithTimestamp('Overview Page loaded'))
                                                   
-            const photoSelect = await page.waitForSelector('img.rounded', {timeout:1000}) // issue
+            const photoSelect = await page.waitForSelector('img.rounded', {timeout:1000})
             const photo = await photoSelect?.evaluate(el => el.getAttribute('src'))
             
             // console.log(photo)

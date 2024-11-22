@@ -37,7 +37,7 @@ export async function updateManga(access_token:string, authId:string, url:string
         const mangaInfo:mangaReturn = await mangaReq.json()
 
 
-        console.log(mangaInfo)
+        // console.log(mangaInfo)
 
         await env.DB.prepare('UPDATE userData SET currentIndex = ?, interactTime = ? WHERE userID = ? AND mangaName = ?')
             .bind(mangaInfo.currentIndex, interactTime, authId, mangaInfo.mangaName)
@@ -85,7 +85,7 @@ export async function changeMangaCat(access_token:string|null=null, authId:strin
             .bind(newCat, authId, mangaId)
             .run()
 
-    console.log(metric)
+    console.log({"metrics":metric})
     
     if (metric.success) return new Response(JSON.stringify({message:"Success"}), {status:200})
 
@@ -98,13 +98,17 @@ export async function bulkUpdateMangaInfo(access_token:string, newData:updateDat
             
         if (validationRes instanceof Response) return validationRes
 
-        console.log(newData)
+        // console.log(newData)
         const stmt = env.DB.prepare('UPDATE mangaData SET urlList = ?, chapterTextList = ? WHERE mangaId = ?')
 
         var boundStmt:D1PreparedStatement[] = []
         for (var i = 0; i < newData.length; i++) {
-            console.log(newData[i].chapterUrlList, newData[i].chapterTextList, newData[i].mangaId)
+            // console.log(newData[i].chapterUrlList, newData[i].chapterTextList, newData[i].mangaId)
             boundStmt.push(stmt.bind(newData[i].chapterUrlList, newData[i].chapterTextList, newData[i].mangaId))
+
+            if (newData[i].iconBuffer) {
+                await env.IMG.put(newData[i].mangaId, new Uint8Array(newData[i].iconBuffer!.data).buffer, {httpMetadata:{contentType:"image/jpeg"}}) //Save Cover Image with title as mangaId
+            }
         }
         boundStmt.push(env.DB.prepare('INSERT INTO stats (timestamp, type, stat_value) VALUES (CURRENT_TIMESTAMP, "chapCount", ?)').bind(amountNewChapters))
         // boundStmt.push(env.DB.prepare('DELETE FROM stats WHERE timestamp < datetime("now", "-30 days")')) //removes any stat thats older than 30 days

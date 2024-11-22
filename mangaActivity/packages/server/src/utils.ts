@@ -68,7 +68,7 @@ export async function verifyUserAuth(access_token:string|null, userId:string|nul
   if (!access_token) return new Response(JSON.stringify({message: "No Access Token"}), {status:401}) 
 
   //if access token matches trust provided user id
-  if (access_token == env.SERVER_PASSWORD) return userId
+  if (access_token === env.SERVER_PASSWORD) return userId
 
   //If onlyServer and token doesn't match return error response
   if (serverOnly) return new Response(JSON.stringify({message: "401: Unauthorized"}), {status:401}) 

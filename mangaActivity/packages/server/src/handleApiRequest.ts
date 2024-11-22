@@ -5,7 +5,7 @@ import dataHandler from './handlers/dataHandler';
 
 export function handleApiRequest(path: string[], request: Request, env: Env) {
   // We've received at API request. Route the request based on the path.
-  console.log(path)
+  // console.log(path)
   switch (path[0]) {
     case 'token':
       return tokenHandler(path, request, env);

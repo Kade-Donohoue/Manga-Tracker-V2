@@ -219,7 +219,7 @@ export default function feed():JSX.Element {
     <div style={{padding: 32}}>
       <label className='feedMangaTitle'>{mangaDetails[currentCard].mangaName}</label>
       <div className='mangaContainer'>
-        {mangaDetails ? <img src={`${fetchPath==='/.proxy'? '/.proxy/image':import.meta.env.VITE_IMG_URL}}/${mangaDetails[currentCard].mangaId}`} alt="Manga Icon" className='cover-image' /> : <p>Loading...</p>}
+        {mangaDetails ? <img src={`${fetchPath==='/.proxy'? '/.proxy/image':import.meta.env.VITE_IMG_URL}/${mangaDetails[currentCard].mangaId}`} alt="Manga Icon" className='cover-image' /> : <p>Loading...</p>}
         <div className="button-container">
           <div className="button-wrapper">
             <button className="action-button" 

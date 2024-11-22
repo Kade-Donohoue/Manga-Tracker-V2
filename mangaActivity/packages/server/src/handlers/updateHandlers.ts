@@ -21,7 +21,7 @@ export default async function updateHandler(path: string[], request: Request, en
         case 'changeMangaCat':
             return await changeMangaCat(body.access_token, body.authId, body.mangaId, body.newCat, env)
         case 'bulkUpdateMangaInfo':
-            console.log(body.toString())
+            // console.log(body.toString())
             return await bulkUpdateMangaInfo(body.access_token, body.newData, body.amountNewChapters, env)
         case 'updateUserCategories':
             return await updateUserCategories(body.access_token, body.authId, body.newCatList, env)

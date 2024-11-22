@@ -89,7 +89,6 @@ export default function addManga() {
 
 
       var errorLog:string[] = []
-      // for (var i = 0; i < urlList.length; i++) {
       const reply = await fetch(`${fetchPath}/api/data/add/addManga`, {
         method: 'POST',
         headers: {
@@ -105,7 +104,7 @@ export default function addManga() {
 
       if (!reply.ok) {
         toast.update(notif, {
-          render: "A internal Server Error Ocurred!", 
+          render: "A Internal Server Error Ocurred!", 
           type: "error", 
           isLoading: false,
           autoClose: 5000, 
@@ -114,12 +113,9 @@ export default function addManga() {
           draggable: true,
           progress: 0
         })
+        setIsLoading(false)
         return
-          // console.log(await reply.json())
-        // const data:{message:string, url:string} = await reply.json()
-        // errorLog.push(`${data.url}: ${data.message}`)
       }
-      // }
       let {results}:{results:{message:String,url:string,success:boolean}[]} = await reply.json()
 
       for (let manga of results) {
