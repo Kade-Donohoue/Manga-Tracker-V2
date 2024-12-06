@@ -126,10 +126,13 @@ export const start = async (isEmbedded: boolean) => {
         maxAge: responseData.expires_in,
       });
 
+      let expirationDate = new Date();
+      expirationDate.setFullYear(expirationDate.getFullYear() + 100);
       cookies.set('refresh_token', responseData.refresh_token, {
         path: '/',
         secure: true,
-        sameSite: "strict"
+        sameSite: "strict",
+        expires: expirationDate
       })
     } 
     //fetch user discord data
