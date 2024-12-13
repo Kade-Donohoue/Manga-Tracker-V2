@@ -9,7 +9,7 @@ export default async function tokenHandler(path: string[], request: Request, env
       client_secret: env.CLIENT_SECRET,
       grant_type: 'authorization_code',
       code: body.code,
-      redirect_uri: env.VITE_CLIENT_URL
+      redirect_uri: body.redirectUri?body.redirectUri:env.VITE_CLIENT_URL
     });
     // console.log(tokenBody)
     const response = await fetch(`${env.VITE_DISCORD_API_BASE}/oauth2/token`, {

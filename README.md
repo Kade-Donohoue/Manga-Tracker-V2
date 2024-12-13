@@ -12,6 +12,14 @@ the first 2 are required while the text command and utils are optional. Each fol
 
 # **Change Logs**
 
+## Change Log 1.3.0
+ - Destop app now created using electron
+ - tokens are now stored in local Storage
+ - favicon is now Manga Trackers Icon instead of the default
+
+## Change Log 1.2.4
+ - fixed refresh token being lost whenever browser was closed resulting in random logouts
+
 ## Change Log 1.2.3
  - fixed edge case that would prevent asura from getting data
  - added observability for new cloudflare logs into example
