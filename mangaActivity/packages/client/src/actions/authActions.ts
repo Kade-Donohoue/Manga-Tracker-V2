@@ -1,3 +1,5 @@
+import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
 import { Cookies } from 'react-cookie'; 
 import { authStore } from '../stores/authStore';
 import discordSdk from '../discordSdk';
@@ -5,9 +7,13 @@ import { type Types } from '@discord/embedded-app-sdk';
 import { IGuildsMembersRead } from '../types';
 import { toast } from 'react-toastify';
 import { setFetchPath, fetchPath } from '../vars';
+import { Preferences } from '@capacitor/preferences';
+// import { Capacitor } from '@capacitor/core';
 
-export const start = async (isEmbedded: boolean) => {
-  const cookies = new Cookies(); 
+export const start = async (isEmbedded: boolean, code:string = '') => {
+
+  // Determine if the app is running in a Capacitor environment
+  const isCapacitorApp = Capacitor.isNativePlatform();
 
   if (isEmbedded) {
     const { user } = authStore.getState();
@@ -80,7 +86,7 @@ export const start = async (isEmbedded: boolean) => {
 
   } else {
     console.log('Starting External Auth');
-    const loggedIn: boolean = await externalAuth(cookies);
+    const loggedIn: boolean = await externalAuth(isCapacitorApp, code);
 
     if (!loggedIn) return toast.error('Unable To Login!');
     console.log('Logged In');
@@ -97,37 +103,76 @@ export const start = async (isEmbedded: boolean) => {
     return value as string
   }
 
-  async function externalAuth(cookies: Cookies): Promise<boolean> {
-    if (import.meta.env.DEV) {
-      setFetchPath("")
+  async function setStorage(key: string, value: string): Promise<void> {
+    if (Capacitor.isNativePlatform()) {
+      await Preferences.set({ key, value });
     } else {
-      setFetchPath(import.meta.env.VITE_SERVER_URL)
+      localStorage.setItem(key, value);
+    }
+  }
+
+  // Unified function to retrieve a value
+  async function getStorage(key: string): Promise<string | null> {
+    if (Capacitor.isNativePlatform()) {
+      const { value } = await Preferences.get({ key });
+      return value;
+    } else {
+      return localStorage.getItem(key);
+    }
+  }
+
+  async function externalAuth(isCapacitorApp: boolean, code: string = ''): Promise<boolean> {
+    console.log('external auth code: ' + code);
+
+    if (import.meta.env.DEV) {
+      setFetchPath('');
+    } else {
+      setFetchPath(import.meta.env.VITE_SERVER_URL);
     }
 
-    let access_token:string = getAccess_Token()
-    let refresh_token:string = localStorage.getItem('refresh_token') as string;
-
-    console.log(`Token: ${access_token}`);
+    let access_token: string = getAccess_Token();
+    let refresh_token: string | null = await getStorage('refresh_token');
 
     if (!access_token) {
       console.log('No Token Saved');
-      const code: string = new URLSearchParams(window.location.search).get('code') as string;
+      if (!code) code = new URLSearchParams(window.location.search).get('code') as string;
+      console.log(code);
       if (!code && !refresh_token) return false;
 
+      let body: string;
       const isElectron = typeof window.electron !== 'undefined' && window.electron.isElectron;
-      const redirectUri = isElectron ? 'https://manga.kdonohoue.com/electron' : import.meta.env.VITE_CLIENT_URL;
+      if (isCapacitorApp) {
+        body = JSON.stringify(
+          refresh_token
+            ? { refresh_token }
+            : { code: code, redirectUri: 'kd://callback', codeVerifier: await getStorage('codeVerifier') }
+        );
+      } else if (isElectron) {
+        body = JSON.stringify(
+          refresh_token
+            ? { refresh_token }
+            : { code: code, redirectUri: 'https://manga.kdonohoue.com/electron' }
+        );
+      } else {
+        body = JSON.stringify(
+          refresh_token
+            ? { refresh_token }
+            : { code: code, redirectUri: import.meta.env.VITE_CLIENT_URL }
+        );
+      }
+      console.log(body);
 
-      let body = JSON.stringify(refresh_token ? { refresh_token } : { code: code, redirectUri: redirectUri });
-
-      const response = await fetch(`${fetchPath}/api/${refresh_token?'refresh':'token'}`, {
+      const response = await fetch(`${fetchPath}/api/${refresh_token ? 'refresh' : 'token'}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body,
       });
-      if (!response.ok) return false
-      let responseData = await response.json<{
+
+      if (!response.ok) return false;
+
+      const responseData = await response.json<{
         access_token: string;
         expires_in: number;
         refresh_token: string;
@@ -135,15 +180,16 @@ export const start = async (isEmbedded: boolean) => {
 
       if (!responseData.access_token || responseData.access_token === 'mock_token') return false;
 
-      console.log('saving tokens')
-      access_token = responseData.access_token
+      console.log('saving tokens');
+      access_token = responseData.access_token;
 
-      localStorage.setItem('access_token', JSON.stringify({value: responseData.access_token, expirationTime: Date.now() +responseData.expires_in * 1000}));
-      localStorage.setItem('refresh_token', responseData.refresh_token);
+      await setStorage('access_token', JSON.stringify({ value: responseData.access_token, expirationTime: Date.now() + responseData.expires_in * 1000 }));
+      await setStorage('refresh_token', responseData.refresh_token);
 
-      console.log('tokens saved')
-    } 
-    //fetch user discord data
+      console.log('tokens saved');
+    }
+
+    // Fetch user Discord data
     const user = await fetch('https://discord.com/api/v10/users/@me', {
       headers: {
         Authorization: `Bearer ${access_token}`,
@@ -154,16 +200,16 @@ export const start = async (isEmbedded: boolean) => {
         return null;
       });
 
-      //Save Auth For rest of App. 
+    // Save Auth For Rest of App
     const authState = {
       access_token: access_token,
-      user: user as any
+      user: user as any,
     };
 
     authStore.setState({
       ...authState,
     });
     return true;
-    
   }
+
 };

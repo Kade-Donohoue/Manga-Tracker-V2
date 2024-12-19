@@ -11,6 +11,11 @@ export default async function tokenHandler(path: string[], request: Request, env
       code: body.code,
       redirect_uri: body.redirectUri?body.redirectUri:env.VITE_CLIENT_URL
     });
+
+    if (body.codeVerifier) {
+      tokenBody.append('code_verifier', body.codeVerifier);
+    }
+
     // console.log(tokenBody)
     const response = await fetch(`${env.VITE_DISCORD_API_BASE}/oauth2/token`, {
       method: 'POST',

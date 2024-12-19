@@ -8,7 +8,7 @@
     "email": "kade.donohoue@gmail.com"
   },
   "private": true,
-  "version": "1.2.4",
+  "version": "1.4.0",
   "scripts": {
     "test": "$npm_execpath run tsc",
     "dev": "vite --mode dev",
@@ -36,12 +36,17 @@
     },
     "linux": {
       "maintainer": "Kade Donohoue <kade.donohoue@gmail.com>",
-      "target": ["AppImage", "deb"],
+      "target": [
+        "AppImage",
+        "deb"
+      ],
       "icon": "src/electron/icon.png",
       "category": "Utility"
     },
-    "win" : {
-      "target": ["nsis"],
+    "win": {
+      "target": [
+        "nsis"
+      ],
       "icon": "src/electron/icon.ico"
     },
     "extraResources": [
@@ -50,6 +55,13 @@
     ]
   },
   "dependencies": {
+    "@byteowls/capacitor-oauth2": "^5.0.0",
+    "@capacitor/android": "^6.2.0",
+    "@capacitor/app": "^6.0.2",
+    "@capacitor/browser": "^6.0.4",
+    "@capacitor/cli": "^6.2.0",
+    "@capacitor/core": "^6.2.0",
+    "@capacitor/preferences": "^6.0.3",
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
     "@mui/icons-material": "^5.16.1",
@@ -59,6 +71,7 @@
     "@radix-ui/react-scroll-area": "^1.0.5",
     "@stitches/react": "^1.2.8",
     "lodash": "^4.17.21",
+    "oauth-pkce": "^0.0.7",
     "react": "^18.3.1",
     "react-cookie": "^7.2.0",
     "react-device-detect": "^2.2.2",
@@ -73,6 +86,7 @@
     "zustand": "4.1.4"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
     "@cloudflare/workers-types": "^3.0.0",
     "@testing-library/jest-dom": "^6.4.2",
     "@testing-library/react": "^14.3.0",

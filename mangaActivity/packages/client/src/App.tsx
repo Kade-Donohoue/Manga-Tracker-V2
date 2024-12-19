@@ -32,6 +32,9 @@ import MenuIcon from '@mui/icons-material/Menu';
 
 import * as S from './AppStyles'
 import { IconButton } from '@mui/material';
+import { App as capApp } from '@capacitor/app';
+import { start } from './actions/authActions';
+import { Capacitor } from '@capacitor/core';
 
 // Add contexts here
 export default function App(): React.ReactElement {
@@ -125,34 +128,38 @@ const routes: Record<string, AppRoute> = {
 function RootedApp(): React.ReactElement {
 
   React.useEffect(() => {
-    //fetch userCats
-    
+    // Function to fetch user categories
     async function getCats() {
-      try{
-        const auth = authStore.getState()
-    
-        const data = await fetch(`${fetchPath}/api/data/pull/pullUserCategories`, {
+      try {
+        const auth = authStore.getState();
+
+        const response = await fetch(`${fetchPath}/api/data/pull/pullUserCategories`, {
           method: 'POST',
           headers: {
-              'Content-Type': 'application/json',
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-              "access_token": auth.access_token,
-              "authId": null,
+            access_token: auth.access_token,
+            authId: null,
           }),
-        })
-    
-        if (!data.ok) return toast.error("Unable to get User Cats")
-          
-        let catStr:{message:string, cats:{value:string,label:string}[]} = await data.json()
-        setCatOptions(catStr.cats)
-      } catch {
-        return toast.error("Unable to get User Cats")
+        });
+
+        if (!response.ok) {
+          toast.error('Unable to get User Cats');
+          return;
+        }
+
+        const catData: { message: string; cats: { value: string; label: string }[] } = await response.json();
+        setCatOptions(catData.cats); // Assuming setCatOptions is defined in your component
+      } catch (error) {
+        console.error(error);
+        toast.error('Unable to get User Cats');
       }
     }
-    
-    getCats()
-  }, [])
+
+    // Call getCats on component mount
+    getCats();
+  }, []);
 
   const [sideBarExpanded, setSideBarExpanded] = React.useState<boolean>(true)
 

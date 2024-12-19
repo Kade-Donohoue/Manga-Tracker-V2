@@ -47,7 +47,7 @@ export default function feed():JSX.Element {
         }),
       })
 
-      console.log(resp)
+      // console.log(resp)
       if (!resp.ok) {
         const errorData:{message:string} = await resp.json()
         setIsLoadingStart(false)
@@ -56,7 +56,7 @@ export default function feed():JSX.Element {
       setCurrentCard(0)
       setIsLoadingStart(false)
       const data:{mangaDetails:mangaDetails[]} = await resp.json();
-      console.log(data)
+      // console.log(data)
       setMangaDetails(data.mangaDetails)
       
       
@@ -64,7 +64,7 @@ export default function feed():JSX.Element {
       else setShowError(false) 
     }
     catch (error) {
-      console.log(error)
+      console.error(error)
       setError('An unknown error Occurred! Try restarting the activity.')
       setIsLoadingStart(false)
     }
@@ -72,14 +72,14 @@ export default function feed():JSX.Element {
 
   function setError(message:string) {
     const errorField = document.getElementById('errorField') as HTMLLabelElement|null
-    console.log(message)
+    // console.log(message)
     if (!errorField) return
     errorField!.innerHTML = message
     setShowError(true)
   }
 
   async function updateCardIndex(increment:number) {
-    console.log(increment)
+    // console.log(increment)
     const resp = fetch(`${fetchPath}/api/data/update/updateInteractTime`, {
       method: 'POST',
       headers: {
@@ -96,12 +96,29 @@ export default function feed():JSX.Element {
     if (!mangaDetails) return LoadingScreen
     setCurrentCard(currentCard+increment)
     setChapter(null)
+    await resp
 
-    console.log(await resp)
+    // console.log(await resp)
+  }
+
+  function style(chapterText:string) {
+    let newStyle = customStyles
+
+    newStyle.option = (provided, state) => ({
+      ...provided,
+      backgroundColor: state.isSelected ? '#6b6b6b' : '#121212',
+      color: state.data.label === chapterText ? '#28A745':'#fff',
+      fontWeight: state.data.label === chapterText ? 'bold':'normal',
+      '&:hover': {
+        backgroundColor: '#6b6b6b',
+      },
+      padding: '12px 20px',
+    })
+    return newStyle
   }
 
   async function submitManga(mangaId:string) {
-    console.log(mangaId)
+    // console.log(mangaId)
     let notif = toast.loading("Updating Chapter!")
     const newIndex = mangaDetails[currentCard].chapterTextList.indexOf(newChapter!.label)
     if (!newIndex || newIndex == -1) return toast.update(notif, {
@@ -132,7 +149,7 @@ export default function feed():JSX.Element {
       var tmp:mangaDetails[] = [...mangaDetails]
       tmp[currentCard].interactTime = Date.now()
       tmp[currentCard].currentIndex = newIndex
-      console.log(tmp)
+      // console.log(tmp)
       setMangaDetails(tmp)
       setChapter(null)
 
@@ -225,7 +242,7 @@ export default function feed():JSX.Element {
             <button className="action-button" 
               onClick={(e) => {
               const links = mangaDetails[currentCard].urlList
-              console.log(links[mangaDetails[currentCard].currentIndex])
+              // console.log(links[mangaDetails[currentCard].currentIndex])
                if (fetchPath === '/.proxy') {
                 discordSdk.commands.openExternalLink({url: links[mangaDetails[currentCard].currentIndex+1]})
                } else {
@@ -282,7 +299,7 @@ export default function feed():JSX.Element {
               options={mangaDetails[currentCard].chapterTextList.toReversed().map((text, i) => {
                   return {value: text, label: text}
               })} 
-              styles={customStyles} 
+              styles={style(mangaDetails[currentCard].chapterTextList[mangaDetails[currentCard].currentIndex])} 
           />
           <Button onClick={(e) => {
               submitManga(mangaDetails[currentCard].mangaId)
@@ -297,20 +314,20 @@ export default function feed():JSX.Element {
       <div className='controlButtonContainer'>
         <button className='prev mangaFeedControlButton' onClick={(e) => {
           if (currentCard > 0) updateCardIndex(-1)
-            console.log(currentCard)
+            // console.log(currentCard)
           }}
           disabled={(currentCard==0)}
           >Prev
         </button>
         <button className='setCurrent mangaFeedControlButton' onClick={(e) => {
             handleChapterOpen()
-            console.log('CLICK')
+            // console.log('CLICK')
           }}>Mark As Read
         </button>
         <button className='next mangaFeedControlButton' onClick={(e) => {
           if (currentCard < mangaDetails.length - 1) updateCardIndex(1)
           else console.log('end of range', currentCard, mangaDetails.length)
-          console.log(currentCard)
+          // console.log(currentCard)
           }}
           disabled={(mangaDetails.length <= currentCard+1)}
           >Next

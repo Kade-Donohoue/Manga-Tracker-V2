@@ -64,7 +64,7 @@ export default function settings() {
 
   async function postCats( newCats:dropdownOption[] ) {
     setCatOptions(newCats)
-    console.log(newCats)
+    // console.log(newCats)
     let resp = await fetch(`${fetchPath}/api/data/update/updateUserCategories`, {
       method: 'POST',
           headers: {
@@ -176,7 +176,7 @@ export default function settings() {
     for (const row of rows) {
       newRowsV1.push(row.id === newRow.id ?{value: newRow.id, label: newRow.label}:{value: row.id, label: row.label})
     }
-    console.log(newRowsV1)
+    // console.log(newRowsV1)
     setLocalCats(newRowsV1)
 
     postCats(newRowsV1)

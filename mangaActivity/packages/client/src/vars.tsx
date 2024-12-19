@@ -31,7 +31,7 @@ export const methodOptions:dropdownOption[] = [
 export let fetchPath:string = "/.proxy"
 
 export function setFetchPath(path:string){
-    console.log(`Changing Path To: ${path}`)
+    // console.log(`Changing Path To: ${path}`)
     fetchPath = path
-    console.log(path)
+    // console.log(path)
 }

@@ -5,18 +5,18 @@ import { getBrowser } from "../jobQueue"
 import { Job } from 'bullmq'
 
 /**
- * Gets the chapter list from ChapManganato
- * @param url: Chapter URL of a manga from ChapManganato. 
+ * Gets the chapter list from Comick
+ * @param url: Chapter URL of a manga from Comick. 
  * @param icon: wether or not to get icon
  * @returns {
- *  "mangaName": name of manga , 
- *  "chapterUrlList": string separated by commas(',') for all chapter urls of manga
- *  "chapterTextList": string separated by commas(',') for all chapter text of manga
- *  "iconBuffer": base64 icon for manga
- * }
- */
+*  "mangaName": name of manga , 
+*  "chapterUrlList": string separated by commas(',') for all chapter urls of manga
+*  "chapterTextList": string separated by commas(',') for all chapter text of manga
+*  "iconBuffer": base64 icon for manga
+* }
+*/
 export async function getManga(url:string, icon:boolean = true, ignoreIndex = false, job:Job) {
-    if (config.logging.verboseLogging) console.log('mangaDex')
+    if (config.logging.verboseLogging) console.log('comick')
     
     let lastTimestamp:number = Date.now()
     const browser = await getBrowser()
@@ -26,8 +26,8 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         page.setDefaultNavigationTimeout(1000) // timeout nav after 1 sec
         page.setRequestInterception(true)
 
-        const allowRequests = ['mangadex']
-        const bypassBlockReqs = ['_nuxt', 'api.mangadex.org/manga/', 'api.mangadex.org/chapter/']
+        const allowRequests = ['comick']
+        const bypassBlockReqs = ['_next', 'comick.pictures']
         const blockRequests = ['.css', 'facebook', 'fbcdn.net', 'bidgear', '.png', '.svg', 'disqus', '.js', '.woff']
         page.on('request', (request) => {
             const u = request.url()
@@ -57,44 +57,38 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
             }
             request.continue()
         })
+
         job.log(logWithTimestamp('Loading Chapter Page'))
         await page.goto(url, {waitUntil: 'networkidle0', timeout: 10*1000})
         await job.updateProgress(20)
         job.log(logWithTimestamp('Chapter Page Loaded, fetching data'))
 
-        //extracts chapter links as well as the text for each chapter
-        const chapterLinks:string[] = await page.evaluate(() =>  Array.from(document.querySelectorAll('div.reader--menu > div#chapter-selector > div > div > div > ul > li > ul > li'), element => `${(window as any).__NUXT__.config.public.baseUrl}/chapter/${element.getAttribute('data-value')}`).reverse())
-        const chapterText:string[] = await page.evaluate(() =>  Array.from(document.querySelectorAll('div.reader--menu > div#chapter-selector > div > div > div > ul > li > ul > li'), element => element.innerHTML).reverse())
+        
+        const malJson = await page.evaluate(() => {
+            const scriptContent = document.getElementById('__MALSYNC__')?.textContent;
+            return scriptContent ? JSON.parse(scriptContent) : null;
+        });
+        await job.updateProgress(30)
+        job.log(logWithTimestamp('Mal Data fetched'))
+    
 
-        if (chapterLinks.length == 0 || chapterLinks.length != chapterText.length) throw new Error('Manga: Issue fetching Chapters')
+        const chapterLinks:string[] = await page.evaluate((malJson) =>  Array.from(document.querySelectorAll('select.flex-1:nth-child(1) > option'), element => malJson.comic_url+'/'+(element as HTMLOptionElement).value).reverse(), malJson)
+        const chapterText:string[] = await page.evaluate(() =>  Array.from(document.querySelectorAll('select.flex-1:nth-child(1) > option'), element => element.innerHTML.replace('Ch', 'Chapter')).reverse())
 
-        const title = await page.evaluate(() => document.querySelector("div.reader--menu > div > div > a.text-primary ")?.innerHTML, {timeout: 500})
-
-        if (config.logging.verboseLogging) {
-            console.log(chapterLinks)
-            console.log(chapterText)
-            console.log(title)
-        }
-
-        job.log(logWithTimestamp('Data fetched'))
-        await job.updateProgress(40)
+        if (chapterLinks.length == 0 || chapterLinks.length != chapterText.length) throw new Error('Manga: Unable to get chapters! Contact an admin!')
+        await job.updateProgress(50)
+        job.log(logWithTimestamp('Chapter Data fetched'))
 
         var resizedImage:Buffer|null = null
         if (icon) {
-            job.log(logWithTimestamp('Starting Icon Fetch'))
-            const overViewURL = await page.evaluate(() => `${(window as any).__NUXT__.config.public.baseUrl}${document.querySelector("div.reader--menu > div > div > a.text-primary")?.getAttribute('href')}`, {timeout: 500})
-            if (config.logging.verboseLogging) console.log(overViewURL)
-            job.log(logWithTimestamp('Loading overview page'))
-            await page.goto(overViewURL, {timeout: 10000})
+            const imageUrl = await page.evaluate(() => {
+                const metaTag = document.querySelector('meta[property="og:image"]');
+                return metaTag ? metaTag.getAttribute('content') : null;
+            });
+            if (config.logging.verboseLogging) console.log('Image Url: ' + imageUrl)
             await job.updateProgress(60)
-            job.log(logWithTimestamp('Overview page loaded'))
-            
-            const photoSelect = await page.waitForSelector('img.rounded', {timeout:1000})
-
-            const photo = (await photoSelect?.evaluate(el => el.getAttribute('src'))).replace('https://', 'https://uploads.').replace('.512.jpg', '')
-            if (config.logging.verboseLogging) console.log(photo)
             job.log(logWithTimestamp('Loading Icon'))
-            const icon = await page.goto(photo, {timeout: 10000})
+            const icon = await page.goto(imageUrl, {timeout: 10000})
             job.log(logWithTimestamp('Icon Loaded'))
             await job.updateProgress(80)
             console.log(icon)
@@ -105,20 +99,26 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
                 .toBuffer()
         }
         await page.close()
-        job.log(logWithTimestamp('All Data fetch. processing data.'))
         await job.updateProgress(90)
-        // if (urlParts.length > 2) urlParts.pop()
+        job.log(logWithTimestamp('All Data Fetched! Proccessing Data'))
 
-        let urlParts = url.split('chapter/').at(-1).split('/')
-        let urlNoPage = `https://mangadex.org/chapter/${urlParts[0]}`
-        const currIndex = chapterLinks.indexOf(urlNoPage)
+        const title = malJson.md_comic.title
+        if (!title) throw Error('Manga: Unable to get Title!')
+
+        const idMatch = url.match(/\/([^/]+)-chapter-[\d.]+(?:-[^/]+)?$/);
+        if (!idMatch) throw Error('Manga: Invalid URL format! Contact an admin.')
+        console.log(`${malJson.comic_url}/${idMatch[1]}`)
+        const currIndex = chapterLinks.indexOf(`${malJson.comic_url}/${idMatch[1]}`)
 
         if (currIndex == -1 && !ignoreIndex) {
             throw new Error("Manga: unable to find current chapter. Please retry or contact Admin!")
         }
 
-        job.log(logWithTimestamp('done'))
+        console.log(chapterText)
+        console.log(chapterLinks)
+
         await job.updateProgress(100)
+        job.log(logWithTimestamp('Done!'))
         return {"mangaName": title, "chapterUrlList": chapterLinks.join(','), "chapterTextList": chapterText.join(','), "currentIndex": currIndex, "iconBuffer": resizedImage}
     } catch (err) {
         job.log(logWithTimestamp(`Error: ${err}`))

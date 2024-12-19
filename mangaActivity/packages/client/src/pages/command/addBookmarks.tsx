@@ -93,12 +93,12 @@ export default function addBookmarks() {
       setIsLoading(true)
       setShowError(false)
       setErrorList([])
-      console.log(selectedFolder!.value)
+      // console.log(selectedFolder!.value)
 
       if (typeof selectedFolder!.value === 'string') return console.log('Wrong Type')
       var currentUrls:string[] = []
       pullUrlsFromFolder(selectedFolder!.value, currentUrls)
-      console.log(currentUrls)
+      // console.log(currentUrls)
       // return
       if (currentUrls.length < 1) {
          toast.update(notif, {
@@ -271,7 +271,7 @@ export default function addBookmarks() {
    */
   async function pullUrlsFromFolder(node:BookmarkNode, urls:string[]) {
     for (const child of node.children!) {
-      console.log(child.name)
+      // console.log(child.name)
       if (child.type=='url' || child.type=='text/x-moz-place') {
         let currentUrl = (child.url||child.uri!).toLowerCase()
         if (currentUrl.includes('manga') || currentUrl.includes('reaper') || currentUrl.includes('asura')) urls.push(currentUrl)

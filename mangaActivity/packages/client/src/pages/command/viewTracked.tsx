@@ -3,7 +3,7 @@ import {authStore} from '../../stores/authStore'
 import {dropdownOption, mangaDetails, } from '../../types'
 import {customStyles} from '../../styled/index'
 import {LoadingScreen} from '../../components/LoadingScreen'
-import React, { useEffect } from "react"
+import React, { ChangeEvent, useEffect } from "react"
 import { toast } from 'react-toastify'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -22,17 +22,18 @@ import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
-import { CardActionArea } from '@mui/material'
+import { CardActionArea, TextField } from '@mui/material'
 import { catOptions, fetchPath } from '../../vars'
 
 import './viewTracker.css'
 import {modalStyle} from '../../AppStyles'
 
-const sortOptions:{label:string,value:keyof mangaDetails}[] = [
+const sortOptions:{label:string,value:keyof mangaDetails | "search"}[] = [
+    {label: "Title Search", value: "search"},
     {label: "Title", value: "mangaName"},
     {label: "Updated", value: "updateTime"},
     {label: "Interacted", value: "interactTime"},
-    {label: "Read Chapters", value: "currentIndex"}
+    {label: "Read Chapters", value: "currentIndex"},
 ]
 
 export default function tracked() {
@@ -42,8 +43,9 @@ export default function tracked() {
     const [newChapter, setChapter] = React.useState<dropdownOption | null>(null)
 
     const [filterOption, setFilterOption] = React.useState<dropdownOption | null>(catOptions[7])
-    const [methodOption, setMethodOption] = React.useState<{label:string,value:string} | null>(sortOptions[2])
+    const [methodOption, setMethodOption] = React.useState<{label:string,value:string} | null>(sortOptions[0])
     const [orderOption, setOrderOption] = React.useState<{value:string, label:string} | null>({value:"1", label:"Ascending"})
+    const [currentSearh, setSearch] = React.useState<string>("")
 
     const auth = authStore.getState();
     // console.log(auth)
@@ -364,11 +366,49 @@ export default function tracked() {
         )
     }
 
+    function escapeRegExp(str:string) {
+        return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+      
+    function fuzzyMatch(pattern: string, str: string): number {
+        pattern = pattern.toLowerCase();
+        str = str.toLowerCase();
+    
+        let score = 0;
+        let lastIndex = -1;
+    
+        // Iterate over the characters in the pattern and find them in the target string
+        for (let char of pattern) {
+            const index = str.indexOf(char, lastIndex + 1);
+            if (index === -1) return -1;  // No match found, return a low score
+    
+            score += index - lastIndex;  // Increase score based on distance between matches
+            lastIndex = index;
+        }
+    
+        return score;  // Return the "closeness" score
+    }
+    
+
+    const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
+        setSearch(event.target.value)
+    }
+
     function checkFilter(manga:mangaDetails) {
 
-        if (!filterOption || filterOption.value === "%") return true
+        //ignore filters while searching
+        // if (/* if search param / search being used */) return fuzzyMatch('Serach param here', manga.mangaName)
 
-        if (manga.userCat === filterOption.value) return true
+        // if (!filterOption || filterOption.value === "%") return true
+
+        // if (manga.userCat === filterOption.value) return true
+
+        // respect filters while searching
+        if (!filterOption || filterOption.value === "%" || manga.userCat === filterOption.value) {
+            if (currentSearh) {
+                return fuzzyMatch(currentSearh, manga.mangaName) > 0
+            } else return true
+        }
 
         return false
     }
@@ -432,7 +472,7 @@ export default function tracked() {
 
     useEffect(() => {
         getUserManga()
-        console.log(fetchPath==='/.proxy'? '/.proxy/image':import.meta.env.VITE_IMG_URL)
+        // console.log(fetchPath==='/.proxy'? '/.proxy/image':import.meta.env.VITE_IMG_URL)
     }, [])
 
     if (!mangaInfo) return LoadingScreen()
@@ -461,11 +501,34 @@ export default function tracked() {
                                     {modalIndex >= 0 ? mangaInfo[modalIndex].mangaName:"Unknown"}
                                 </Typography>
                                 </Tooltip>
-                            <Typography id="modal-chapter-list" sx={{overflowY: "scroll", height: 256, color:"blue", textDecoration:'underline'}}>
-                                <ul>
-                                {modalIndex >= 0 ? mangaInfo[modalIndex].chapterTextList.toReversed().map((chapText, i) => <li><a onClick={(e) => {if (fetchPath === '/.proxy') {discordSdk.commands.openExternalLink({url:mangaInfo[modalIndex].urlList.toReversed()[i]})} else {window.open(mangaInfo[modalIndex].urlList.toReversed()[i])}}}>{chapText}</a></li>):<div/>}
-                                </ul>
-                            </Typography>
+                                <Typography
+                                    id="modal-chapter-list"
+                                    sx={{ overflowY: "scroll", height: 256, color: 'blue', textDecoration: 'underline' }}
+                                >
+                                    <ul>
+                                        {(modalIndex >= 0) ? 
+                                        mangaInfo[modalIndex].chapterTextList.toReversed().map((chapText, i) => (
+                                            <li key={i}>
+                                            <a
+                                                onClick={(e) => {
+                                                const url = mangaInfo[modalIndex].urlList.toReversed()[i];
+                                                fetchPath === '/.proxy' 
+                                                    ? discordSdk.commands.openExternalLink({ url }) 
+                                                    : window.open(url);
+                                                }}
+                                                style={{
+                                                    fontWeight: chapText === mangaInfo[modalIndex].chapterTextList[mangaInfo[modalIndex].currentIndex] ? 'bold' : 'normal',
+                                                    color: chapText === mangaInfo[modalIndex].chapterTextList[mangaInfo[modalIndex].currentIndex] ? '#28A745' : 'blue',
+                                                }}
+                                            >
+                                                {chapText}
+                                            </a>
+                                            </li>
+                                        )) : <div />}
+                                    </ul>
+                                </Typography>
+
+
                         </div>
                     </div>
                     
@@ -489,7 +552,22 @@ export default function tracked() {
 
 
 
-        <div className='cardControls' style={{display:"flex", justifyContent:"center", justifyItems:"center"}}>
+        <div className='cardControls' style={{display:"flex", justifyContent:"center", justifyItems:"center", marginTop: "10px"}}>
+            <TextField 
+                id='search' 
+                label="Search" 
+                value={currentSearh} 
+                onChange={handleSearchChange}
+                variant="outlined"
+                size="small"
+                InputProps={{
+                    style: {
+                        // height: '100%',
+                        border: 'none', // Remove the inner border (if you don't want the inner box border)
+                    },
+                }}
+            />
+
             <Select
                 value={filterOption}
                 onChange={setFilterOption}
@@ -511,12 +589,26 @@ export default function tracked() {
         </div>
         <div className='cardContainer' style={{display:"flex", justifyContent:"center", justifyItems:"center"}}>
             {mangaInfo.filter(manga => checkFilter(manga)).sort((a, b) => {
-                let key:keyof mangaDetails = methodOption?.value as keyof mangaDetails
+                let key:keyof mangaDetails | "search" = methodOption?.value as keyof mangaDetails | "search"
                 let orderVal = parseInt(orderOption?orderOption.value:'0')
 
                 if (!key || !orderVal) return 0
 
-                if (a[key] > b[key]) return 1*orderVal
+                if (methodOption?.value === 'search') {
+                    if (currentSearh) {
+                        const scoreA = fuzzyMatch(currentSearh, a.mangaName)
+                        const scoreB = fuzzyMatch(currentSearh, b.mangaName)
+            
+                        if (scoreA > scoreB) return 1 * orderVal
+                        if (scoreA < scoreB) return -1 * orderVal
+                    } else {
+                        if (a.mangaName > b.mangaName) return 1 * orderVal;
+                        if (a.mangaName < b.mangaName) return -1 * orderVal;
+                    }
+                    return 0
+                }
+                key = key as keyof mangaDetails
+                if (a[key ] > b[key]) return 1*orderVal
                 if (a[key] < b[key]) return -1*orderVal
                 return 0
             }).map((data, i) => 

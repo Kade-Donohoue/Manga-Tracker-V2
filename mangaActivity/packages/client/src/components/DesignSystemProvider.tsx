@@ -46,7 +46,7 @@ const getTheme = (key: string, fallback?: string) => {
   } catch (e) {
     // Unsupported
   }
-  console.log(fallback)
+  // console.log(fallback)
   return theme || fallback;
 };
 

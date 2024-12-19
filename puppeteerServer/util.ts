@@ -17,5 +17,6 @@ export function validMangaCheck(url:string):mangaUrlCheck {
     else if (url.includes('reaperscans') && config.sites.allowReaperScans) return {success: true, value: 'reaperScans'}
     else if (url.includes('reaper-scan') && config.sites.allowReaperScansFake) return {success: true, value: 'reaper-scans-fake'}
     else if (url.includes('asura') && config.sites.allowAsura) return {success: true, value: 'asura'}
+    else if (url.includes('comick') && config.sites.allowComick) return {success: true, value: 'comick'}
     else return {success: false, value: 'Unsupported WebPage!', statusCode: 422}
 }
