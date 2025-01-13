@@ -6,7 +6,7 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   server: {
     // Set the custom URL scheme (this is the URL you'll use to detect and open the app)
-    url: "https://devmanga.kdonohoue.com",
+    url: "https://manga.kdonohoue.com",
     androidScheme: "https",  // Scheme for Android
   },
   plugins: {

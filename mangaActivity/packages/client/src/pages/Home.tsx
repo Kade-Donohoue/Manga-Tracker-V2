@@ -13,13 +13,14 @@ export default function Home() {
       <a style={{color:"lightblue", textDecoration:"underline"}} onClick={(e) => {discordSdk.commands.openExternalLink({url:'https://manganato.com/'})}} href='https://manganato.com/'>Manganato</a>, 
       <a style={{color:"lightblue", textDecoration:"underline"}} onClick={(e) => {discordSdk.commands.openExternalLink({url:'https://asuracomic.net/'})}} href='https://asuracomic.net/'> Asura Scans</a>, 
       <a style={{color:"lightblue", textDecoration:"underline"}} onClick={(e) => {discordSdk.commands.openExternalLink({url:'https://reaper-scans.com/'})}} href='https://reaper-scans.com/'> Reaper-Scans</a>, 
-      <a style={{color:"lightblue", textDecoration:"underline"}} onClick={(e) => {discordSdk.commands.openExternalLink({url:'https://reaperscans.com/'})}} href='https://reaperscans.com/'> Reaper Scans</a>
+      <a style={{color:"lightblue", textDecoration:"underline"}} onClick={(e) => {discordSdk.commands.openExternalLink({url:'https://reaperscans.com/'})}} href='https://reaperscans.com/'> Reaper Scans</a>,
+      <a style={{color:"lightblue", textDecoration:"underline"}} onClick={(e) => {discordSdk.commands.openExternalLink({url:'https://comick.io/home2'})}} href='https://comick.io/home2'> Comick</a>, 
       , and 
       <a style={{color:"lightblue", textDecoration:"underline"}} onClick={(e) => {discordSdk.commands.openExternalLink({url:'https://mangadex.org/'})}}> Mangadex </a> 
       are supported. 
 
       <p>
-        If you have any requests please file an issue on the <a style={{color:"lightblue", textDecoration:"underline"}} onClick={(e) => {discordSdk.commands.openExternalLink({url:'https://github.com/Kade-Donohoue/Manga-Bot'})}} href='https://github.com/Kade-Donohoue/Manga-Bot'>Github</a>!
+        If you have any requests please file an issue on the <a style={{color:"lightblue", textDecoration:"underline"}} onClick={(e) => {discordSdk.commands.openExternalLink({url:'https://github.com/Kade-Donohoue/Manga-Tracker-V2'})}} href='https://github.com/Kade-Donohoue/Manga-Tracker-V2'>Github</a>!
       </p><br></br>
 
       To get started select a category<br></br><br></br>

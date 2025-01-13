@@ -1,11 +1,28 @@
 # **Change Logs**
 
+## Change Log 1.4.1
+ - changed default android capacitor url. 
+ - Access_token now gets deleted and properly refreshed when it expires
+ - complete rework of how the view tracked series modal works
+ - feed change option button is now easier to see 
+ - updated view tracked chapter and category update screen. 
+ - view tracked update chapter now gives a currect error when no chapter is selected. 
+ - added comick to home screen. 
+ - reimplemented comick script to work long term
+ - updated github repo link on home page to point to the correct repo
+ - fixed dev mode to not reload every 30 sec when using cloudflare tunnel
+ - updated mangaActivity readme to improve instructions
+ - moved autoUpdateInfo from logging to updateSettings
+ - updated puppeteer servers example config
+ - split chapter check to its own function for puppeteer server. 
+
 ## Change Log 1.4.0
  - New Android App!
  - added support for comick
  - removed some debug console logs
  - fixed mangadex being unable to be added if provided url included the page
  - created script to help fix reaper-scans links
+ - change log is now in its own file
 
 ## Change Log 1.3.1
  - Current Chapter is now green for feed and view Tracked

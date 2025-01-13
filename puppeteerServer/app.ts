@@ -129,7 +129,7 @@ app.get('/checkStatus/get', checkOpts, async function(req, res) {
 
 async function updateAllManga() {
     let date = new Date()
-    if (config.logging.autoUpdateInfo) console.log(`Updating all manga at ${date.toLocaleString()}`)
+    if (config.updateSettings.autoUpdateInfo) console.log(`Updating all manga at ${date.toLocaleString()}`)
     const resp = await fetch(`${config.serverCom.serverUrl}/api/data/pull/getUpdateData`, {
         method: 'GET',
         headers: {
@@ -162,7 +162,7 @@ async function updateAllManga() {
 
         const webSite = validMangaCheck(firstChapUrl)
         if (webSite.success === false) {
-            console.log(`Disabled or Invalid URL in database! Check your config and the database Skipping for now. mangaId:${returnData[i].mangaId}`)
+            console.log(`Disabled or Invalid URL in database, ${webSite.value}! Check your config and the database Skipping for now. mangaId:${returnData[i].mangaId}`)
             continue
         }
         if (config.logging.verboseLogging) console.log(returnData[i])
@@ -245,7 +245,7 @@ async function sendUpdate(dataIndex:number) {
             })
 
             if (!resp.ok) console.warn(await resp.json())
-                else if (config.logging.autoUpdateInfo) console.log(`${dataCollector[dataIndex].batchData.newData.length} / ${dataCollector[dataIndex].batchData.completedCount} Manga Update Saved With ${dataCollector[dataIndex].batchData.newChapterCount} New Chapters!`)
+                else if (config.updateSettings.autoUpdateInfo) console.log(`${dataCollector[dataIndex].batchData.newData.length} / ${dataCollector[dataIndex].batchData.completedCount} Manga Update Saved With ${dataCollector[dataIndex].batchData.newChapterCount} New Chapters!`)
         
         } else {
             for (let i = 0; i < dataCollector[dataIndex].batchData.newData.length; i++) {
@@ -268,7 +268,7 @@ async function sendUpdate(dataIndex:number) {
         
 
         
-    } else if (config.logging.autoUpdateInfo) console.log('Update Complete! No New Chapters Found!')
+    } else if (config.updateSettings.autoUpdateInfo) console.log('Update Complete! No New Chapters Found!')
     dataCollector.splice(dataIndex, 1)
 }
 

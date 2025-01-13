@@ -92,16 +92,23 @@ export const start = async (isEmbedded: boolean, code:string = '') => {
     console.log('Logged In');
   }
 
-  function getAccess_Token() {
-    const tokenData = localStorage.getItem("access_token")
-    if (!tokenData) return ""
-    const {value, expirationTime} = JSON.parse(tokenData)
-    if (Date.now() > expirationTime) {
-      localStorage.removeItem('access_token')
-      return ""
+  async function getAccess_Token(): Promise<string> {
+    const tokenData = await getStorage("access_token");
+    if (!tokenData) return "";
+  
+    try {
+      const { value, expirationTime } = JSON.parse(tokenData);
+      if (Date.now() > expirationTime) {
+        await deleteStorage("access_token"); // Use deleteStorage for clearing expired tokens
+        return "";
+      }
+      return value;
+    } catch (error) {
+      console.error("Error parsing token data:", error);
+      return "";
     }
-    return value as string
   }
+  
 
   async function setStorage(key: string, value: string): Promise<void> {
     if (Capacitor.isNativePlatform()) {
@@ -121,6 +128,14 @@ export const start = async (isEmbedded: boolean, code:string = '') => {
     }
   }
 
+  async function deleteStorage(key: string): Promise<void> {
+    if (Capacitor.isNativePlatform()) {
+      await Preferences.remove({ key });
+    } else {
+      localStorage.removeItem(key);
+    }
+  }
+
   async function externalAuth(isCapacitorApp: boolean, code: string = ''): Promise<boolean> {
     console.log('external auth code: ' + code);
 
@@ -130,7 +145,7 @@ export const start = async (isEmbedded: boolean, code:string = '') => {
       setFetchPath(import.meta.env.VITE_SERVER_URL);
     }
 
-    let access_token: string = getAccess_Token();
+    let access_token: string = await getAccess_Token();
     let refresh_token: string | null = await getStorage('refresh_token');
 
     if (!access_token) {
@@ -142,22 +157,23 @@ export const start = async (isEmbedded: boolean, code:string = '') => {
       let body: string;
       const isElectron = typeof window.electron !== 'undefined' && window.electron.isElectron;
       if (isCapacitorApp) {
+        console.log(`Capacitor, ${code}`)
         body = JSON.stringify(
-          refresh_token
+          !code
             ? { refresh_token }
             : { code: code, redirectUri: 'kd://callback', codeVerifier: await getStorage('codeVerifier') }
         );
       } else if (isElectron) {
         body = JSON.stringify(
-          refresh_token
-            ? { refresh_token }
-            : { code: code, redirectUri: 'https://manga.kdonohoue.com/electron' }
+          code
+            ? { code: code, redirectUri: 'https://manga.kdonohoue.com/electron' }
+            : { refresh_token }
         );
       } else {
         body = JSON.stringify(
-          refresh_token
-            ? { refresh_token }
-            : { code: code, redirectUri: import.meta.env.VITE_CLIENT_URL }
+          code
+            ? { code: code, redirectUri: import.meta.env.VITE_CLIENT_URL }
+            : { refresh_token }
         );
       }
       console.log(body);
@@ -169,6 +185,11 @@ export const start = async (isEmbedded: boolean, code:string = '') => {
         },
         body,
       });
+
+      if (response.status === 400) {
+        console.log('clearing refresh token')
+        deleteStorage('refresh_token')
+      }
 
       if (!response.ok) return false;
 

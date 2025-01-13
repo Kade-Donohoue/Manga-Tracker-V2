@@ -27,6 +27,7 @@ import { catOptions, fetchPath } from '../../vars'
 
 import './viewTracker.css'
 import {modalStyle} from '../../AppStyles'
+import SeriesModal from '../../components/SeriesModal'
 
 const sortOptions:{label:string,value:keyof mangaDetails | "search"}[] = [
     {label: "Title Search", value: "search"},
@@ -78,7 +79,7 @@ export default function tracked() {
     }
 
     async function openMangaOverview(mangaId:string) {
-        console.log('opening')
+        console.log('opening Series Modal!')
         let mangaIndex = mangaInfo.findIndex(manga => manga.mangaId === mangaId)
         SetModalIndex(mangaIndex)
         handleOpen()
@@ -231,7 +232,7 @@ export default function tracked() {
         let notif = toast.loading("Changing Chapter!")
 
         if (!newChapter) return toast.update(notif, {
-            render: "No Category Selected!", 
+            render: "No Chapter Selected!", 
             type: "error", 
             isLoading: false,
             autoClose: 5000, 
@@ -354,20 +355,28 @@ export default function tracked() {
                     options={catOptions} 
                     styles={customStyles} 
                 />
-                <Button onClick={(e) => {
+                <Button
+                    onClick={(e) => {
+                        changeUserCat(mangaInfo[modalIndex].mangaId)
+                        handleCatClose()
+                    }}
+                    variant="contained"
+                    color="primary"
+                    fullWidth
+                    sx={{ mb: 2 }}
+                >
+                Submit
+                </Button>
+                {/* <Button onClick={(e) => {
                     changeUserCat(mangaInfo[modalIndex].mangaId)
                     handleCatClose()
-                }}>Submit</Button>
+                }}>Submit</Button> */}
                 <SvgIcon onClick={handleCatClose} sx={{position: "absolute", top: 10, right: 10}}>
                     <CancelIcon sx={{color: "white"}}/>
                 </SvgIcon>
                 </Box>
             </Modal>
         )
-    }
-
-    function escapeRegExp(str:string) {
-        return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
       
     function fuzzyMatch(pattern: string, str: string): number {
@@ -377,16 +386,15 @@ export default function tracked() {
         let score = 0;
         let lastIndex = -1;
     
-        // Iterate over the characters in the pattern and find them in the target string
         for (let char of pattern) {
             const index = str.indexOf(char, lastIndex + 1);
-            if (index === -1) return -1;  // No match found, return a low score
+            if (index === -1) return -1;  // No match found for letter return -1, possible subtract score instead of -1
     
-            score += index - lastIndex;  // Increase score based on distance between matches
+            score += index - lastIndex; 
             lastIndex = index;
         }
     
-        return score;  // Return the "closeness" score
+        return score;
     }
     
 
@@ -395,15 +403,6 @@ export default function tracked() {
     }
 
     function checkFilter(manga:mangaDetails) {
-
-        //ignore filters while searching
-        // if (/* if search param / search being used */) return fuzzyMatch('Serach param here', manga.mangaName)
-
-        // if (!filterOption || filterOption.value === "%") return true
-
-        // if (manga.userCat === filterOption.value) return true
-
-        // respect filters while searching
         if (!filterOption || filterOption.value === "%" || manga.userCat === filterOption.value) {
             if (currentSearh) {
                 return fuzzyMatch(currentSearh, manga.mangaName) > 0
@@ -434,10 +433,22 @@ export default function tracked() {
                     })} 
                     styles={customStyles} 
                 />
-                <Button onClick={(e) => {
+                <Button
+                    onClick={(e) => {
+                        changeCurrChapter(mangaInfo[modalIndex].mangaId)
+                        handleChapterClose()
+                    }}
+                    variant="contained"
+                    color="primary"
+                    fullWidth
+                    sx={{ mb: 2 }}
+                >
+                Submit
+                </Button>
+                {/* <Button onClick={(e) => {
                     changeCurrChapter(mangaInfo[modalIndex].mangaId)
                     handleChapterClose()
-                }}>Submit</Button>
+                }}>Submit</Button> */}
                 <SvgIcon onClick={handleChapterClose} sx={{position: "absolute", top: 10, right: 10}}>
                     <CancelIcon sx={{color: "white"}}/>
                 </SvgIcon>
@@ -455,8 +466,22 @@ export default function tracked() {
     //modal control
     const [open, setOpen] = React.useState(false)
     const handleOpen = () => setOpen(true)
-    const handleClose = () => setOpen(false)
+    const handleClose = async () => {
+        setOpen(false)
 
+        await fetch(`${fetchPath}/api/data/update/updateInteractTime`, {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                  "access_token": auth.access_token,
+                  "authId": null,
+                  "mangaId": mangaInfo[modalIndex].mangaId,
+                  "interactionTime": Date.now()
+            }),
+        })
+    }
     const [catOpen, setCatOpen] = React.useState(false)
     const handleCatOpen = () => setCatOpen(true)
     const handleCatClose = () => setCatOpen(false)
@@ -466,7 +491,7 @@ export default function tracked() {
     const handleChapterClose = () => setChapterOpen(false)
 
     const [removeOpen, setRemoveOpen] = React.useState(false)
-    const handleRemoveOpen = () => setRemoveOpen(true)
+    const handleRemoveOpen = () => {setRemoveOpen(true); console.log(removeOpen)}
     const handleRemoveClose = () => setRemoveOpen(false)
 
 
@@ -479,78 +504,23 @@ export default function tracked() {
     return (
     <div className='viewTrackerContainer' style={{display:"flex", justifyContent:"center", flexDirection: "column"}}>
         <div className='mangaOverviewModal' id="overviewModal">
-            <Modal
+            <SeriesModal
                 open={open}
                 onClose={handleClose}
-                aria-labelledby="modal-title"
-                aria-describedby="modal-description"
-            >
-                <Box sx={{width: "80vw", height: "65vh", ...modalStyle}}>
-                    <div style={{display: 'flex', flexDirection: 'row'}}>
-                        <img className="modalImage" src={`${fetchPath==='/.proxy'? '/.proxy/image':import.meta.env.VITE_IMG_URL}/${modalIndex >= 0 ? mangaInfo[modalIndex].mangaId: "mangaNotFoundImage"}`}></img>
-                        <div style={{paddingLeft: "20px"}}>
-                            
+                title={modalIndex >= 0 ? mangaInfo[modalIndex].mangaName:'unknown'}
+                imageUrl={(fetchPath==='/.proxy'? '/.proxy/image':import.meta.env.VITE_IMG_URL) +'/'+ (modalIndex >= 0 ? mangaInfo[modalIndex].mangaId: "mangaNotFoundImage")}
+                chapters={modalIndex >= 0 ? mangaInfo[modalIndex].chapterTextList.toReversed().map((chapText, i) => ({'title': chapText, 'url': mangaInfo[modalIndex].urlList.toReversed()[i], 'key': i})):[]}
+                currentChapterUrl={modalIndex >= 0 ? mangaInfo[modalIndex].urlList[mangaInfo[modalIndex].currentIndex]:''}
+                onRemove={() => handleRemoveOpen()}
+                onChangeCategory={() => handleCatOpen()}
+                onChangeChap={() => handleChapterOpen()}
+            />
 
-                            <Tooltip title={<h1>{modalIndex >= 0 ? mangaInfo[modalIndex].mangaName:"Unknown"}</h1>} enterDelay={700}>
-                                <Typography gutterBottom variant="h3" component="h3" style={{"display": "-webkit-box",
-                                    "WebkitBoxOrient": "vertical",
-                                    "WebkitLineClamp": 1,
-                                    "overflow": "hidden",
-                                    "textOverflow": "ellipsis",}}
-                                >
-                                    {modalIndex >= 0 ? mangaInfo[modalIndex].mangaName:"Unknown"}
-                                </Typography>
-                                </Tooltip>
-                                <Typography
-                                    id="modal-chapter-list"
-                                    sx={{ overflowY: "scroll", height: 256, color: 'blue', textDecoration: 'underline' }}
-                                >
-                                    <ul>
-                                        {(modalIndex >= 0) ? 
-                                        mangaInfo[modalIndex].chapterTextList.toReversed().map((chapText, i) => (
-                                            <li key={i}>
-                                            <a
-                                                onClick={(e) => {
-                                                const url = mangaInfo[modalIndex].urlList.toReversed()[i];
-                                                fetchPath === '/.proxy' 
-                                                    ? discordSdk.commands.openExternalLink({ url }) 
-                                                    : window.open(url);
-                                                }}
-                                                style={{
-                                                    fontWeight: chapText === mangaInfo[modalIndex].chapterTextList[mangaInfo[modalIndex].currentIndex] ? 'bold' : 'normal',
-                                                    color: chapText === mangaInfo[modalIndex].chapterTextList[mangaInfo[modalIndex].currentIndex] ? '#28A745' : 'blue',
-                                                }}
-                                            >
-                                                {chapText}
-                                            </a>
-                                            </li>
-                                        )) : <div />}
-                                    </ul>
-                                </Typography>
+            {changeCatModal()}
+            {changeChapterModal()}
+            {confirmRemovalDialog()}
 
-
-                        </div>
-                    </div>
-                    
-                    <Typography id="modal-description" sx={{ mt: 2, }}>
-                        <ButtonGroup variant='contained' sx={{position: "absolute", bottom:10, alignItems:"center", width: "95%"}}>
-                            <Button sx={{width:"33%"}} onClick={handleRemoveOpen}>Remove</Button>
-                            <Button sx={{width:"34%"}} onClick={handleCatOpen}>Change Category</Button>
-                            <Button sx={{width:"33%"}} onClick={handleChapterOpen}>Change Current Chapter</Button>
-                        </ButtonGroup>
-                    </Typography>
-                    <SvgIcon onClick={handleClose} sx={{position: "absolute", top: 10, right: 10}}>
-                        <CancelIcon sx={{color: "white"}}/>
-                    </SvgIcon>
-
-                    {changeCatModal()}
-                    {changeChapterModal()}
-                    {confirmRemovalDialog()}
-                </Box>
-            </Modal>
         </div>
-
-
 
         <div className='cardControls' style={{display:"flex", justifyContent:"center", justifyItems:"center", marginTop: "10px"}}>
             <TextField 
@@ -562,8 +532,7 @@ export default function tracked() {
                 size="small"
                 InputProps={{
                     style: {
-                        // height: '100%',
-                        border: 'none', // Remove the inner border (if you don't want the inner box border)
+                        border: 'none',
                     },
                 }}
             />
@@ -634,14 +603,16 @@ export default function tracked() {
                     </Tooltip>
                     <Typography variant="body2" color="text.secondary" sx={{color: "lightgray", position: "absolute", bottom: 10}}> 
                       <table>
-                        <tr> 
-                          <td>Chapter:</td>
-                          <td>{`${data.chapterTextList[checkIndexInRange(data.currentIndex, data.chapterTextList.length)].match(/[0-9.]+/g)}/${data.chapterTextList[data.chapterTextList.length-1].match(/[0-9.]+/g)}`}</td>
-                        </tr>
-                        <tr>
-                          <td>Category: </td>
-                          <td>{findCatLabel(data.userCat)}</td>
-                        </tr>
+                        <tbody>
+                            <tr> 
+                            <td>Chapter:</td>
+                            <td>{`${data.chapterTextList[checkIndexInRange(data.currentIndex, data.chapterTextList.length)].match(/[0-9.]+/g)}/${data.chapterTextList[data.chapterTextList.length-1].match(/[0-9.]+/g)}`}</td>
+                            </tr>
+                            <tr>
+                            <td>Category: </td>
+                            <td>{findCatLabel(data.userCat)}</td>
+                            </tr>
+                        </tbody>
                       </table>
                     </Typography>
                   </CardContent>

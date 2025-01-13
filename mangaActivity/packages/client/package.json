@@ -8,10 +8,10 @@
     "email": "kade.donohoue@gmail.com"
   },
   "private": true,
-  "version": "1.4.0",
+  "version": "1.4.1",
   "scripts": {
     "test": "$npm_execpath run tsc",
-    "dev": "vite --mode dev",
+    "dev": "vite --mode dev --host",
     "dev-proxy": "vite --mode dev-proxy",
     "staging": "vite --mode staging",
     "staging-proxy": "vite --mode staging-proxy",
@@ -19,6 +19,7 @@
     "build-staging": "tsc && vite build --mode staging",
     "preview": "vite preview",
     "tsc": "tsc",
+    "capacitor:build": "npx cap sync && npx cap open android",
     "electron:buildAll": "concurrently \"pnpm electron:build --linux\" \"pnpm electron:build --win\"",
     "electron:dev": "NODE_ENV=development cross-env VITE_DEV_SERVER_URL=http://localhost:3000 electron ./src/electron/main.js",
     "electron:build": "NODE_ENV=production electron-builder"
@@ -66,6 +67,7 @@
     "@emotion/styled": "^11.11.5",
     "@mui/icons-material": "^5.16.1",
     "@mui/material": "^5.16.1",
+    "@mui/system": "^6.2.1",
     "@mui/x-data-grid": "^7.12.0",
     "@radix-ui/colors": "^0.1.9",
     "@radix-ui/react-scroll-area": "^1.0.5",

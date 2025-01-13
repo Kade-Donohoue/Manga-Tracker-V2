@@ -233,7 +233,7 @@ export default function feed():JSX.Element {
     </div>
   )
   return (
-    <div style={{padding: 32}}>
+    <div style={{padding: 32, maxWidth: '100%'}}>
       <label className='feedMangaTitle'>{mangaDetails[currentCard].mangaName}</label>
       <div className='mangaContainer'>
         {mangaDetails ? <img src={`${fetchPath==='/.proxy'? '/.proxy/image':import.meta.env.VITE_IMG_URL}/${mangaDetails[currentCard].mangaId}`} alt="Manga Icon" className='cover-image' /> : <p>Loading...</p>}
@@ -335,10 +335,19 @@ export default function feed():JSX.Element {
       </div>
       
       <br></br>
-      <button className='feedChangeOptionButton' onClick={(e) => {
+      <Button 
+        sx={{"position": "absolute", "bottom": "1rem", "right": "1rem"}}
+        variant="contained"
+        color="primary"
+        onClick={(e) => {
+          //remove response data 
+          setMangaDetails([])
+        }}
+      >Change Options</Button>
+      {/* <button className='feedChangeOptionButton' onClick={(e) => {
         //remove response data 
         setMangaDetails([])
-      }}>Change Options</button>
+      }}>Change Options</button> */}
     </div>
   )
 }

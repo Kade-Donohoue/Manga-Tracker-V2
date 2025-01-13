@@ -176,7 +176,9 @@ function RootedApp(): React.ReactElement {
         }}>
         <Scrollable.Viewport>
           <S.Ul>
-            <IconButton sx={{borderRadius:0}} onClick={(e) => setSideBarExpanded(!sideBarExpanded)}><MenuIcon sx={{fontSize:30, align:"left", color:"white"}}/></IconButton>
+            <IconButton sx={{borderRadius:0}} onClick={(e) => setSideBarExpanded(!sideBarExpanded)}>
+              <MenuIcon sx={{fontSize:30, align:"left", color:"white"}}/>
+            </IconButton>
             {Object.values(routes).map((r) => (
               <S.Li as={Link} to={r.path} key={r.path} selected={location.pathname === r.path} css={{"@small": {display:(sideBarExpanded?"block":"none")}}}>
                 <p style={{display: "flex", alignItems: 'center', fontSize:16}}><r.icon sx={{fontSize:18, align:"center" }} />{sideBarExpanded?` ${r.name}`:''}</p>

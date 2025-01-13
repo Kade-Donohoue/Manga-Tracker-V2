@@ -3,19 +3,19 @@
         "allowManganatoScans": true,
         "allowMangaDex": true,
         "allowReaperScans": true,
-        "allowReaperScansFake": true,
-        "allowAsura": true
+        "allowReaperScansFake": false,
+        "allowAsura": true,
+        "allowComick": true
     },
     "queue": {
         "redisIp": "127.0.0.1",
         "instances": 3,
         "clearQueuesAtStart": false,
-        "instantClearJob": true,
+        "instantClearJob": false,
         "removeCompleted": 1000,
         "removeFailed": 5000
     },
     "logging": {
-        "autoUpdateInfo": true,
         "verboseLogging": false
     },
     "serverCom": {
@@ -23,6 +23,7 @@
         "serverPassWord": "secret_Password_Change_Me"
     },
     "updateSettings": {
+        "autoUpdateInfo": true,
         "updateDelay": 7200000,
         "updateAtStart": true,
         "refetchImgs": false
