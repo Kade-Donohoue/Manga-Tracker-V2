@@ -100,7 +100,7 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         job.updateProgress(100)
         job.log(logWithTimestamp('All data fetched!'))
         return {
-            "mangaName": getEnglishTitle(comicData.comic.md_titles), 
+            "mangaName": getEnglishTitle(comicData.comic.md_titles, comicData.comic.title), 
             "chapterUrlList": urls.join(','), 
             "chapterTextList": chapters.join(','), 
             "currentIndex": currIndex, 
@@ -147,13 +147,13 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         return match ? match[1] : null
     }
 
-    function getEnglishTitle(titles:{title: string, lang: string}[]) {
+    function getEnglishTitle(titles:{title:string, lang:string}[], defaultTitle:string = 'unknown') {
         for (let i = 0; i < titles.length; i++) {
+            if (!titles[i].lang) continue
             if (titles[i].lang.toLowerCase() === 'en') return titles[i].title
         }
 
-        if (titles[0]?.title) return titles[0].title
-        return 'Unknown'
+        return defaultTitle
     }
 }
 

@@ -1,5 +1,8 @@
 # **Change Logs**
 
+## Change Log 1.4.2
+ - Resolved an issue on comick where it would fail to fetch manga data if lang was null for the titles. 
+
 ## Change Log 1.4.1
  - changed default android capacitor url. 
  - Access_token now gets deleted and properly refreshed when it expires
