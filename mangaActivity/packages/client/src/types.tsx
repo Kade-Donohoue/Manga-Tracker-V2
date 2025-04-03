@@ -294,7 +294,8 @@ export interface mangaInfo {
 export interface mangaDetails {
   mangaName:string,
   mangaId:string,
-  urlList: string[],
+  urlBase:string,
+  slugList: string[],
   chapterTextList: string[], 
   updateTime: string,
   currentIndex: number,

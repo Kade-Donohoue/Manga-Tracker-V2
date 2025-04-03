@@ -3,6 +3,7 @@ import config from '../config.json'
 import sharp from 'sharp'
 import { getBrowser } from "../jobQueue"
 import { Job } from 'bullmq'
+import { fetchData } from '../types'
 
 /**
  * Gets the chapter list from ChapManganato
@@ -10,12 +11,12 @@ import { Job } from 'bullmq'
  * @param icon: wether or not to get icon
  * @returns {
  *  "mangaName": name of manga , 
- *  "chapterUrlList": string separated by commas(',') for all chapter urls of manga
+ *  "urlList": string separated by commas(',') for all chapter urls of manga
  *  "chapterTextList": string separated by commas(',') for all chapter text of manga
  *  "iconBuffer": base64 icon for manga
  * }
  */
-export async function getManga(url:string, icon:boolean = true, ignoreIndex = false, job:Job) {
+export async function getManga(url:string, icon:boolean = true, ignoreIndex = false, job:Job):Promise<fetchData> {
     if (config.logging.verboseLogging) console.log('ReaperScans')
     
     let lastTimestamp:number = Date.now()
@@ -62,32 +63,34 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         await job.updateProgress(20)
 
         let seriesSlug = url.replace('//', '').split('/')[2]
-        
+        if(config.logging.verboseLogging) console.log(seriesSlug)
+
         job.log(logWithTimestamp('Starting Chapter Request'))
-        let chapResponse = await fetch(`https://api.reaperscans.com/chapter/all/${seriesSlug}`)
+        let chapResponse = await fetch(`https://api.reaperscans.com/chapters/${seriesSlug}/all`)
+        if(config.logging.verboseLogging) console.log(chapResponse)
         job.log(logWithTimestamp('Fetch Complete'))
 
         if (!chapResponse.ok) throw new Error('Manga: Unable to get Chapter List. Contact an admin or try again later!')
 
-        let chapterLinks:string[] = []
+        let chapterSlugs:string[] = []
         let chapterText:string[] = []
         for (const chapData of (await chapResponse.json())) {
             // filters out early releases
-            if (chapData.price != 0) continue
+            if (!chapData.public) continue
 
-            chapterLinks.push(`https://reaperscans.com/series/${seriesSlug}/${chapData.chapter_slug}`)
-            chapterText.push(chapData.chapter_name.split('-')[0].trim())
+            chapterSlugs.push(chapData.chapter_slug)
+            chapterText.push(chapData.chapter_slug.split('-')[1])
         }
-        chapterLinks.reverse()
+        chapterSlugs.reverse()
         chapterText.reverse()
 
 
-        if (chapterLinks.length == 0 || chapterLinks.length != chapterText.length) throw new Error('Manga: Issue fetching Chapters')
+        if (chapterSlugs.length == 0 || chapterSlugs.length != chapterText.length) throw new Error('Manga: Issue fetching Chapters')
 
         const title = await page.evaluate(() => document.querySelector("h2.font-semibold")?.innerHTML, {timeout: 500})
 
         if (config.logging.verboseLogging) {
-            console.log(chapterLinks)
+            console.log(chapterSlugs)
             console.log(chapterText)
             console.log(title)
         }
@@ -99,7 +102,7 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         if (icon) {
 
             const photoSelect = await page.waitForSelector('img.rounded', {timeout:1000})
-            const photo = (await photoSelect?.evaluate(el => el.getAttribute('src'))).replace('w=48', 'w=384')
+            const photo = (await photoSelect?.evaluate(el => el.getAttribute('src'))).replace('w=96', 'w=384')
             if (config.logging.verboseLogging) console.log(`https://reaperscans.com${photo}`)
             
             allowAllRequests = true
@@ -117,7 +120,8 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         await page.close()
         job.log(logWithTimestamp('All Data Fetched Processing'))
         
-        const currIndex = chapterLinks.indexOf(url)
+        console.log(url.replace(`https://reaperscans.com/series/${seriesSlug}/`, ''))
+        const currIndex = chapterSlugs.indexOf(url.replace(`https://reaperscans.com/series/${seriesSlug}/`, ''))
 
         if (currIndex == -1 && !ignoreIndex) {
             throw new Error("Manga: unable to find current chapter. Try opening page and copying URL or contact an Admin!")
@@ -125,7 +129,13 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
 
         job.log(logWithTimestamp('Done'))
         await job.updateProgress(100)
-        return {"mangaName": title, "chapterUrlList": chapterLinks.join(','), "chapterTextList": chapterText.join(','), "currentIndex": currIndex, "iconBuffer": resizedImage}
+        return {
+            "mangaName": title, 
+            "urlBase": `https://reaperscans.com/series/${seriesSlug}/`,
+            "slugList": chapterSlugs.join(','), 
+            "chapterTextList": chapterText.join(','), 
+            "currentIndex": currIndex, 
+            "iconBuffer": resizedImage}
     } catch (err) {
         job.log(logWithTimestamp(`Error: ${err}`))
         console.warn(`Unable to fetch data for: ${url}`)

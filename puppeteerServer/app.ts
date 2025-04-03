@@ -130,9 +130,10 @@ app.get('/checkStatus/get', checkOpts, async function(req, res) {
 async function updateAllManga() {
     let date = new Date()
     if (config.updateSettings.autoUpdateInfo) console.log(`Updating all manga at ${date.toLocaleString()}`)
-    const resp = await fetch(`${config.serverCom.serverUrl}/api/data/pull/getUpdateData`, {
+    const resp = await fetch(`${config.serverCom.serverUrl}/serverReq/data/getAllManga`, {
         method: 'GET',
         headers: {
+            "Content-Type": "application/json",
             "pass": config.serverCom.serverPassWord
         }
     })
@@ -144,25 +145,28 @@ async function updateAllManga() {
     // console.log(returnData)
     let batchId = Date.now()
     let batchedJobs:{data:any,name:string,opts:any}[] = []
+    let invalidCount = 0
     for (var i = 0; i < returnData.length; i++) {
 
         let firstChapUrl = ''
-        if (returnData[i].urlList.indexOf(',') == -1) {
-            if (returnData[i].urlList.length <= 0) {
+        if (returnData[i].slugList.indexOf(',') == -1) {
+            if (returnData[i].slugList.length <= 0) {
                 console.log("Unable to find first chap skipping: " + returnData[i].mangaId)
-                if (config.logging.verboseLogging) console.log(returnData[i].urlList)
+                if (config.logging.verboseLogging) console.log(returnData[i].slugList)
+                invalidCount++
                 continue
             } else {
-                firstChapUrl = returnData[i].urlList.substring(0, returnData[i].urlList.length)
+                firstChapUrl = returnData[i].urlBase+returnData[i].slugList.substring(0, returnData[i].slugList.length)
             }
         } else {
-            firstChapUrl = returnData[i].urlList.substring(0, returnData[i].urlList.indexOf(','))
+            firstChapUrl = returnData[i].urlBase+returnData[i].slugList.substring(0, returnData[i].slugList.indexOf(','))
         }
         if (config.logging.verboseLogging) console.log(firstChapUrl)
 
         const webSite = validMangaCheck(firstChapUrl)
         if (webSite.success === false) {
             console.log(`Disabled or Invalid URL in database, ${webSite.value}! Check your config and the database Skipping for now. mangaId:${returnData[i].mangaId}`)
+            invalidCount++
             continue
         }
         if (config.logging.verboseLogging) console.log(returnData[i])
@@ -175,8 +179,8 @@ async function updateAllManga() {
                 mangaId: returnData[i].mangaId, 
                 getIcon: config.updateSettings.refetchImgs,
                 update: true,    
-                length: returnData.length,
-                oldUrlList: returnData[i].urlList,
+                length: returnData.length-invalidCount,
+                oldSlugList: returnData[i].urlList,
                 batchId: batchId
             },
             opts: {priority: 2, removeOnComplete: config.queue.removeCompleted, removeOnFail: config.queue.removeFailed, attempts: 2}
@@ -200,8 +204,8 @@ getEvents.on('completed', async ({ jobId }:{jobId:string}) => {
         }
 
         dataCollector[dataIndex].batchData.completedCount++
-        if ((job.returnvalue.iconBuffer) || (job.returnvalue.chapterUrlList && job.returnvalue.chapterUrlList != job.data.oldUrlList)) {
-            dataCollector[dataIndex].batchData.newChapterCount+=((job.returnvalue.chapterUrlList.match(/,/g) || []).length - (job.data.oldUrlList.match(/,/g) || []).length)
+        if ((job.returnvalue.iconBuffer) || (job.returnvalue.urlList && job.returnvalue.urlList != job.data.oldSlugList)) {
+            dataCollector[dataIndex].batchData.newChapterCount+=((job.returnvalue.slugList.match(/,/g) || []).length - (job.data.oldSlugList.match(/,/g) || []).length)
             dataCollector[dataIndex].batchData.newData.push({...job.returnvalue, mangaId: job.data.mangaId})
         }
 
@@ -232,30 +236,30 @@ getEvents.on('failed', async ({ jobId }:{jobId:string}) => {
 async function sendUpdate(dataIndex:number) {
     if (dataCollector[dataIndex].batchData.newData.length > 0) {
         if (!config.updateSettings.refetchImgs) {
-            const resp = await fetch(`${config.serverCom.serverUrl}/api/data/update/bulkUpdateMangaInfo`, {
+            const resp = await fetch(`${config.serverCom.serverUrl}/serverReq/data/updateManga`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    "pass": config.serverCom.serverPassWord,
                 },
                 body: JSON.stringify({
-                    "access_token": config.serverCom.serverPassWord,
                     "newData": dataCollector[dataIndex].batchData.newData,
                     "amountNewChapters": dataCollector[dataIndex].batchData.newChapterCount
                 }),
             })
 
-            if (!resp.ok) console.warn(await resp.json())
+            if (!resp.ok) console.warn(resp)
                 else if (config.updateSettings.autoUpdateInfo) console.log(`${dataCollector[dataIndex].batchData.newData.length} / ${dataCollector[dataIndex].batchData.completedCount} Manga Update Saved With ${dataCollector[dataIndex].batchData.newChapterCount} New Chapters!`)
         
         } else {
             for (let i = 0; i < dataCollector[dataIndex].batchData.newData.length; i++) {
-                const resp = await fetch(`${config.serverCom.serverUrl}/api/data/update/bulkUpdateMangaInfo`, {
+                const resp = await fetch(`${config.serverCom.serverUrl}/serverReq/data/updateManga`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        "pass": config.serverCom.serverPassWord,
                     },
                     body: JSON.stringify({
-                        "access_token": config.serverCom.serverPassWord,
                         "newData": [dataCollector[dataIndex].batchData.newData[i]],
                         "amountNewChapters": 0
                     }),

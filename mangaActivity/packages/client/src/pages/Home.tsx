@@ -10,12 +10,12 @@ export default function Home() {
     <div style={{padding: 32}}>
       Welcome to the Manga Bot. The one stop shop for your manga tracking needs!<br></br>
       Currently 
-      <a style={{color:"lightblue", textDecoration:"underline"}} onClick={(e) => {discordSdk.commands.openExternalLink({url:'https://manganato.com/'})}} href='https://manganato.com/'>Manganato</a>, 
+      <a style={{color:"lightblue", textDecoration:"underline"}} onClick={(e) => {discordSdk.commands.openExternalLink({url:'https://manganato.com/'})}} href='https://manganato.com/'> Manganato</a>, 
       <a style={{color:"lightblue", textDecoration:"underline"}} onClick={(e) => {discordSdk.commands.openExternalLink({url:'https://asuracomic.net/'})}} href='https://asuracomic.net/'> Asura Scans</a>, 
-      <a style={{color:"lightblue", textDecoration:"underline"}} onClick={(e) => {discordSdk.commands.openExternalLink({url:'https://reaper-scans.com/'})}} href='https://reaper-scans.com/'> Reaper-Scans</a>, 
+      {/* <a style={{color:"lightblue", textDecoration:"underline"}} onClick={(e) => {discordSdk.commands.openExternalLink({url:'https://reaper-scans.com/'})}} href='https://reaper-scans.com/'> Reaper-Scans</a>,  */}
       <a style={{color:"lightblue", textDecoration:"underline"}} onClick={(e) => {discordSdk.commands.openExternalLink({url:'https://reaperscans.com/'})}} href='https://reaperscans.com/'> Reaper Scans</a>,
       <a style={{color:"lightblue", textDecoration:"underline"}} onClick={(e) => {discordSdk.commands.openExternalLink({url:'https://comick.io/home2'})}} href='https://comick.io/home2'> Comick</a>, 
-      , and 
+      and 
       <a style={{color:"lightblue", textDecoration:"underline"}} onClick={(e) => {discordSdk.commands.openExternalLink({url:'https://mangadex.org/'})}}> Mangadex </a> 
       are supported. 
 

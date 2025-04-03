@@ -4,7 +4,7 @@ const asura =  require("./puppeteerScripts/asuraV2")
 
 interface pulledData {
     "mangaName":string, 
-    "chapterUrlList":string, 
+    "urlList":string, 
     "chapterTextList":string, 
     "currentIndex":number, 
     "iconBuffer":Buffer
@@ -23,7 +23,7 @@ async function fetchManga() {
     const returnData = (await resp.json()).data
     if (config.verboselogging) console.log(returnData)
 
-    let newData:{"mangaName":string, "chapterUrlList":string, "chapterTextList":string, "currentIndex":number, "iconBuffer":Buffer, mangaId:string}[] = []
+    let newData:{"mangaName":string, "urlList":string, "chapterTextList":string, "currentIndex":number, "iconBuffer":Buffer, mangaId:string}[] = []
     for (var i = 0; i < returnData.length; i++) {
         const firstChapUrl = returnData[i].urlList.substring(0, returnData[i].urlList.indexOf(','))
         if (config.verboselogging) console.log(firstChapUrl)
@@ -56,7 +56,7 @@ async function fetchManga() {
     if (config.verboselogging) console.log(newData)
     console.log(newData)
 
-    const updateResp = await fetch(`${config.serverUrl}/api/data/update/bulkUpdateMangaInfo`, {
+    const updateResp = await fetch(`${config.serverUrl}/serverReq/data/updateManga`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

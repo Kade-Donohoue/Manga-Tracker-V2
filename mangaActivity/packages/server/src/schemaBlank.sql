@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS userData (
     userID TEXT NOT NULL,
     mangaId TEXT NOT NULL,
     currentIndex INTEGER NOT NULL,
+    currentChap REAL NOT NULL,
     userCat TEXT NOT NULL,
     interactTime INTEGER NOT NULL,
     PRIMARY KEY (userID, mangaId)
@@ -14,7 +15,8 @@ CREATE TABLE IF NOT EXISTS userData (
 CREATE TABLE IF NOT EXISTS mangaData (
     mangaId TEXT PRIMARY KEY NOT NULL,
     mangaName TEXT NOT NULL,
-    urlList TEXT NOT NULL,
+    urlBase TEXT NOT NULL,
+    slugList TEXT NOT NULL,
     chapterTextList TEXT NOT NULL,
     updateTime TEXT NOT NULL
 );

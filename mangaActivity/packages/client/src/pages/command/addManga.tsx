@@ -104,7 +104,7 @@ export default function addManga() {
 
       if (!reply.ok) {
         toast.update(notif, {
-          render: "A Internal Server Error Ocurred!", 
+          render: "An Internal Server Error Ocurred!", 
           type: "error", 
           isLoading: false,
           autoClose: 5000, 

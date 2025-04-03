@@ -19,7 +19,7 @@ const askQuestion = (query: string): Promise<string> => {
   
 
 interface mangaMinData {urlList: string, mangaId: string}
-interface mangaData {"mangaName":string, "chapterUrlList":string, "chapterTextList":string, "currentIndex":number, "iconBuffer":Buffer, mangaId:string}
+interface mangaData {"mangaName":string, "urlList":string, "chapterTextList":string, "currentIndex":number, "iconBuffer":Buffer, mangaId:string}
 
 async function fixManga() {
 
@@ -56,7 +56,7 @@ async function fixManga() {
                 } else {
                     let newURL = await askQuestion('Whats the correct URL?\n')
                     newData.push({...await getManga(newURL.toLowerCase()), mangaId: mangaData[i].mangaId})
-                    // newData.push({mangaId: mangaData[i].mangaId, chapterUrlList:newURL.toLowerCase(), mangaName: '', chapterTextList: '', currentIndex: 1, iconBuffer: null})
+                    // newData.push({mangaId: mangaData[i].mangaId, urlList:newURL.toLowerCase(), mangaName: '', chapterTextList: '', currentIndex: 1, iconBuffer: null})
                 }
                 // console.log()
             }
@@ -67,7 +67,7 @@ async function fixManga() {
 
     console.log(newData)
     return
-    const updateResp = await fetch(`${config.serverUrl}/api/data/update/bulkUpdateMangaInfo`, {
+    const updateResp = await fetch(`${config.serverUrl}/serverReq/data/updateManga`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

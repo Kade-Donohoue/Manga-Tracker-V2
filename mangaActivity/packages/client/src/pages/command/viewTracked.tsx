@@ -22,12 +22,14 @@ import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
-import { CardActionArea, TextField } from '@mui/material'
+import { CardActionArea, Checkbox, FormControlLabel, TextField } from '@mui/material'
+import AddCircleOutlinedIcon from '@mui/icons-material/AddCircleOutlined';
 import { catOptions, fetchPath } from '../../vars'
 
 import './viewTracker.css'
 import {modalStyle} from '../../AppStyles'
 import SeriesModal from '../../components/SeriesModal'
+import { userInfo } from 'os'
 
 const sortOptions:{label:string,value:keyof mangaDetails | "search"}[] = [
     {label: "Title Search", value: "search"},
@@ -43,10 +45,11 @@ export default function tracked() {
     const [newCat, setNewCat] = React.useState<dropdownOption | null>(catOptions[0])
     const [newChapter, setChapter] = React.useState<dropdownOption | null>(null)
 
-    const [filterOption, setFilterOption] = React.useState<dropdownOption | null>(catOptions[7])
+    const [filterOption, setFilterOption] = React.useState<dropdownOption | null>(catOptions[8])
     const [methodOption, setMethodOption] = React.useState<{label:string,value:string} | null>(sortOptions[0])
     const [orderOption, setOrderOption] = React.useState<{value:string, label:string} | null>({value:"1", label:"Ascending"})
-    const [currentSearh, setSearch] = React.useState<string>("")
+    const [currentSearch, setSearch] = React.useState<string>("")
+    const [unreadChecked, setUnreadChecked] = React.useState<boolean>(false)
 
     const auth = authStore.getState();
     // console.log(auth)
@@ -76,6 +79,8 @@ export default function tracked() {
         const results:{mangaDetails:mangaDetails[]} = await response.json()
         if (results.mangaDetails.length <= 0) toast.info("No Manga!")
         setMangaInfo(results.mangaDetails)
+
+        mangaInfo[modalIndex].urlBase
     }
 
     async function openMangaOverview(mangaId:string) {
@@ -378,6 +383,173 @@ export default function tracked() {
             </Modal>
         )
     }
+
+    function addMangaModal() {
+
+        const [selectedCat, setSelectedCat] = React.useState<dropdownOption | null>(catOptions[0])
+        const [isLoading, setIsLoading] = React.useState(false)
+
+        return (
+            <Modal
+                open={addOpen}
+                onClose={handleAddClose}
+                aria-labelledby="cat-modal-title"
+                aria-describedby="cat-modal-description"
+            >
+                <Box sx={{width: "80vw", height: "28vh", ...modalStyle}}>
+                {/* <h2 id="add-modal-title">Add New Manga:</h2> */}
+                <label htmlFor="chapURL">Enter Chapter URL(s):</label>
+                <input type="text" id="chapURL" name="chapURL" placeholder='https://mangaURL1.com/manga/chapter,https://mangaURL2.com/manga/chapter'></input> <br></br>
+
+                <label htmlFor="cat-select">Choose a Category: </label>
+                <Select name="categories" 
+                    id="cat-select" 
+                    className="catSelect" 
+                    value={selectedCat} 
+                    onChange={setSelectedCat} 
+                    options={catOptions} 
+                    styles={customStyles} 
+                    />
+                <br></br>
+                {/* <input/> */}
+                <Button
+                    onClick={(e) => {
+                        submitManga()
+                        handleAddClose()
+                    }}
+                    variant="contained"
+                    color="primary"
+                    fullWidth
+                    sx={{ mb: 2 }}
+                >
+                {isLoading? 'Loading...':'Add Manga!'}
+                </Button>
+                {/* <Button onClick={(e) => {
+                    changeUserCat(mangaInfo[modalIndex].mangaId)
+                    handleCatClose()
+                }}>Submit</Button> */}
+                <SvgIcon onClick={handleCatClose} sx={{position: "absolute", top: 10, right: 10}}>
+                    <CancelIcon sx={{color: "white"}}/>
+                </SvgIcon>
+                </Box>
+            </Modal>
+
+
+            
+        )
+
+        async function submitManga() {
+            if (isLoading) return toast.error('Already adding!')
+            let notif = toast.loading("Adding Manga!", {closeOnClick: true, draggable: true,})
+            try {
+              setIsLoading(true)
+            //   setShowError(false)
+        
+              const urlBox = document.getElementById("chapURL") as HTMLTextAreaElement|null
+              var urls:string|null = null
+              if (urlBox) urls = urlBox.value.replace(" ", "")
+        
+              if (!urls) {
+                 toast.update(notif, {
+                render: "No Manga Provided!", 
+                type: "error", 
+                isLoading: false,
+                autoClose: 5000, 
+                hideProgressBar: false, 
+                closeOnClick: true, 
+                draggable: true,
+                progress: 0
+               })
+               setIsLoading(false)
+               return
+              }
+              const urlList:string[] = urls.split(',')
+        
+        
+              var errorLog:string[] = []
+              const reply = await fetch(`${fetchPath}/api/data/add/addManga`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  "access_token": auth.access_token,
+                  "authId": null,
+                  "userCat": selectedCat?.value,
+                  "urls": urlList
+                }),
+              })
+        
+              if (!reply.ok) {
+                toast.update(notif, {
+                  render: "An Internal Server Error Ocurred!", 
+                  type: "error", 
+                  isLoading: false,
+                  autoClose: 5000, 
+                  hideProgressBar: false, 
+                  closeOnClick: true, 
+                  draggable: true,
+                  progress: 0
+                })
+                setIsLoading(false)
+                return
+              }
+              let {results}:{results:{message:String,url:string,success:boolean}[]} = await reply.json()
+        
+              for (let manga of results) {
+                if (!manga.success) errorLog.push(`${manga.url}: ${manga.message}`)
+              }
+        
+        
+              urlBox!.value = ""
+              if (errorLog.length == 0) {
+                getUserManga()
+                toast.update(notif, {
+                  render: "Manga Successfully Added!", 
+                  type: "success", 
+                  isLoading: false, 
+                  autoClose: 5000, 
+                  hideProgressBar: false, 
+                  closeOnClick: true, 
+                  draggable: true,
+                  progress: 0
+                })
+              } else {
+                // setShowError(true)
+                toast.update(notif, {
+                  render: "Unable to Add 1 or More Manga!", 
+                  type: "error", 
+                  isLoading: false,
+                  autoClose: 5000, 
+                  hideProgressBar: false, 
+                  closeOnClick: true, 
+                  draggable: true,
+                  progress: 0
+                })
+        
+                const errorField = document.getElementById('errorField') as HTMLLabelElement|null
+                errorField!.innerHTML = errorLog.join("<br></br>")
+              }
+              setIsLoading(false)
+            } catch (error) {
+              toast.update(notif, {
+                render: "An Unknown Error has Occurred", 
+                type: "error", 
+                isLoading: false,
+                autoClose: 5000, 
+                hideProgressBar: false, 
+                closeOnClick: true, 
+                draggable: true,
+                progress: 0
+              })
+              // setShowError(true)
+              setIsLoading(false)
+              console.error('Error Adding manga: ', error)
+            }
+          }  
+    }
+
+    
       
     function fuzzyMatch(pattern: string, str: string): number {
         pattern = pattern.toLowerCase();
@@ -403,9 +575,12 @@ export default function tracked() {
     }
 
     function checkFilter(manga:mangaDetails) {
+        if (unreadChecked) {
+            if (manga.chapterTextList.length - 1 <= manga.currentIndex) return false
+        }
         if (!filterOption || filterOption.value === "%" || manga.userCat === filterOption.value) {
-            if (currentSearh) {
-                return fuzzyMatch(currentSearh, manga.mangaName) > 0
+            if (currentSearch) {
+                return fuzzyMatch(currentSearch, manga.mangaName) > 0
             } else return true
         }
 
@@ -486,6 +661,10 @@ export default function tracked() {
     const handleCatOpen = () => setCatOpen(true)
     const handleCatClose = () => setCatOpen(false)
 
+    const [addOpen, setAddOpen] = React.useState(false)
+    const handleAddOpen = () => setAddOpen(true)
+    const handleAddClose = () => setAddOpen(false)
+
     const [chapterOpen, setChapterOpen] = React.useState(false)
     const handleChapterOpen = () => setChapterOpen(true)
     const handleChapterClose = () => setChapterOpen(false)
@@ -497,6 +676,7 @@ export default function tracked() {
 
     useEffect(() => {
         getUserManga()
+        
         // console.log(fetchPath==='/.proxy'? '/.proxy/image':import.meta.env.VITE_IMG_URL)
     }, [])
 
@@ -509,8 +689,8 @@ export default function tracked() {
                 onClose={handleClose}
                 title={modalIndex >= 0 ? mangaInfo[modalIndex].mangaName:'unknown'}
                 imageUrl={(fetchPath==='/.proxy'? '/.proxy/image':import.meta.env.VITE_IMG_URL) +'/'+ (modalIndex >= 0 ? mangaInfo[modalIndex].mangaId: "mangaNotFoundImage")}
-                chapters={modalIndex >= 0 ? mangaInfo[modalIndex].chapterTextList.toReversed().map((chapText, i) => ({'title': chapText, 'url': mangaInfo[modalIndex].urlList.toReversed()[i], 'key': i})):[]}
-                currentChapterUrl={modalIndex >= 0 ? mangaInfo[modalIndex].urlList[mangaInfo[modalIndex].currentIndex]:''}
+                chapters={modalIndex >= 0 ? mangaInfo[modalIndex].chapterTextList.toReversed().map((chapText, i) => ({'title': chapText, 'url': mangaInfo[modalIndex].urlBase+(mangaInfo[modalIndex].slugList.toReversed()[i]), 'key': i})):[]}
+                currentChapterUrl={modalIndex >= 0 ? mangaInfo[modalIndex].urlBase+mangaInfo[modalIndex].slugList[mangaInfo[modalIndex].currentIndex]:''}
                 onRemove={() => handleRemoveOpen()}
                 onChangeCategory={() => handleCatOpen()}
                 onChangeChap={() => handleChapterOpen()}
@@ -519,21 +699,34 @@ export default function tracked() {
             {changeCatModal()}
             {changeChapterModal()}
             {confirmRemovalDialog()}
+            {addMangaModal()}
 
         </div>
 
-        <div className='cardControls' style={{display:"flex", justifyContent:"center", justifyItems:"center", marginTop: "10px"}}>
+        <div className="cardControls">
             <TextField 
-                id='search' 
+                id="search" 
                 label="Search" 
-                value={currentSearh} 
+                value={currentSearch} 
                 onChange={handleSearchChange}
                 variant="outlined"
                 size="small"
-                InputProps={{
-                    style: {
-                        border: 'none',
+                className="inputField"
+                sx={{
+                    "& .MuiOutlinedInput-root": {
+                      "& fieldset": {
+                        borderColor: "#cccccc", // Default outline color
+                      },
+                      "&:hover fieldset": {
+                        borderColor: "#b3b3b3", // Outline color when hovered
+                      },
+                      "&.Mui-focused fieldset": {
+                        borderColor: "#2684ff", // Outline color when focused
+                      },
                     },
+                  }}            
+                InputProps={{
+                    style: { background: "inherit", borderColor: "#ccc"}
                 }}
             />
 
@@ -542,20 +735,45 @@ export default function tracked() {
                 onChange={setFilterOption}
                 options={catOptions}
                 styles={customStyles}
+                className="selectField"
             />
+
             <Select
                 value={methodOption}
                 onChange={setMethodOption}
                 options={sortOptions}
                 styles={customStyles}
+                className="selectField"
             />
+
             <Select
                 value={orderOption}
                 onChange={setOrderOption}
-                options={[{value:"1", label:"Ascending"}, {value:"-1", label:"Descending"}]}
+                options={[
+                    { value: "1", label: "Ascending" }, 
+                    { value: "-1", label: "Descending" }
+                ]}
                 styles={customStyles}
+                className="selectField"
+            />
+
+            <FormControlLabel
+                control={
+                    <Checkbox
+                        checked={unreadChecked}
+                        onChange={(e) => setUnreadChecked(e.target.checked)}
+                        sx={{
+                            color: "#ddd", // Default color
+                            "&.Mui-checked": { color: "#22346e" }, // Checked color
+                        }}
+                    />
+                }
+                label="Unread"
+                sx={{ color: "inherit" }} // Matches surrounding text color
             />
         </div>
+
+
         <div className='cardContainer' style={{display:"flex", justifyContent:"center", justifyItems:"center"}}>
             {mangaInfo.filter(manga => checkFilter(manga)).sort((a, b) => {
                 let key:keyof mangaDetails | "search" = methodOption?.value as keyof mangaDetails | "search"
@@ -564,9 +782,9 @@ export default function tracked() {
                 if (!key || !orderVal) return 0
 
                 if (methodOption?.value === 'search') {
-                    if (currentSearh) {
-                        const scoreA = fuzzyMatch(currentSearh, a.mangaName)
-                        const scoreB = fuzzyMatch(currentSearh, b.mangaName)
+                    if (currentSearch) {
+                        const scoreA = fuzzyMatch(currentSearch, a.mangaName)
+                        const scoreB = fuzzyMatch(currentSearch, b.mangaName)
             
                         if (scoreA > scoreB) return 1 * orderVal
                         if (scoreA < scoreB) return -1 * orderVal
@@ -606,7 +824,7 @@ export default function tracked() {
                         <tbody>
                             <tr> 
                             <td>Chapter:</td>
-                            <td>{`${data.chapterTextList[checkIndexInRange(data.currentIndex, data.chapterTextList.length)].match(/[0-9.]+/g)}/${data.chapterTextList[data.chapterTextList.length-1].match(/[0-9.]+/g)}`}</td>
+                            <td>{`${data.chapterTextList[checkIndexInRange(data.currentIndex, data.chapterTextList.length)].match(/[0-9.]+/g)?.join('.')}/${data.chapterTextList[data.chapterTextList.length-1].match(/[0-9.]+/g)?.join('.')}`}</td>
                             </tr>
                             <tr>
                             <td>Category: </td>
@@ -618,7 +836,18 @@ export default function tracked() {
                   </CardContent>
                 </CardActionArea>
               </Card>
+
+              
             )}
+
+            <Card sx={{ width: 320, height: 350, backgroundColor: "black", color: "white" }}>
+                <CardActionArea onClick={(e) => handleAddOpen()} sx={{ height: "100%" }}>
+                    <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
+                        <AddCircleOutlinedIcon sx={{ width: 200, height: 200 }} />
+                    </Box>
+                </CardActionArea>
+            </Card>
+
         </div>
     </div>
     )

@@ -3,6 +3,7 @@ import config from '../config.json'
 import sharp from 'sharp'
 import { getBrowser } from "../jobQueue"
 import { Job } from 'bullmq'
+import { fetchData } from '../types'
 
 /**
  * Gets the chapter list from Comick
@@ -10,12 +11,12 @@ import { Job } from 'bullmq'
  * @param icon: wether or not to get icon
  * @returns {
 *  "mangaName": name of manga , 
-*  "chapterUrlList": string separated by commas(',') for all chapter urls of manga
+*  "urlList": string separated by commas(',') for all chapter urls of manga
 *  "chapterTextList": string separated by commas(',') for all chapter text of manga
 *  "iconBuffer": base64 icon for manga
 * }
 */
-export async function getManga(url:string, icon:boolean = true, ignoreIndex = false, job:Job) {
+export async function getManga(url:string, icon:boolean = true, ignoreIndex = false, job:Job):Promise<fetchData> {
     if (config.logging.verboseLogging) console.log('comick')
     let lastTimestamp:number = Date.now()
 
@@ -36,10 +37,10 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
 
         job.log(logWithTimestamp('begining to parse data'))
 
-        let hid = url.split('/').at(-1).toLowerCase()
-        hid = hid.replace(/-chapter-\d+-\w+$/g, '')
+        let userHid = url.split('/').at(-1).toLowerCase()
+        userHid = userHid.replace(/-chapter-\d+-\w+$/g, '')
         // const hidMatch = url.match(/\/([^/]+)-chapter-[\d.]+(?:-[^/]+)?$/)
-        if (config.logging.verboseLogging) console.log('hid: ', hid)
+        if (config.logging.verboseLogging) console.log('userHid: ', userHid)
         const chapterMap:ChapterMap = {}
         let userChap = null
         chapterData.chapters.forEach(item => {
@@ -48,33 +49,34 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
 
             if (!chapterMap[chap] || chapterMap[chap].up_count < up_count) {
                 chapterMap[chap] = {
-                    chapter: chap?`Chapter ${chap}`:'Chapter Unknown',
-                    url: `https://comick.io/comic/${slug}/${hid}`,
+                    chapter: chap?chap:'Unknown',
+                    hid: hid,
                     up_count
                 }
             }
 
             if (!hid) return
-            if (hid === hid) userChap = chapterMap[chap].chapter
+            console.log()
+            if (hid.toLowerCase() === userHid) userChap = chapterMap[chap].chapter
         })
         console.log('userChap: ', userChap)
 
         const chapters: string[] = []
-        const urls: string[] = []
+        const hidList: string[] = []
         Object.values(chapterMap).sort((a, b) => {
-            if (a.chapter === "Chapter Unknown" && b.chapter !== "Chapter Unknown") return -1
-            if (a.chapter !== "Chapter Unknown" && b.chapter === "Chapter Unknown") return 1
+            if (a.chapter === "Unknown" && b.chapter !== "Unknown") return -1
+            if (a.chapter !== "Unknown" && b.chapter === "Unknown") return 1
 
             return a.chapter.localeCompare(b.chapter, undefined, { numeric: true })
-        }).forEach(({ chapter, url }, i) => {
+        }).forEach(({ chapter, hid }, i) => {
             chapters.push(chapter)
-            urls.push(url)
+            hidList.push(hid)
         })
         job.updateProgress(70)
         job.log(logWithTimestamp('Chapter Data parsed getting final data!'))
 
         if (config.logging.verboseLogging) {
-            console.log('urls: ', urls.join(','))
+            console.log('url ends: ', hidList.join(','))
             console.log('chapters: ', chapters.join(','))
         }
 
@@ -101,7 +103,8 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         job.log(logWithTimestamp('All data fetched!'))
         return {
             "mangaName": getEnglishTitle(comicData.comic.md_titles, comicData.comic.title), 
-            "chapterUrlList": urls.join(','), 
+            "urlBase": `https://comick.io/comic/${slug}/`,
+            "slugList": hidList.join(','), 
             "chapterTextList": chapters.join(','), 
             "currentIndex": currIndex, 
             "iconBuffer": resizedImage
@@ -250,7 +253,7 @@ type chapterData = {
 
 type ChapterDetails = {
     chapter: string,
-    url: string,
+    hid: string,
     up_count: number
 }
 

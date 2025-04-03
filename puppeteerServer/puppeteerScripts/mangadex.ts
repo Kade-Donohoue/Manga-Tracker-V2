@@ -3,6 +3,7 @@ import config from '../config.json'
 import sharp from 'sharp'
 import { getBrowser } from "../jobQueue"
 import { Job } from 'bullmq'
+import { fetchData } from '../types'
 
 /**
  * Gets the chapter list from ChapManganato
@@ -10,108 +11,91 @@ import { Job } from 'bullmq'
  * @param icon: wether or not to get icon
  * @returns {
  *  "mangaName": name of manga , 
- *  "chapterUrlList": string separated by commas(',') for all chapter urls of manga
+ *  "urlList": string separated by commas(',') for all chapter urls of manga
  *  "chapterTextList": string separated by commas(',') for all chapter text of manga
  *  "iconBuffer": base64 icon for manga
  * }
  */
-export async function getManga(url:string, icon:boolean = true, ignoreIndex = false, job:Job) {
+export async function getManga(url:string, icon:boolean = true, ignoreIndex = false, job:Job):Promise<fetchData> {
     if (config.logging.verboseLogging) console.log('mangaDex')
     
     let lastTimestamp:number = Date.now()
-    const browser = await getBrowser()
-    const page = await browser.newPage()
-
+    
     try {
-        page.setDefaultNavigationTimeout(1000) // timeout nav after 1 sec
-        page.setRequestInterception(true)
+        job.log(logWithTimestamp('Pulling Chapter Data!'))
 
-        const allowRequests = ['mangadex']
-        const bypassBlockReqs = ['_nuxt', 'api.mangadex.org/manga/', 'api.mangadex.org/chapter/']
-        const blockRequests = ['.css', 'facebook', 'fbcdn.net', 'bidgear', '.png', '.svg', 'disqus', '.js', '.woff']
-        page.on('request', (request) => {
-            const u = request.url()
-            if (!match(u, allowRequests)) {
-                request.abort()
-                return
-            }
+        const chapterId = url.match(/\/chapter\/([\w-]+)/)[1]
+        if (!chapterId) throw new Error('Manga: Unable to get Chapter ID. please unsure this url is valid!')
+        
+        const chapterRequest = await fetch(`https://api.mangadex.org/chapter/${chapterId}`) as any
 
-            if (match(u, bypassBlockReqs)) {
-                request.continue()
-                return
-            }
+        if (!chapterRequest.ok) throw new Error('Manga: Unable to fetch Current Chapter!')
 
-            if (request.resourceType() == "image") { 
-                request.abort()
-                return
-            }
+        const currChapData:{result:string, response:string, data:{id:string,type:string,relationships:{id:string,type:string}[]}} = await chapterRequest.json()
 
-            if (request.resourceType() == "fetch") {
-                request.abort()
-                return
-            }
+        let mangaId = currChapData.data.relationships.find(relation => relation.type === "manga").id || ''
 
-            if (match(u, blockRequests)) {
-                request.abort()
-                return
-            }
-            request.continue()
+        if (!mangaId) throw new Error('Manga: Unable to get Mangadex mangaId ensure url is valid!')
+
+        const [feedRequest, mangaRequest] = await Promise.all([
+            fetch(`https://api.mangadex.org/manga/${mangaId}/feed?translatedLanguage[]=en&limit=500&order[chapter]=asc`),
+            fetch(`https://api.mangadex.org/manga/${mangaId}`)
+        ])
+
+        if (!feedRequest.ok) throw new Error('Manga: Unable to fetch manga list!')
+        if (!mangaRequest.ok) throw new Error('Manga: Unable to fetch manga Overview!')
+
+        job.log(logWithTimestamp('Data fetched, Proccessing!'))
+        
+        const chapterData:mangaDexFeed = await feedRequest.json()
+        const overViewData:overViewData = await mangaRequest.json()
+
+        const title = getEnglishTitle(overViewData.data)
+
+        if (!title) throw new Error('Manga: Unable to get title!')
+
+        let slugList = []
+        let chapterTestList = []
+        chapterData.data.forEach((data) => {
+            slugList.push(data.id)
+            chapterTestList.push(data.attributes.chapter ?? 'Unknown')
         })
-        job.log(logWithTimestamp('Loading Chapter Page'))
-        await page.goto(url, {waitUntil: 'networkidle0', timeout: 10*1000})
-        await job.updateProgress(20)
-        job.log(logWithTimestamp('Chapter Page Loaded, fetching data'))
 
-        //extracts chapter links as well as the text for each chapter
-        const chapterLinks:string[] = await page.evaluate(() =>  Array.from(document.querySelectorAll('div.reader--menu > div#chapter-selector > div > div > div > ul > li > ul > li'), element => `${(window as any).__NUXT__.config.public.baseUrl}/chapter/${element.getAttribute('data-value')}`).reverse())
-        const chapterText:string[] = await page.evaluate(() =>  Array.from(document.querySelectorAll('div.reader--menu > div#chapter-selector > div > div > div > ul > li > ul > li'), element => element.innerHTML).reverse())
+        if (slugList.length == 0 || slugList.length != chapterTestList.length) throw new Error('Manga: Issue fetching Chapters')
 
-        if (chapterLinks.length == 0 || chapterLinks.length != chapterText.length) throw new Error('Manga: Issue fetching Chapters')
+        job.log(logWithTimestamp('Data Proccessed'))
 
-        const title = await page.evaluate(() => document.querySelector("div.reader--menu > div > div > a.text-primary ")?.innerHTML, {timeout: 500})
+        // await page.goto(url, {waitUntil: 'networkidle0', timeout: 10*1000}
 
-        if (config.logging.verboseLogging) {
-            console.log(chapterLinks)
-            console.log(chapterText)
-            console.log(title)
-        }
-
-        job.log(logWithTimestamp('Data fetched'))
         await job.updateProgress(40)
 
         var resizedImage:Buffer|null = null
         if (icon) {
-            job.log(logWithTimestamp('Starting Icon Fetch'))
-            const overViewURL = await page.evaluate(() => `${(window as any).__NUXT__.config.public.baseUrl}${document.querySelector("div.reader--menu > div > div > a.text-primary")?.getAttribute('href')}`, {timeout: 500})
-            if (config.logging.verboseLogging) console.log(overViewURL)
-            job.log(logWithTimestamp('Loading overview page'))
-            await page.goto(overViewURL, {timeout: 10000})
-            await job.updateProgress(60)
-            job.log(logWithTimestamp('Overview page loaded'))
-            
-            const photoSelect = await page.waitForSelector('img.rounded', {timeout:1000})
+            job.log(logWithTimestamp('Fetching Image'))
 
-            const photo = (await photoSelect?.evaluate(el => el.getAttribute('src'))).replace('https://', 'https://uploads.').replace('.512.jpg', '')
-            if (config.logging.verboseLogging) console.log(photo)
-            job.log(logWithTimestamp('Loading Icon'))
-            const icon = await page.goto(photo, {timeout: 10000})
-            job.log(logWithTimestamp('Icon Loaded'))
-            await job.updateProgress(80)
-            console.log(icon)
-            let iconBuffer = await icon?.buffer()
-            console.log(iconBuffer)
+            let coverID = overViewData.data.relationships.find(relation => relation.type === "cover_art")?.id||''
+
+            if (!coverID) throw new Error('Manga: Unable to get cover ID!')
+
+            const coverDataReq = await fetch(`https://api.mangadex.org/cover/${coverID}`)
+
+            if (!coverDataReq.ok) throw new Error('Manga: unable to fetch cover data')
+
+            let coverData:{result:string,response:string,data:{id:string,type:"cover_art",attributes:{'fileName':string}}} = await coverDataReq.json()
+
+            const coverReq = await fetch(`https://mangadex.org/covers/${mangaId}/${coverData.data.attributes.fileName}`)
+            if (config.logging.verboseLogging) console.log(`https://mangadex.org/covers/${mangaId}/${coverID}.jpg`)
+
+            const iconBuffer = await coverReq.arrayBuffer()
             resizedImage = await sharp(iconBuffer)
                 .resize(480, 720)
                 .toBuffer()
         }
-        await page.close()
         job.log(logWithTimestamp('All Data fetch. processing data.'))
         await job.updateProgress(90)
-        // if (urlParts.length > 2) urlParts.pop()
 
         let urlParts = url.split('chapter/').at(-1).split('/')
-        let urlNoPage = `https://mangadex.org/chapter/${urlParts[0]}`
-        const currIndex = chapterLinks.indexOf(urlNoPage)
+        const currIndex = slugList.indexOf(chapterId)
 
         if (currIndex == -1 && !ignoreIndex) {
             throw new Error("Manga: unable to find current chapter. Please retry or contact Admin!")
@@ -119,12 +103,18 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
 
         job.log(logWithTimestamp('done'))
         await job.updateProgress(100)
-        return {"mangaName": title, "chapterUrlList": chapterLinks.join(','), "chapterTextList": chapterText.join(','), "currentIndex": currIndex, "iconBuffer": resizedImage}
+        return {
+            "mangaName": title, 
+            "urlBase": 'https://mangadex.org/chapter/',
+            "slugList": slugList.join(','), 
+            "chapterTextList": chapterTestList.join(','), 
+            "currentIndex": currIndex, 
+            "iconBuffer": resizedImage}
     } catch (err) {
         job.log(logWithTimestamp(`Error: ${err}`))
         console.warn(`Unable to fetch data for: ${url}`)
         if (config.logging.verboseLogging) console.warn(err)
-        if (!page.isClosed()) await page.close()
+        // if (!page.isClosed()) await page.close()
         
         //ensure only custom error messages gets sent to user
         if (err.message.startsWith('Manga:')) throw new Error(err.message)
@@ -156,4 +146,137 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
             return ` (Took ${diff} ms)`;
         }
     }
+
+    function getEnglishTitle(data: MangaData): string {
+        const { title, altTitles } = data.attributes;
+      
+        // Check if an English title exists in altTitles
+        for (const altTitle of altTitles) {
+          if (altTitle.en) {
+            return altTitle.en;
+          }
+        }
+      
+        // Fallback to the main title in English
+        if (title.en) {
+          return title.en;
+        }
+      
+        // Default to the first available title
+        const firstTitle = Object.values(title)[0];
+        return firstTitle || "";
+      }
+      
 }
+
+type mangaDexFeed = {
+    "result": "ok",
+    "response": "collection",
+    "data": [
+      {
+        "id": string,
+        "type": "chapter",
+        "attributes": {
+          "title": string,
+          "volume": string,
+          "chapter": string,
+          "pages": 0,
+          "translatedLanguage": string,
+          "uploader": string,
+          "externalUrl": string,
+          "version": 1,
+          "createdAt": string,
+          "updatedAt": string,
+          "publishAt": string,
+          "readableAt": string
+        },
+        "relationships": [
+          {
+            "id": string,
+            "type": string,
+            "related": string,
+            "attributes": {}
+          }
+        ]
+      }
+    ],
+    "limit": number,
+    "offset": number,
+    "total": number
+  }
+
+  type MangaAttributes = {
+    title: Record<string, string>;
+    altTitles: { [key: string]: string }[];
+  };
+  
+  type MangaData = {
+    attributes: MangaAttributes;
+  };
+
+  type overViewData = {
+    "result": "ok",
+    "response": "entity",
+    "data": {
+      "id": "497f6eca-6276-4993-bfeb-53cbbbba6f08",
+      "type": "manga",
+      "attributes": {
+        title: Record<string, string>,
+        altTitles: { [key: string]: string }[],
+        "description": { [key: string]: string },
+        "isLocked": true,
+        "links": {
+          "property1": "string",
+          "property2": "string"
+        },
+        "originalLanguage": string,
+        "lastVolume": string,
+        "lastChapter": string,
+        "publicationDemographic": string,
+        "status": string,
+        "year": number,
+        "contentRating": string,
+        "chapterNumbersResetOnNewVolume": boolean,
+        "availableTranslatedLanguages": string[],
+        "latestUploadedChapter": string,
+        "tags": [
+          {
+            "id": string,
+            "type": string,
+            "attributes": {
+              "name": {
+                "property1": string,
+                "property2": string
+              },
+              "description": {
+                "property1": string,
+                "property2": string
+              },
+              "group": string,
+              "version": number
+            },
+            "relationships": [
+              {
+                "id": string,
+                "type": string,
+                "related": string,
+                "attributes": {}
+              }
+            ]
+          }
+        ],
+        "state": string,
+        "version": 1,
+        "createdAt": string,
+        "updatedAt": string
+      },
+      "relationships": [
+        {
+          "id": string,
+          "type": string,
+          "related": string,
+          "attributes": {}
+        }
+      ]
+    }
+  }

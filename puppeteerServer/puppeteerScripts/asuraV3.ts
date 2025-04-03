@@ -3,6 +3,7 @@ import config from '../config.json'
 import sharp from 'sharp'
 import { getBrowser } from '../jobQueue'
 import { Job } from 'bullmq'
+import { fetchData } from '../types'
 
 /**
  * Gets the chapter list from ChapManganato
@@ -10,12 +11,12 @@ import { Job } from 'bullmq'
  * @param icon: wether or not to get icon
  * @returns {
  *  "mangaName": name of manga , 
- *  "chapterUrlList": string separated by commas(',') for all chapter urls of manga
+ *  "urlList": string separated by commas(',') for all chapter urls of manga
  *  "chapterTextList": string separated by commas(',') for all chapter text of manga
  *  "iconBuffer": base64 icon for manga
  * }
  */
-export async function getManga(url:string, icon:boolean = true, ignoreIndex = false, job:Job) {
+export async function getManga(url:string, icon:boolean = true, ignoreIndex = false, job:Job):Promise<fetchData> {
     if (config.logging.verboseLogging) console.log('Asura')
     
     let lastTimestamp:number = Date.now()
@@ -67,8 +68,6 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         job.log(logWithTimestamp('Chapter Loaded, starting retrial of overview URL and chapterData'))
 
         const chapterData:{chapterMapData:[{label:string,value:number}]} = await page.evaluate(() => {
-            let foundData:string = ''
-            let foundStart:boolean = false
             let str:string
 
             (window as any).__next_f.forEach((bigArray:any[]) => {
@@ -79,9 +78,11 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
             //finds beinging of chapter list from next_f and pulls chapter list returning as json
             let startIndex = str.indexOf('"chapterMapData":[')
             if (startIndex == -1 ) throw new Error('Manga: Unable to find start of chapter list')
+                
             let endIndex = str.indexOf('}]', startIndex)
             if (endIndex == -1) throw new Error('Manga: Ubable to find end of chapter list') 
-                // return str.slice(startIndex, endIndex+1).trim()
+
+
             return JSON.parse(`{${str.slice(startIndex, endIndex+2).trim()}}`)
         })
         if (config.logging.verboseLogging) console.log(chapterData)
@@ -105,22 +106,27 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         // let dataRows = stringData.trim().split('\n')
         if (config.logging.verboseLogging) console.log(chapterData)
 
-        let chapterLinks = []
-        let chapterText = []
+        let chapeterList = []
+        // let chapterLinks = []
+        // let chapterText = []
         chapterData.chapterMapData.reverse().forEach((row:{label:string, value:number}) => {
             if (!row) return
-            chapterText.push(row.label)
-            chapterLinks.push(overViewURL+'chapter/'+row.value)
+            chapeterList.push(row.value)
+            // chapterText.push('Chapter ' + row.value)//row.label to use asura labels (if want to use some data cleaning needs done)
+            // chapterLinks.push(overViewURL+'chapter/'+row.value)
         })
         job.log(logWithTimestamp('Chapter Data Processed'))
 
-        if (chapterLinks.length == 0 || chapterLinks.length != chapterText.length) throw new Error('Manga: Issue fetching Chapters, lists dont match or no data was found!')
+        // if (chapterLinks.length == 0 || chapterLinks.length != chapterText.length) throw new Error('Manga: Issue fetching Chapters, lists dont match or no data was found!')
+
+        if (chapeterList.length == 0) throw new Error('Manga: Issue fetching Chapters, no data was found!')
 
         const title = await page.evaluate(() => document.querySelector("a.items-center:nth-child(2) > h3:nth-child(1)")?.innerHTML, {timeout: 500})
 
         if (config.logging.verboseLogging) {
-            console.log(chapterLinks)
-            console.log(chapterText)
+            // console.log(chapterLinks)
+            // console.log(chapterText)
+            console.log(chapeterList)
             console.log(title)
         }
         job.log(logWithTimestamp('Info Gathered'))
@@ -154,14 +160,23 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         
 
         //match index by chapter number as asura frequently changes id in url 
-        let endChapUrls = chapterLinks.map((valUrl) => valUrl.split('/chapter/').at(-1))
-        const currIndex = endChapUrls.indexOf(url.split('/chapter/').at(-1))
+        // let endChapUrls = chapterLinks.map((valUrl) => valUrl.split('/chapter/').at(-1))
+        // const currIndex = endChapUrls.indexOf(url.split('/chapter/').at(-1))
+        const currIndex = chapeterList.indexOf(Number.parseFloat(url.split('/chapter/').at(-1)))
 
         if (currIndex == -1 && !ignoreIndex) {
             throw new Error('Manga: unable to find current chapter. Please retry or contact Admin!')
         }
+
         await job.updateProgress(100)
-        return {"mangaName": title, "chapterUrlList": chapterLinks.join(','), "chapterTextList": chapterText.join(','), "currentIndex": currIndex, "iconBuffer": resizedImage}
+        return {
+            "mangaName": title, 
+            "urlBase": overViewURL+'chapter/',
+            "slugList": chapeterList.join(','), 
+            "chapterTextList": chapeterList.join(','), 
+            "currentIndex": currIndex, 
+            "iconBuffer": resizedImage
+        }
     } catch (err) {
         job.log(logWithTimestamp(`Error: ${err}`))
         console.warn(`Unable to fetch data for: ${url}`)

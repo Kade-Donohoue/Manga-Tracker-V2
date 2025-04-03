@@ -51,6 +51,7 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
   useEffect(() => {
     if (open) {
       const timer = setTimeout(() => {
+        console.log(currentChapterUrl)
         if (listRef.current) {
           const currentChapterElement = listRef.current.querySelector(
             `[data-url="${currentChapterUrl}"]`
@@ -82,6 +83,7 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
   // Check if the chapter is before the current one
   const isChapterRead = (chapterUrl: string) => {
     const currentIndex = chapters.findIndex((chapter) => chapter.url === currentChapterUrl)
+    console.log(chapters[currentIndex])
     const chapterIndex = chapters.findIndex((chapter) => chapter.url === chapterUrl)
     return chapterIndex > currentIndex
   }
@@ -173,7 +175,7 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
                   }}
                 >
                   <ListItemText
-                    primary={chapter.title}
+                    primary={'Chapter ' + chapter.title}
                     primaryTypographyProps={{
                       style: {
                         fontWeight: chapter.url === currentChapterUrl ? 'bold' : 'normal',

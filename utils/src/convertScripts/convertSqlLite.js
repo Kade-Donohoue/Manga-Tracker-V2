@@ -1,6 +1,6 @@
 const sqlite3 = require("sqlite3").verbose()
 const fs = require('fs')
-const config = require('../config.json')
+const config = require('../../config.json')
 
 let sql
 const data = new sqlite3.Database('../manga.db',sqlite3.OPEN_READWRITE,(err)=>{

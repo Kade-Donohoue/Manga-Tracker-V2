@@ -20,7 +20,7 @@ puppeteer.use(adblocker)
  * @param icon: wether or not to get icon
  * @returns {
  *  "mangaName": name of manga , 
-*  "chapterUrlList": string separated by commas(',') for all chapter urls of manga
+*  "urlList": string separated by commas(',') for all chapter urls of manga
 *  "chapterTextList": string separated by commas(',') for all chapter text of manga
 *  "iconBuffer": base64 icon for manga
 *  }
@@ -75,10 +75,10 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = tr
             a => a.innerHTML
         ))
 
-        let chapterUrlList:string[] = []
+        let urlList:string[] = []
         chapterURLs.forEach((chap:string) => {
-            if (!chap.includes('reaper') || chapterUrlList.includes(chap)) return
-            chapterUrlList.push(chap)
+            if (!chap.includes('reaper') || urlList.includes(chap)) return
+            urlList.push(chap)
         })
 
         let chapterTextList:string[] = []
@@ -87,10 +87,10 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = tr
             chapterTextList.push(chap)
         })
 
-        chapterUrlList.reverse()
+        urlList.reverse()
         chapterTextList.reverse()
 
-        if (chapterUrlList.length <= 0 || chapterTextList.length != chapterUrlList.length) throw new Error('Manga: Issue fetching Chapters Contact an Admin!')
+        if (urlList.length <= 0 || chapterTextList.length != urlList.length) throw new Error('Manga: Issue fetching Chapters Contact an Admin!')
 
         const titleSelect = await page.waitForSelector('#content > div > div > div > div.ts-breadcrumb.bixbox > div > span:nth-child(2) > a > span', {timeout: 1000})
         let mangaName = await titleSelect.evaluate(el => el.innerText)
@@ -115,13 +115,13 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = tr
         }
         await page.close()
 
-        const currIndex = chapterUrlList.indexOf(url)
+        const currIndex = urlList.indexOf(url)
 
         if (currIndex == -1 && !ignoreIndex) {
             throw new Error("Manga: unable to find current chapter. Please retry or contact Admin!")
         }
 
-        return {"mangaName": mangaName, "chapterUrlList": chapterUrlList.join(','), "chapterTextList": chapterTextList.join(','), "currentIndex": currIndex, "iconBuffer": resizedImage}
+        return {"mangaName": mangaName, "urlList": urlList.join(','), "chapterTextList": chapterTextList.join(','), "currentIndex": currIndex, "iconBuffer": resizedImage}
         
     } catch (err) {
         console.warn("Unable to fetch: " + url)

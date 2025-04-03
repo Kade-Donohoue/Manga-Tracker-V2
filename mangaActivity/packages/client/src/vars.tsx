@@ -4,6 +4,7 @@ import { useState } from "react"
 export let catOptions = [
     {value: "reading", label: "Reading"},
     {value: "notreading", label: "Not Reading"},
+    {value: "dropped", label: "Dropped"},
     {value: "hold", label: "Hold"},
     {value: "finished", label: "Finished"},
     {value: "inqueue", label: "In Queue"},
@@ -28,7 +29,7 @@ export const methodOptions:dropdownOption[] = [
     {value: "userCat", label: "Category"}
 ]
 
-export let fetchPath:string = "/.proxy"
+export let fetchPath:string = ""
 
 export function setFetchPath(path:string){
     // console.log(`Changing Path To: ${path}`)

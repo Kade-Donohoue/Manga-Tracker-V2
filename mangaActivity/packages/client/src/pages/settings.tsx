@@ -22,6 +22,7 @@ import Box from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
 import { modalStyle } from '../AppStyles';
 import { Cookies } from 'react-cookie';
+import { SignOutButton, UserProfile } from '@clerk/clerk-react';
 
 interface dataGridRow {
   id:string,
@@ -64,6 +65,7 @@ export default function settings() {
 
   async function postCats( newCats:dropdownOption[] ) {
     setCatOptions(newCats)
+
     // console.log(newCats)
     let resp = await fetch(`${fetchPath}/api/data/update/updateUserCategories`, {
       method: 'POST',
@@ -73,7 +75,7 @@ export default function settings() {
           body: JSON.stringify({
               "access_token": auth.access_token,
               "authId": null,
-              "newCatList": JSON.stringify(newCats)
+              "newCatList": JSON.stringify(newCats.filter((cat) => cat.value.includes('user:')))
           }),
     })
 
@@ -273,10 +275,14 @@ export default function settings() {
         <Accordion sx={{backgroundColor:'#1e1e1e', color:'#ffffff', width:"80%"}}>
           <AccordionSummary expandIcon={<ExpandMoreIcon sx={{color:'#ffffff'}}/>} id='panel-category-header'>User</AccordionSummary>
           <AccordionDetails>
-            <Box>
+          <UserProfile />
+          <SignOutButton>
+            <Button startIcon={<LogoutIcon/>}>Logout</Button>
+          </SignOutButton>
+            {/* <Box>
               <Button startIcon={<DeleteIcon/>} onClick={handleOpenDeleteModal}>Remove User Data</Button>
-              <Button startIcon={<LogoutIcon/>} onClick={logoutUser}>Logout</Button>
-            </Box>
+              
+            </Box> */}
           </AccordionDetails>
         </Accordion>
 

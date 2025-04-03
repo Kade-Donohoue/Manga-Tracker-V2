@@ -8,7 +8,7 @@
     "email": "kade.donohoue@gmail.com"
   },
   "private": true,
-  "version": "1.4.1",
+  "version": "2.0.0",
   "scripts": {
     "test": "$npm_execpath run tsc",
     "dev": "vite --mode dev --host",
@@ -22,7 +22,8 @@
     "capacitor:build": "npx cap sync && npx cap open android",
     "electron:buildAll": "concurrently \"pnpm electron:build --linux\" \"pnpm electron:build --win\"",
     "electron:dev": "NODE_ENV=development cross-env VITE_DEV_SERVER_URL=http://localhost:3000 electron ./src/electron/main.js",
-    "electron:build": "NODE_ENV=production electron-builder"
+    "electron:build": "NODE_ENV=production electron-builder",
+    "electron:buildDev": "NODE_ENV=dev electron-builder --linux"
   },
   "build": {
     "appId": "com.kdonohoue.manga",
@@ -63,6 +64,8 @@
     "@capacitor/cli": "^6.2.0",
     "@capacitor/core": "^6.2.0",
     "@capacitor/preferences": "^6.0.3",
+    "@clerk/clerk-react": "^5.22.10",
+    "@clerk/themes": "^2.2.16",
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
     "@mui/icons-material": "^5.16.1",

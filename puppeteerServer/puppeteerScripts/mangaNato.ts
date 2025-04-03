@@ -6,16 +6,18 @@ import { Job } from 'bullmq'
 
 /**
  * Gets the chapter list from ChapManganato
+ * Currently BROKEN DUE TO MANGANATO DOMAIN CHANGE / UNTESTED WITH NEW DOMAIN!!!!!!!!!
  * @param url: Chapter URL of a manga from ChapManganato. 
  * @param icon: wether or not to get icon
  * @returns {
  *  "mangaName": name of manga , 
- *  "chapterUrlList": string separated by commas(',') for all chapter urls of manga
+ *  "urlList": string separated by commas(',') for all chapter urls of manga
  *  "chapterTextList": string separated by commas(',') for all chapter text of manga
  *  "iconBuffer": base64 icon for manga
  * }
  */
 export async function getManga(url:string, icon:boolean = true, ignoreIndex = false, job:Job) {
+    throw new Error('Manga: MANGANATO CURRENTLY DISABLED!')
     
     let lastTimestamp:number = Date.now()
     const browser = await getBrowser()
@@ -67,7 +69,7 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
 
         const chapterDropdown = await page.waitForSelector('body > div.body-site > div:nth-child(1) > div.panel-navigation > select', {timeout: 500})
 
-        const chapterUrlList = await chapterDropdown?.evaluate(() => Array.from(
+        const urlList = await chapterDropdown?.evaluate(() => Array.from(
             document.querySelectorAll('body > div.body-site > div:nth-child(1) > div.panel-navigation > select > option'),
             a => `${(window as any).$navi_change_chapter_address}${a.getAttribute('data-c')}`
         ).reverse())
@@ -78,7 +80,7 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         ).reverse())
 
         
-        if (chapterUrlList.length <= 0 || chapterUrlList.length != chapterTextList.length) throw new Error('Manga: Issue fetching chapters! Please Contact and Admin!')
+        if (urlList.length <= 0 || urlList.length != chapterTextList.length) throw new Error('Manga: Issue fetching chapters! Please Contact and Admin!')
 
         const titleSelect = await page.waitForSelector('body > div.body-site > div:nth-child(1) > div.panel-breadcrumb > a:nth-child(3)')
         const mangaName = await titleSelect?.evaluate(el => el.innerText)
@@ -119,7 +121,7 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         await page.close()
         job.log(logWithTimestamp('All Data Fetched processing now'))
         
-        const currIndex = chapterUrlList.indexOf(url)
+        const currIndex = urlList.indexOf(url)
 
         if (currIndex == -1 && !ignoreIndex) {
             throw new Error("Manga: Unable to find current chapter. Please retry or contact Admin!")
@@ -127,7 +129,7 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
 
         job.log(logWithTimestamp('Done'))
         await job.updateProgress(100)
-        return {"mangaName": mangaName, "chapterUrlList": chapterUrlList.join(','), "chapterTextList": chapterTextList.join(','), "currentIndex": currIndex, "iconBuffer": resizedImage}
+        return {"mangaName": mangaName, "urlList": urlList.join(','), "chapterTextList": chapterTextList.join(','), "currentIndex": currIndex, "iconBuffer": resizedImage}
     } catch (err) {
         job.log(logWithTimestamp(`Error: ${err}`))
         console.warn('Unable to fetch data for: ' + url)

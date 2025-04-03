@@ -1,15 +1,10 @@
 import { Status } from '@discord/embedded-app-sdk/output/schema/common'
 import {Env, mangaDataRowReturn, mangaReturn} from '../types'
-import {verifyUserAuth} from '../utils'
 import { v4 as uuidv4 } from 'uuid'
 
-export async function saveManga(access_token:string, authId:string, urls:string[], userCat:string = 'unsorted', env:Env) {
+export async function saveManga(authId:string, urls:string[], userCat:string = 'unsorted', env:Env) {
     try {
         console.log('starting manga req')
-        const validationRes = await verifyUserAuth(access_token, authId, env)
-
-        if (validationRes instanceof Response) return validationRes
-        authId = validationRes
 
         if (urls && urls.length <= 0 ) return new Response(JSON.stringify({Message: 'No Urls Provided!'}), {status:500}) 
 
@@ -79,13 +74,22 @@ export async function saveManga(access_token:string, authId:string, urls:string[
 
             let mangaId = testResult?.results?.[0]?.mangaId||uuidv4().toString() //use existing id or create new one if not exist
 
-            newBoundStmt.push(env.DB.prepare(
-                'INSERT INTO mangaData (mangaId,mangaName,urlList,chapterTextList,updateTime) VALUES (?,?,?,?,?) ON CONFLICT(mangaId) DO UPDATE SET urlList = excluded.urlList, chapterTextList = excluded.chapterTextList, updateTime = excluded.updateTime'
-            ).bind(mangaId, newMangaInfo[index].mangaName, newMangaInfo[index].chapterUrlList, newMangaInfo[index].chapterTextList, currentTime))
+            console.log("Binding values:", {
+                mangaId,
+                mangaName: newMangaInfo[index]?.mangaName,
+                urlBase: newMangaInfo[index]?.urlBase,
+                slugList: newMangaInfo[index]?.slugList,
+                chapterTextList: newMangaInfo[index]?.chapterTextList,
+                updateTime: currentTime
+            });
 
             newBoundStmt.push(env.DB.prepare(
-                'Insert INTO userData (userId, mangaId, currentIndex, userCat, interactTime) VALUES (?,?,?,?,?) ON CONFLICT(userID, mangaId) DO UPDATE SET currentIndex = excluded.currentIndex, userCat = excluded.userCat, interactTime = excluded.interactTime'
-            ).bind(validationRes, mangaId, newMangaInfo[index].currentIndex, userCat, Date.now()))
+                'INSERT INTO mangaData (mangaId,mangaName,urlBase,slugList,chapterTextList,updateTime) VALUES (?,?,?,?,?,?) ON CONFLICT(mangaId) DO UPDATE SET urlBase = excluded.urlBase, slugList = excluded.slugList, chapterTextList = excluded.chapterTextList, updateTime = excluded.updateTime'
+            ).bind(mangaId, newMangaInfo[index].mangaName, newMangaInfo[index].urlBase, newMangaInfo[index].slugList, newMangaInfo[index].chapterTextList, currentTime))
+
+            newBoundStmt.push(env.DB.prepare(
+                'Insert INTO userData (userId, mangaId, currentIndex, currentChap, userCat, interactTime) VALUES (?,?,?,?,?,?) ON CONFLICT(userID, mangaId) DO UPDATE SET currentIndex = excluded.currentIndex, currentChap = excluded.currentChap, userCat = excluded.userCat, interactTime = excluded.interactTime'
+            ).bind(authId, mangaId, newMangaInfo[index].currentIndex, newMangaInfo[index].chapterTextList.split(',')[newMangaInfo[index].currentIndex], userCat, Date.now()))
             
             await env.IMG.put(mangaId, new Uint8Array(newMangaInfo[index].iconBuffer.data).buffer, {httpMetadata:{contentType:"image/jpeg"}}) //Save Cover Image with title as mangaId
 

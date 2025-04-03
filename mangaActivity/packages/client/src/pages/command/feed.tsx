@@ -241,44 +241,44 @@ export default function feed():JSX.Element {
           <div className="button-wrapper">
             <button className="action-button" 
               onClick={(e) => {
-              const links = mangaDetails[currentCard].urlList
+              const slugs = mangaDetails[currentCard].slugList
               // console.log(links[mangaDetails[currentCard].currentIndex])
                if (fetchPath === '/.proxy') {
-                discordSdk.commands.openExternalLink({url: links[mangaDetails[currentCard].currentIndex+1]})
+                discordSdk.commands.openExternalLink({url: mangaDetails[currentCard].urlBase+slugs[mangaDetails[currentCard].currentIndex+1]})
                } else {
-                window.open(links[mangaDetails[currentCard].currentIndex+1])
+                window.open(mangaDetails[currentCard].urlBase+slugs[mangaDetails[currentCard].currentIndex+1])
                }
                 
             }}
             >Read Next</button>
-            <span className="chapter-number">{ 
+            <span className="chapter-number">Chapter { 
             ( mangaDetails[currentCard].currentIndex+1 < mangaDetails[currentCard].chapterTextList.length ) ? mangaDetails[currentCard].chapterTextList[mangaDetails[currentCard].currentIndex+1] : mangaDetails[currentCard].chapterTextList[mangaDetails[currentCard].chapterTextList.length-1]
             }</span>
           </div>
           <div className="button-wrapper">
             <button className="action-button" 
               onClick={(e) => {
-              const links = mangaDetails[currentCard].urlList
+                const slugs = mangaDetails[currentCard].slugList
               if (fetchPath === '/.proxy') {
-                discordSdk.commands.openExternalLink({url: links[links.length-1]!});
+                discordSdk.commands.openExternalLink({url: mangaDetails[currentCard].urlBase+slugs[slugs.length-1]!});
                } else {
-                window.open(links[links.length-1]!)
+                window.open(mangaDetails[currentCard].urlBase+slugs[slugs.length-1]!)
                }
               
             }}>Read Latest</button>
-            <span className="chapter-number">{mangaDetails[currentCard].chapterTextList[mangaDetails[currentCard].chapterTextList.length-1]}</span>
+            <span className="chapter-number">Chapter {mangaDetails[currentCard].chapterTextList[mangaDetails[currentCard].chapterTextList.length-1]}</span>
           </div>
           <div className="button-wrapper">
             <button className="action-button" 
               onClick={(e) => {
                 if (fetchPath === '/.proxy') {
-                  discordSdk.commands.openExternalLink({url: mangaDetails[currentCard].urlList[mangaDetails[currentCard].currentIndex]});
+                  discordSdk.commands.openExternalLink({url: mangaDetails[currentCard].urlBase+mangaDetails[currentCard].slugList[mangaDetails[currentCard].currentIndex]});
                 } else {
-                  window.open(mangaDetails[currentCard].urlList[mangaDetails[currentCard].currentIndex])
+                  window.open(mangaDetails[currentCard].urlBase+mangaDetails[currentCard].slugList[mangaDetails[currentCard].currentIndex])
                 }
               
             }}>Read Current</button>
-            <span className="chapter-number">{mangaDetails[currentCard].chapterTextList[mangaDetails[currentCard].currentIndex]}</span>
+            <span className="chapter-number">Chapter {mangaDetails[currentCard].chapterTextList[mangaDetails[currentCard].currentIndex]}</span>
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import {Env} from './types';
-import {handleApiRequest} from './handleApiRequest';
-import {handleErrors} from './handleErrors';
+import {handleApiRequest} from './handlers/clientHandlers/handleApiRequest';
+import {handleErrors} from './handlers/handleErrors';
+import { handleServerRequest } from './handlers/serverHandlers/handleserverRequest';
 export default {
   async fetch(request: Request, env: Env) {
     return await handleErrors(request, async () => {
@@ -23,7 +24,7 @@ export default {
       switch (path[0]) {
         case 'api':
           // This is a request for `/api/...`, call the API handler.
-          // console.log(path)
+          console.log(path)
           let newResp = await handleApiRequest(path.slice(1), request, env);
 
           if ( newResp instanceof Response) {
@@ -35,9 +36,11 @@ export default {
             return modResp
           }
           return new Response(JSON.stringify({'message': 'Internal Server Error'}), {status: 500})
+        case 'serverReq': 
+          return await handleServerRequest(path.slice(1), request, env)
         default:
           console.log("Unknown subdirectory tried" + path)
-          return new Response('Not found', {status: 404});
+          return new Response(JSON.stringify({message: 'Not found', path: path[0]}), {status: 404});
       }
     });
   },

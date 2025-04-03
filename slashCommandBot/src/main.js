@@ -117,12 +117,12 @@ async function main() {
             console.log("Registering Global Commands")
             await rest.put(Routes.applicationCommands(token.appID), {
                 body: [/*...slashCommandsJson, */...slashSubCommandsJson, 
-                    {
-                        "name": "Launch Manga Tracker",
-                        "description": "Launch Manga Tracker",
-                        "type": 4,
-                        "handler": 2
-                    }
+                    // {
+                    //     "name": "Launch Manga Tracker",
+                    //     "description": "Launch Manga Tracker",
+                    //     "type": 4,
+                    //     "handler": 2
+                    // }
                 ],
             })
             // await rest.put(Routes.applicationGuildCommands(token.appID, token.guildID), {
@@ -134,12 +134,12 @@ async function main() {
                 body: [/*...slashCommandsJson, */...slashSubCommandsJson],
             })
             await rest.put(Routes.applicationCommands(token.appID), {
-                body: [{
+                body: [/*{
                     "name": "Launch",
                     "description": "Launch Manga Tracker",
                     "type": 4,
                     "handler": 2
-                }],
+                }*/],
             })
         }
         console.log('Slash Commands Registered')

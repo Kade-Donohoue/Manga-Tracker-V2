@@ -17,7 +17,7 @@ puppeteer.use(adblocker)
  * @param icon: wether or not to get icon
  * @returns {
  *  "mangaName": name of manga , 
- *  "chapterUrlList": string separated by commas(',') for all chapter urls of manga
+ *  "urlList": string separated by commas(',') for all chapter urls of manga
  *  "chapterTextList": string separated by commas(',') for all chapter text of manga
  *  "iconBuffer": base64 icon for manga
  * }
@@ -126,7 +126,7 @@ async function getManga(url:string, icon:boolean = true) {
         
         let currIndex = 0
 
-        return {"mangaName": title, "chapterUrlList": chapterLinks.join(','), "chapterTextList": chapterText.join(','), "currentIndex": currIndex, "iconBuffer": resizedImage}
+        return {"mangaName": title, "urlList": chapterLinks.join(','), "chapterTextList": chapterText.join(','), "currentIndex": currIndex, "iconBuffer": resizedImage}
     } catch (err) {
         console.warn(`Unable to fetch data for: ${url}`)
         if (config.verboseLogging) console.warn(err)

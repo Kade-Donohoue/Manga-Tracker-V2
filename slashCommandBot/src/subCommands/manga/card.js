@@ -30,7 +30,7 @@ module.exports = class mangaCardSubCommand extends BaseSubcommandExecutor {
         const data = await resp.json()
         const chapTextList = data.mangaDetails.chapterTextList.split(',')
         const card = await generateCard(data.mangaDetails.mangaName, chapTextList.at(-1), chapTextList[parseInt(data.mangaDetails.currentIndex)], chapTextList[parseInt(data.mangaDetails.currentIndex)+1], `${chapTextList.length} Chapters`, data.mangaDetails.updateTime, data.mangaDetails.mangaId)
-        if (!card) return interaction.editReply({content:"A internal system error has occurred"})
+        if (!card) return interaction.editReply({content:"An internal system error has occurred"})
         const attach = new AttachmentBuilder(card, { name: `${data.mangaDetails.mangaId}-card.png`})
         interaction.editReply({ content: "", files: [attach], ephemeral: true})
     }

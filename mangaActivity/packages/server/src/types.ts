@@ -1,103 +1,90 @@
+import { number, object, z } from "zod";
+
 export interface Env {
   ENVIRONMENT: 'dev' | 'staging' | 'production';
   VITE_CLIENT_ID: string;
   CLIENT_SECRET: string;
   BOT_TOKEN: string;
   VITE_DISCORD_API_BASE: string;
-  VITE_SERVER_URL: string,
-  VITE_CLIENT_URL: string,
+  VITE_SERVER_URL: string;
+  VITE_CLIENT_URL: string;
+  VITE_CLERK_PUBLISHABLE_KEY: string;
   CF_ACCESS_CLIENT_ID?: string;
   CF_ACCESS_CLIENT_SECRET?: string;
   DB: D1Database;
   IMG: R2Bucket;
   PUPPETEER_SERVER: string;
-  SERVER_PASSWORD: string
+  SERVER_PASSWORD: string;
+  CLERK_SECRET_KEY: string;
 }
 
-export interface IGetOAuthToken {
-  access_token: string;
-  expires_in: number;
-  refresh_token: string;
-}
+export const mangaDataRow = z.object({
+  mangaName: z.string().min(1),
+  mangaId: z.string().uuid(),
+  urlBase: z.string(),
+  slugList: z.union([z.string(), z.array(z.string())]).transform((val => (typeof val === "string" ? val.split(","):val))),
+  chapterTextList: z.union([z.string(), z.array(z.string())]).transform((val => (typeof val === "string" ? val.split(","):val))),
+  updateTime: z.string(),
+})
 
-export enum SKUAccessTypes {
-  FULL = 1,
-  EARLY_ACCESS = 2,
-  VIP_ACCESS = 3,
-}
+export const userDataRow = z.object({
+  userId: z.string(),
+  mangaId: z.string().uuid(),
+  currentIndex: z.coerce.number().int().min(0),
+  currentChap: z.coerce.number(),
+  userCat: z.string(),
+  interactTime: z.coerce.number().int().min(0),
+})
 
-export const SKUFlags = {
-  AVAILABLE: 1 << 2,
-};
+export const statsDataRow = z.object({
+  timestamp: z.string(),
+  type: z.string(),
+  stat_value: z.coerce.number().int()
+})
 
-export enum EntitlementTypes {
-  PURCHASE = 1,
-  PREMIUM_SUBSCRIPTION = 2,
-  DEVELOPER_GIFT = 3,
-  TEST_MODE_PURCHASE = 4,
-  FREE_PURCHASE = 5,
-  USER_GIFT = 6,
-  PREMIUM_PURCHASE = 7,
-  APPLICATION_SUBSCRIPTION = 8,
-}
+export const settingsDataRow = z.object({
+  userId: z.string(),
+  categories: z.preprocess((val) => {
+    if (typeof val === "string") { //if string parse into json. if fail return string causing validation error
+      try {
+        return JSON.parse(val);
+      } catch {
+        return val; 
+      }
+    }
+    return val;
+  }, z.array(
+    z.object({
+      value: z.string(),
+      label: z.string(),
+    })
+  )),
+})
 
-export interface IGetSKUs {
-  id: string;
-  type: number;
-  dependent_sku_id: string | null;
-  application_id: string;
-  access_type: SKUAccessTypes;
-  name: string;
-  slug: string;
-  flags: number;
-  release_date: string | null;
-  price: {
-    amount: number;
-    currency: string;
-  };
-}
+export const updateData = z.array(z.object({
+  mangaName: z.string().min(1),
+  mangaId: z.string().uuid(),
+  urlBase: z.string(),
+  slugList: z.string(),
+  chapterTextList: z.string(),
+  currentIndex: z.coerce.string(),
+  iconBuffer: z.object({
+    type: z.literal("Buffer"),
+    data: z.array(z.number().int().min(0).max(255)),
+  }).nullable(),
+}))
 
-export interface IGetEntitlements {
-  user_id: string;
-  sku_id: string;
-  application_id: string;
-  id: string;
-  type: number;
-  consumed: boolean;
-  payment: {
-    id: string;
-    currency: string;
-    amount: number;
-    tax: number;
-    tax_inclusive: boolean;
-  };
-}
-
-export interface user {
-	"id": string,
-	"username": string,
-	"avatar": string,
-	"discriminator": string,
-	"public_flags": number,
-	"flags": number,
-	"banner": string,
-	"accent_color": number,
-	"global_name": string,
-	"avatar_decoration_data": string,
-	"banner_color": string,
-	"clan": string,
-	"mfa_enabled": boolean,
-	"locale": string,
-	"premium_type": number
-}
+export type updateDataType = z.infer<typeof updateData>
 
 export interface mangaDetails {
   mangaName:string,
   mangaId:string,
-  urlList: string|string[],
+  urlBase: string,
+  slugList: string|string[],
   chapterTextList: string|string[], 
   updateTime: string,
   currentIndex: number,
+  currentChap: number,
   userCat: string,
   interactTime: number
 }
@@ -107,6 +94,7 @@ export interface userDataRow {
   "userID": string,
   "mangaName": string,
   "currentIndex": number,
+  "currentChap": number,
   "userCat": string,
   "interactTime": number
 }
@@ -114,7 +102,8 @@ export interface userDataRow {
 export interface mangaDataRowReturn {
   "mangaId": string,
   "mangaName": string,
-  "urlList": string,
+  "urlBase": string,
+  "slugList": string,
   "chapterTextList": string, 
   "updateTime": string
 }
@@ -122,14 +111,16 @@ export interface mangaDataRowReturn {
 export interface mangaDataRowProcessed {
   "mangaId": string,
   "mangaName": string,
-  "urlList": string[],
+  "urlBase": string,
+  "slugList": string[],
   "chapterTextList": string[], 
   "updateTime": string
 }
 
 export interface mangaReturn { 
   "mangaName": string,
-  "chapterUrlList": string,
+  "urlBase": string,
+  "slugList": string
   "chapterTextList": string,
   "currentIndex": number,
   "iconBuffer": {
@@ -138,14 +129,14 @@ export interface mangaReturn {
   }
 }
 
-export interface updateData {
-  "mangaName": string,
-  "chapterUrlList": string,
-  "chapterTextList": string,
-  "currentIndex": string,
-  "iconBuffer": {
-    "type": string,
-    "data": number[]
-  }|null,
-  "mangaId": string
-}
+// export interface updateData {
+//   "mangaName": string,
+//   "chapterUrlList": string,
+//   "chapterTextList": string,
+//   "currentIndex": string,
+//   "iconBuffer": {
+//     "type": string,
+//     "data": number[]
+//   }|null,
+//   "mangaId": string
+// }

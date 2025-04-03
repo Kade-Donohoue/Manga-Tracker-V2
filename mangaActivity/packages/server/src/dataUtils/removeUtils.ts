@@ -1,13 +1,7 @@
-import {Env, userDataRow, mangaDataRowReturn, user, mangaReturn} from '../types'
-import {verifyUserAuth} from '../utils'
+import {Env} from '../types'
 
-export async function forgetUser(access_token:string|null=null, authId:string, env:Env) {
+export async function forgetUser(authId:string, env:Env) {
     try {
-        const validationRes = await verifyUserAuth(access_token, authId, env)
-        
-        if (validationRes instanceof Response) return validationRes
-        authId = validationRes
-
         await env.DB.batch([
             env.DB.prepare('DELETE FROM userData WHERE userID = ?').bind(authId),
             env.DB.prepare('DELETE FROM userSettings WHERE userID = ?').bind(authId)
@@ -20,13 +14,8 @@ export async function forgetUser(access_token:string|null=null, authId:string, e
     }
 }
 
-export async function deleteUserManga(access_token:string|null=null, authId:string, mangaId:string, env:Env) {
+export async function deleteUserManga(authId:string, mangaId:string, env:Env) {
     try {
-        const validationRes = await verifyUserAuth(access_token, authId, env)
-        
-        if (validationRes instanceof Response) return validationRes
-        authId = validationRes
-
         await env.DB.prepare('DELETE FROM userData WHERE userID = ? AND mangaId = ?')
                 .bind(authId, mangaId)
                 .run()

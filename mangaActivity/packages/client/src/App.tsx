@@ -35,29 +35,66 @@ import { IconButton } from '@mui/material';
 import { App as capApp } from '@capacitor/app';
 import { start } from './actions/authActions';
 import { Capacitor } from '@capacitor/core';
+import { SignedIn, SignedOut, SignIn, SignUp } from "@clerk/clerk-react";
+
+interface CenteredPageProps {
+  children: React.ReactNode;
+}
+
+const CenteredPage: React.FC<CenteredPageProps> = ({ children }) => (
+  <div style={{
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100vh',
+    backgroundColor: '#1a1a1a',
+  }}>
+    {children}
+  </div>
+);
+
 
 // Add contexts here
 export default function App(): React.ReactElement {
+
   return (
-    <AuthProvider>
-      <DesignSystemProvider>
-      <ToastContainer
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss={false}
-        draggable
-        pauseOnHover
-        theme="dark"
-      />
+    <div style={{"width": "100%", "height": "100%"}}>
+      <SignedOut>
         <Router>
-          <RootedApp />
+          <Routes>
+            <Route path="/" element={
+              <CenteredPage>
+                <SignIn signUpUrl="/sign-up" />
+              </CenteredPage>
+            } />
+            <Route path="/sign-up" element={
+              <CenteredPage>
+                <SignUp signInUrl="/" />
+              </CenteredPage>
+            } />
+          </Routes>
         </Router>
-      </DesignSystemProvider>
-    </AuthProvider>
+      </SignedOut>
+      <SignedIn>
+        <DesignSystemProvider>
+        <ToastContainer
+          position="top-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss={false}
+          draggable
+          pauseOnHover
+          theme="dark"
+        />
+          <Router>
+            <RootedApp />
+          </Router>
+        </DesignSystemProvider>
+      </SignedIn>
+    </div>
   );
 }
 

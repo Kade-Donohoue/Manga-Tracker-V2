@@ -1,20 +1,22 @@
-export interface fetchData {
+export type fetchData = {
     "mangaName":string, 
-    "chapterUrlList":string, 
+    "urlBase":string, 
+    "slugList":string,
     "chapterTextList":string, 
     "currentIndex":number, 
     "iconBuffer":Buffer|null
 }
 
-export interface updateCollector {
+export type updateCollector = {
     batchId:number,
     batchData: {
         completedCount: number,
         newChapterCount: number, 
         newData: {
-            mangaName:string,
-            chapterUrlList:string,
-            chapterTextList:string,
+            mangaName:string, 
+            urlBase:string, 
+            slugList:string,
+            chapterTextList:string, 
             currentIndex:number,
             iconBuffer:Buffer,
             mangaId:string

@@ -134,7 +134,7 @@ export default function addBookmarks() {
 
       if (!reply.ok) {
         toast.update(notif, {
-          render: "A internal Server Error Ocurred!", 
+          render: "An internal Server Error Ocurred!", 
           type: "error", 
           isLoading: false,
           autoClose: 5000, 
