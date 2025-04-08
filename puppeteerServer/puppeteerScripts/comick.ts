@@ -24,13 +24,21 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         const slug = extractSlug(url)
         if (config.logging.verboseLogging) console.log('slug: ', slug)
         job.log(logWithTimestamp('Fetching Comic Data with following slug: ' + slug))
-        const comicData:comicData = await (await fetch(`https://api.comick.fun/comic/${slug}`)).json()
+        const comicReq = await fetch(`https://api.comick.fun/comic/${slug}`)
+
+        if (!comicReq.ok) throw new Error('Manga: Unable to fetch Comick Data!')
+        const comicData:comicData = await comicReq.json()
+
+
         if (config.logging.verboseLogging) console.log('comic Data: ', comicData)
         await job.updateProgress(20)
         job.log(logWithTimestamp('comic Data Retrieved!'))
         
         job.log(logWithTimestamp('Fetching Chapter Data'))
-        const chapterData:chapterData = await (await fetch(`https://api.comick.fun/comic/${comicData.comic.hid}/chapters?lang=en&limit=${comicData.comic.chapter_count}`)).json()
+        const chapterReq = await fetch(`https://api.comick.fun/comic/${comicData.comic.hid}/chapters?lang=en&limit=${comicData.comic.chapter_count > 60 ? comicData.comic.chapter_count : 60}`)
+        if (!chapterReq.ok) throw new Error('Manga: Unable to fetch chapter Data!')
+        const chapterData:chapterData = await chapterReq.json()
+
         if (config.logging.verboseLogging) console.log('Chapter Data: ', chapterData)
         await job.updateProgress(40)
         job.log(logWithTimestamp('chapter Data Retrieved!'))
@@ -38,7 +46,7 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         job.log(logWithTimestamp('begining to parse data'))
 
         let userHid = url.split('/').at(-1).toLowerCase()
-        userHid = userHid.replace(/-chapter-\d+-\w+$/g, '')
+        userHid = userHid.replace(/-chapter-\d+.?\d*-[a-z]+/gi, '')
         // const hidMatch = url.match(/\/([^/]+)-chapter-[\d.]+(?:-[^/]+)?$/)
         if (config.logging.verboseLogging) console.log('userHid: ', userHid)
         const chapterMap:ChapterMap = {}
@@ -56,10 +64,9 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
             }
 
             if (!hid) return
-            console.log()
             if (hid.toLowerCase() === userHid) userChap = chapterMap[chap].chapter
         })
-        console.log('userChap: ', userChap)
+        if (config.logging.verboseLogging) console.log('userChap: ', userChap)
 
         const chapters: string[] = []
         const hidList: string[] = []

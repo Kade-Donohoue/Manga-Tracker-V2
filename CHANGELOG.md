@@ -1,5 +1,30 @@
 # **Change Logs**
 
+## Change Log 2.0.1
+ - server URL is now correctly set when in production
+ - started adding color selector for categories (WIP)
+ - CORS headers are now correct and will automatically set orgin to client URL specified in config
+ - auto updating manga is fixed and working again
+ - when not refeching images on auto update the correct new chapter count is sent to the server
+ - added rate limiting for comick (possible moved to its own queue)
+ - asura now gets overview url from user provided url instead of pasing next data
+ - added errors for comick network requests when they fail
+ - when comick chapter has a decimal place the userHid is now propperly extracted and matched
+ - comick console logging is now propperly under verbose logging
+ - updated convert manganato to comick script to work with new api
+ - convert manganato to comick script no longer fetches images
+ - created script to help convert from old DB structure to new(not perfect but gets most of them)
+
+## Change Log 2.0.0
+ - DB restructure resulting in smaller network requests as well as smaller DB
+ - changed auth to use clerk instead of discord Oauth allowing account creation. 
+ - deprecated reaper-scans support
+ - fixed minor grammar / spacing issues
+ - new Add manga button on view tracked
+ - view tracked now has option to only see manga with unread chapters
+ - split server-server api and client api into different base endpoints
+ - removing old code for discord activities
+
 ## Change Log 1.4.2
  - Resolved an issue on comick where it would fail to fetch manga data if lang was null for the titles. 
 

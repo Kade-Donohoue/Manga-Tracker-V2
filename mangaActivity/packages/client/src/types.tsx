@@ -305,5 +305,6 @@ export interface mangaDetails {
 
 export interface dropdownOption {
   "value":string, 
-  "label": string
+  "label": string,
+  "color"?: string
 }

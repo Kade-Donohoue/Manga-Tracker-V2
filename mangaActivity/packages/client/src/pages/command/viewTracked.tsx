@@ -827,8 +827,8 @@ export default function tracked() {
                             <td>{`${data.chapterTextList[checkIndexInRange(data.currentIndex, data.chapterTextList.length)].match(/[0-9.]+/g)?.join('.')}/${data.chapterTextList[data.chapterTextList.length-1].match(/[0-9.]+/g)?.join('.')}`}</td>
                             </tr>
                             <tr>
-                            <td>Category: </td>
-                            <td>{findCatLabel(data.userCat)}</td>
+                                <td>Category: </td>
+                                <td>{findCatLabel(data.userCat)}</td>
                             </tr>
                         </tbody>
                       </table>

@@ -2,7 +2,7 @@ import sharp from 'sharp'
 import config from '../../config.json'
 
 async function convertMangaNato() {
-    const resp = await fetch(`${config.serverUrl}/api/data/pull/getUpdateData`, {
+    const resp = await fetch(`${config.serverUrl}/serverReq/data/getAllManga`, {
         method: 'GET',
         headers: {
             "pass": config.serverPassWord
@@ -12,7 +12,7 @@ async function convertMangaNato() {
     if (config.verboseLogging) console.log(resp)
     if (resp.status!=200) return console.log('issue fetching data' )
     
-    const returnData:pulledData[] = (await resp.json()).data
+    const returnData:updateData = (await resp.json()).data
 
 
     let newManga:mangaData[] = []
@@ -20,7 +20,7 @@ async function convertMangaNato() {
         let manga = returnData[i]
     // returnData.forEach(async (manga) => {
 
-        if (!manga.urlList.includes('manganato')) continue
+        if (!manga.slugList.includes('manganato')) continue
 
         let comickSearchRes = await fetch('https://api.comick.fun/v1.0/search/?' + new URLSearchParams({
             type: "comic",
@@ -82,24 +82,43 @@ async function convertMangaNato() {
             urls.push(url)
         })
 
-        const iconBuffer = await (await fetch(`https://meo.comick.pictures/${comicData.comic.md_covers[0].b2key}`)).arrayBuffer()
-        const resizedImage = await sharp(iconBuffer)
-            .resize(480, 720)
-            .toBuffer()
+        // const iconBuffer = await (await fetch(`https://meo.comick.pictures/${comicData.comic.md_covers[0].b2key}`)).arrayBuffer()
+        // const resizedImage = await sharp(iconBuffer)
+        //     .resize(480, 720)
+        //     .toBuffer()
 
         newManga.push({
             mangaName: getEnglishTitle(comicData.comic.md_titles, comicData.comic.title),
-            urlList: urls.join(','),
+            urlBase: '',
+            slugList: urls.join(','),
             chapterTextList: chapters.join(','), 
             currentIndex: -1, 
-            iconBuffer: resizedImage,
+            iconBuffer: null,
             mangaId: manga.mangaId
         })
-        await new Promise(r => setTimeout(r, 1000));
+        await new Promise(r => setTimeout(r, 300));
     }
     // )
 
     console.log(newManga)
+
+    const saveResp = await fetch(`${config.serverUrl}/serverReq/data/updateManga`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            "pass": config.serverPassWord,
+        },
+        body: JSON.stringify({
+            "newData": newManga,
+            "amountNewChapters": 0
+        }),
+    })
+
+    console.log(saveResp)
+
+    let savedata = await saveResp.json()
+    
+    console.log(savedata)
 
 }
 
@@ -114,7 +133,8 @@ function getEnglishTitle(titles:{title:string, lang:string}[], defaultTitle:stri
 
 type mangaData = {
     "mangaName":string, 
-    "urlList":string, 
+    "urlBase": string,
+    "slugList":string, 
     "chapterTextList":string, 
     "currentIndex":number, 
     "iconBuffer":Buffer, 
@@ -234,5 +254,12 @@ type ChapterDetails = {
 type ChapterMap = {
     [chap: string]: ChapterDetails
 }
+
+type updateData = {
+    mangaId:string, 
+    urlBase:string, 
+    slugList:string, 
+    mangaName:string
+}[]
 
 convertMangaNato()

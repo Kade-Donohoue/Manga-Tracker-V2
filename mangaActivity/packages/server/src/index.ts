@@ -10,16 +10,18 @@ export default {
       const path = url.pathname.slice(1).split('/');
 
       if (request.method === 'OPTIONS') {
-        // console.log('OPTIONS Request')
-        // Handle CORS preflight request
         return new Response(null, {
+          status: 204,
           headers: {
-            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Origin': env.VITE_CLIENT_URL, // Use your domain in production
             'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'Access-Control-Allow-Credentials': 'true',
+            'Access-Control-Max-Age': '86400',
           }
         });
-      }    
+      }
+    
 
       switch (path[0]) {
         case 'api':
@@ -29,9 +31,10 @@ export default {
 
           if ( newResp instanceof Response) {
             let modResp = new Response(newResp.body, newResp)
-            modResp.headers.set('Access-Control-Allow-Origin', '*'); // Use your domain in production
-            modResp.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-            modResp.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+            modResp.headers.set('Access-Control-Allow-Origin', env.VITE_CLIENT_URL)
+            modResp.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+            modResp.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+            modResp.headers.set('Access-Control-Allow-Credentials', 'true')
 
             return modResp
           }

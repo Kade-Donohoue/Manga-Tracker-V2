@@ -1,4 +1,4 @@
-import React, { ChangeEvent, HTMLAttributes } from 'react';
+import React, { ChangeEvent, HTMLAttributes, useState } from 'react';
 import {catOptions, setCatOptions} from '../vars'
 import Button from '@mui/material/Button';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
@@ -23,11 +23,14 @@ import Modal from '@mui/material/Modal';
 import { modalStyle } from '../AppStyles';
 import { Cookies } from 'react-cookie';
 import { SignOutButton, UserProfile } from '@clerk/clerk-react';
+import { Popover } from '@mui/material';
+import { SketchPicker } from "react-color";
 
 interface dataGridRow {
   id:string,
   label:string,
   isNew?:boolean
+  color?:string
 }
 
 interface EditFooterProps extends Partial<HTMLAttributes<HTMLDivElement>> {
@@ -51,7 +54,7 @@ export default function settings() {
   function convertToDataGrid(dropdownOptions:dropdownOption[]):GridRowsProp {
     let newData:dataGridRow[] = []
     for (const cat of dropdownOptions) {
-      newData.push({id:cat.value, label:cat.label, isNew: false})
+      newData.push({id:cat.value, label:cat.label, isNew: false, color: cat.color})
     }
     return newData as GridRowsProp
   }
@@ -196,6 +199,35 @@ export default function settings() {
     }
   }
 
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  const [selectedRow, setSelectedRow] = useState<null | number>(null)
+
+  const handleColorClick = (e:React.MouseEvent<HTMLButtonElement>, id:number) => {
+    setAnchorEl(e.currentTarget)
+    setSelectedRow(id)
+  }
+
+  const handleColorClose = () => {
+    setAnchorEl(null)
+    setSelectedRow(null)
+  }
+
+  const handleColorChange = (color:{hex:string}) => {
+    if (selectedRow !== null) {
+      setRows((prevRows) => prevRows.map((row) => row.id === selectedRow ? { ...row, color: color.hex}: row))
+    }
+
+    let selRowStr = String(selectedRow)
+    let newRowsV1:dropdownOption[] = []
+    for (const row of rows) {
+      if (selectedRow) newRowsV1.push(row.id === selRowStr ?{value: selRowStr, label: row.label, color: color.hex}:{value: row.id, label: row.label, color: row.color})
+    }
+
+    setLocalCats(newRowsV1)
+
+    postCats(newRowsV1)
+  }
+
   const columns:GridColDef[] = [
     { field: 'label', headerName: 'Category Title', width: 600, editable: true},
     { field: 'actions', headerName: 'Actions', type:'actions', width: 100, getActions: ({ id }:{id:GridRowId}) => {
@@ -237,6 +269,16 @@ export default function settings() {
         />
       ]
       }
+    },
+    { field: 'color', headerName: 'Category Color', width: 150,  renderCell: (params) => (
+      <Button
+        variant='outlined'
+        sx={{backgroundColor: params.value, color:"#fff"}}
+        onClick={(e) => handleColorClick(e, params.row.id)}
+      >
+        Pick Color
+      </Button>
+    )
     }
   ]
 
@@ -267,8 +309,8 @@ export default function settings() {
                 }}
                 rows={rows} 
                 columns={columns} 
-                isCellEditable={(params:any) => params.row.id.includes('user:')}/>
-
+                isCellEditable={(params:any) => params.row.id.includes('user:')}
+              />
             </Box>
           </AccordionDetails>
         </Accordion>
@@ -299,6 +341,20 @@ export default function settings() {
           </Box>
         </Modal>
       </div>
+
+      <Popover
+        open={Boolean(anchorEl)}
+        anchorEl={anchorEl}
+        onClose={handleColorClose}
+        anchorOrigin={{vertical:"bottom", horizontal:"left"}}
+      >
+        <SketchPicker
+          color={selectedRow !== null ? rows.find((row) => row.id === selectedRow)?.color:"#000000"}
+          onChangeComplete={handleColorChange}
+        >
+        </SketchPicker>
+      </Popover>
+
     </div>
   );
 }

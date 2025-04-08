@@ -88,18 +88,24 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         if (config.logging.verboseLogging) console.log(chapterData)
         await job.updateProgress(30)
 
-        const overViewURL = await page.evaluate(() => {
-            let foundData = '';
-            (window as any).__next_f.some((bigArray:any[]) => {
-                if (bigArray[0] != 1) return false
-                let str:string = bigArray[1] as any
-                if (str.indexOf('"seriesSlug\":\"') >= 0) {
-                    foundData = `${(window as any).__ENV.NEXT_PUBLIC_FRONTEND_URL}/series/${str.slice(str.indexOf('"seriesSlug\":\"')+14, str.indexOf('\",\"seriesName\"'))}/`
-                } 
-                return false
-            })
-            return foundData
-        })
+        const overViewURL = url.split('/chapter/')[0]
+        // const overViewURL = await page.evaluate(() => {
+        //     let foundData = '';
+        //     (window as any).__next_f.some((bigArray:any[]) => {
+        //         if (bigArray[0] != 1) return false
+        //         let str:string = bigArray[1] as any
+        //         if (str.indexOf('"seriesSlug\":\"') >= 0) {
+        //             foundData = `${(window as any).__ENV.NEXT_PUBLIC_FRONTEND_URL}/series/${str.slice(str.indexOf('"seriesSlug\":\"')+14, str.indexOf('\",\"seriesName\"'))}/`
+        //         } 
+        //         return false
+        //     })
+        //     return foundData
+        // })
+
+        if (!overViewURL) throw new Error('Manga: Unable to get base URL!')
+
+        console.log(overViewURL)
+        job.log(logWithTimestamp(overViewURL))
         await job.updateProgress(35)
         
         job.log(logWithTimestamp('Data Retried! processing Data'))
@@ -171,7 +177,7 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         await job.updateProgress(100)
         return {
             "mangaName": title, 
-            "urlBase": overViewURL+'chapter/',
+            "urlBase": overViewURL+'/chapter/',
             "slugList": chapeterList.join(','), 
             "chapterTextList": chapeterList.join(','), 
             "currentIndex": currIndex, 

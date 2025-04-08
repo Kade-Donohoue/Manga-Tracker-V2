@@ -140,7 +140,7 @@ async function updateAllManga() {
     if (config.logging.verboseLogging) console.log(resp)
     if (resp.status!=200) return console.log('issue fetching data to update all manga:' )
 
-    const returnData = (await resp.json()).data
+    const returnData:{mangaId:string, urlBase:string, slugList:string, mangaName:string}[] = (await resp.json()).data
     if (config.logging.verboseLogging) console.log(returnData.length)
     // console.log(returnData)
     let batchId = Date.now()
@@ -180,7 +180,7 @@ async function updateAllManga() {
                 getIcon: config.updateSettings.refetchImgs,
                 update: true,    
                 length: returnData.length-invalidCount,
-                oldSlugList: returnData[i].urlList,
+                oldSlugList: returnData[i].slugList,
                 batchId: batchId
             },
             opts: {priority: 2, removeOnComplete: config.queue.removeCompleted, removeOnFail: config.queue.removeFailed, attempts: 2}
@@ -261,7 +261,7 @@ async function sendUpdate(dataIndex:number) {
                     },
                     body: JSON.stringify({
                         "newData": [dataCollector[dataIndex].batchData.newData[i]],
-                        "amountNewChapters": 0
+                        "amountNewChapters": dataCollector[dataIndex].batchData.newChapterCount
                     }),
                 })
 

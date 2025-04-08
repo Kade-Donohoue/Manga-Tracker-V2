@@ -6,7 +6,7 @@ import * as Scrollable from './components/Scrollable'
 import {AuthProvider} from './components/AuthProvider'
 import { authStore } from './stores/authStore';
 import DesignSystemProvider from './components/DesignSystemProvider'
-import { setCatOptions, catOptions, fetchPath } from './vars';
+import { setCatOptions, catOptions, fetchPath, setFetchPath } from './vars';
 
 
 import Home from './pages/Home'
@@ -165,6 +165,12 @@ const routes: Record<string, AppRoute> = {
 function RootedApp(): React.ReactElement {
 
   React.useEffect(() => {
+
+    if (import.meta.env.DEV) {
+      setFetchPath('');
+    } else {
+      setFetchPath(import.meta.env.VITE_SERVER_URL);
+    }
     // Function to fetch user categories
     async function getCats() {
       try {
