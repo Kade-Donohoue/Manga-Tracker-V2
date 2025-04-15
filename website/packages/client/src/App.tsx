@@ -81,7 +81,7 @@ export default function App(): React.ReactElement {
           <Route
             path="/*"
             element={
-              <div>
+              <div style={{"width": "100%", "height": "100%"}}>
                 <SignedIn>
                   <DesignSystemProvider>
                     <ToastContainer
