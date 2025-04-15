@@ -1,5 +1,3 @@
-import discordSdk from '../../discordSdk'
-import {authStore} from '../../stores/authStore'
 import {dropdownOption, mangaDetails, } from '../../types'
 import {customStyles} from '../../styled/index'
 import {LoadingScreen} from '../../components/LoadingScreen'
@@ -13,7 +11,6 @@ import Tooltip from '@mui/material/Tooltip'
 import Box from '@mui/material/Box'
 import Modal from '@mui/material/Modal'
 import Button from '@mui/material/Button'
-import ButtonGroup from '@mui/material/ButtonGroup'
 import CancelIcon from '@mui/icons-material/Cancel'
 import SvgIcon from '@mui/material/SvgIcon'
 import Select from 'react-select'
@@ -22,14 +19,13 @@ import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
-import { CardActionArea, Checkbox, FormControlLabel, TextField } from '@mui/material'
+import { CardActionArea, Checkbox, FormControlLabel, Menu, MenuItem, Skeleton, TextField } from '@mui/material'
 import AddCircleOutlinedIcon from '@mui/icons-material/AddCircleOutlined';
 import { catOptions, fetchPath } from '../../vars'
 
 import './viewTracker.css'
 import {modalStyle} from '../../AppStyles'
 import SeriesModal from '../../components/SeriesModal'
-import { userInfo } from 'os'
 
 const sortOptions:{label:string,value:keyof mangaDetails | "search"}[] = [
     {label: "Title Search", value: "search"},
@@ -40,7 +36,7 @@ const sortOptions:{label:string,value:keyof mangaDetails | "search"}[] = [
 ]
 
 export default function tracked() {
-    const [mangaInfo, setMangaInfo] = React.useState<mangaDetails[]>([]);
+    const [mangaInfo, setMangaInfo] = React.useState<mangaDetails[] | null>(null);
     const [modalIndex, SetModalIndex] = React.useState<number>(-1)
     const [newCat, setNewCat] = React.useState<dropdownOption | null>(catOptions[0])
     const [newChapter, setChapter] = React.useState<dropdownOption | null>(null)
@@ -51,11 +47,29 @@ export default function tracked() {
     const [currentSearch, setSearch] = React.useState<string>("")
     const [unreadChecked, setUnreadChecked] = React.useState<boolean>(false)
 
-    const auth = authStore.getState();
-    // console.log(auth)
-    if (!auth) {
-        console.log("No Auth!")
-        return <></>
+    //right click menu
+    const [anchorPosition, setAnchorPosition] = React.useState<{ top: number; left: number } | null>(null);
+
+    const handleContextMenu = async (event:React.MouseEvent, mangaId:string) => {
+        if (anchorPosition) {
+            setAnchorPosition(null)
+            return
+        }
+
+        event.preventDefault()
+        console.log(mangaInfo)
+        console.log(mangaId)
+        let index = mangaInfo?.findIndex(manga => manga.mangaId === mangaId)
+        console.log(index)
+
+        if (index !== 0 && (!index || index === -1)) return
+
+        SetModalIndex(index)
+        setAnchorPosition({ top: event.clientY, left: event.clientX })
+    }
+
+    const handleContextClose = () => {
+        setAnchorPosition(null)
     }
 
     async function getUserManga() {
@@ -65,10 +79,6 @@ export default function tracked() {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                "access_token": auth.access_token,
-                "authId": null
-            }),
         }) as any
 
         if (!response.ok) {
@@ -80,11 +90,12 @@ export default function tracked() {
         if (results.mangaDetails.length <= 0) toast.info("No Manga!")
         setMangaInfo(results.mangaDetails)
 
-        mangaInfo[modalIndex].urlBase
+        // mangaInfo[modalIndex].urlBase
     }
 
     async function openMangaOverview(mangaId:string) {
         console.log('opening Series Modal!')
+        if (!mangaInfo) return
         let mangaIndex = mangaInfo.findIndex(manga => manga.mangaId === mangaId)
         SetModalIndex(mangaIndex)
         handleOpen()
@@ -119,8 +130,6 @@ export default function tracked() {
                 'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                "access_token": auth.access_token,
-                "authId": null,
                 "mangaId": mangaId
                 }),
             })
@@ -137,7 +146,7 @@ export default function tracked() {
                 progress: 0
                 })
 
-                let newList:mangaDetails[] = [...mangaInfo] as mangaDetails[]
+                let newList:mangaDetails[] = [...mangaInfo||[]] as mangaDetails[]
 
                 newList.splice(modalIndex, 1)
                 newList.splice(modalIndex, 1)
@@ -193,15 +202,13 @@ export default function tracked() {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                "access_token": auth.access_token,
-                "authId": null,
                 "mangaId": mangaId,
                 "newCat": newCat.value
             }),
         })
 
         if (reply.ok) {
-            const tempInfo:mangaDetails[] = [...mangaInfo] as mangaDetails[]
+            const tempInfo:mangaDetails[] = [...mangaInfo||[]] as mangaDetails[]
             tempInfo[modalIndex].userCat = newCat.value
             setMangaInfo(tempInfo)
 
@@ -247,6 +254,7 @@ export default function tracked() {
             progress: 0
           })
 
+        if (!mangaInfo) return
         const newIndex = mangaInfo[modalIndex].chapterTextList.indexOf(newChapter.label)
         if (!newIndex || newIndex == -1) return toast.update(notif, {
             render: "Internal Error Updating Chapter!", 
@@ -265,8 +273,6 @@ export default function tracked() {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                "access_token": auth.access_token,
-                "authId": null,
                 "mangaId": mangaId,
                 "newIndex": newIndex
             }),
@@ -311,7 +317,7 @@ export default function tracked() {
     }
 
     function confirmRemovalDialog() {
-
+        if (!mangaInfo) return
         return (
             <Dialog
                 open={removeOpen}
@@ -342,7 +348,7 @@ export default function tracked() {
     }
 
     function changeCatModal() {
-
+        if (!mangaInfo) return
         return (
             <Modal
                 open={catOpen}
@@ -384,11 +390,10 @@ export default function tracked() {
         )
     }
 
+    const [selectedCat, setSelectedCat] = React.useState<dropdownOption | null>(catOptions[0])
+    const [isLoading, setIsLoading] = React.useState(false)
     function addMangaModal() {
-
-        const [selectedCat, setSelectedCat] = React.useState<dropdownOption | null>(catOptions[0])
-        const [isLoading, setIsLoading] = React.useState(false)
-
+        if (!mangaInfo) return <div/>
         return (
             <Modal
                 open={addOpen}
@@ -473,8 +478,6 @@ export default function tracked() {
                   'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                  "access_token": auth.access_token,
-                  "authId": null,
                   "userCat": selectedCat?.value,
                   "urls": urlList
                 }),
@@ -588,6 +591,7 @@ export default function tracked() {
     }
 
     function changeChapterModal() {
+        if (!mangaInfo) return
         if (modalIndex < 0 ) return <div/>
         return (
             <Modal
@@ -642,6 +646,7 @@ export default function tracked() {
     const [open, setOpen] = React.useState(false)
     const handleOpen = () => setOpen(true)
     const handleClose = async () => {
+        if (!mangaInfo) return
         setOpen(false)
 
         await fetch(`${fetchPath}/api/data/update/updateInteractTime`, {
@@ -650,8 +655,6 @@ export default function tracked() {
                   'Content-Type': 'application/json',
               },
               body: JSON.stringify({
-                  "access_token": auth.access_token,
-                  "authId": null,
                   "mangaId": mangaInfo[modalIndex].mangaId,
                   "interactionTime": Date.now()
             }),
@@ -666,21 +669,75 @@ export default function tracked() {
     const handleAddClose = () => setAddOpen(false)
 
     const [chapterOpen, setChapterOpen] = React.useState(false)
-    const handleChapterOpen = () => setChapterOpen(true)
+    const handleChapterOpen = () => {
+        if (!mangaInfo || !mangaInfo[modalIndex]) return
+        let optionList:dropdownOption[] = mangaInfo[modalIndex].chapterTextList.toReversed().map((text, i) => {
+            return {value: text, label: text}
+        })
+        setChapterOpen(true)
+        setChapter(optionList[0]||null)
+    }
     const handleChapterClose = () => setChapterOpen(false)
 
     const [removeOpen, setRemoveOpen] = React.useState(false)
     const handleRemoveOpen = () => {setRemoveOpen(true); console.log(removeOpen)}
     const handleRemoveClose = () => setRemoveOpen(false)
 
+    const handleAuxClick = (event: React.MouseEvent, mangaId: string) => {
+        if (!mangaInfo) return
+        if (event.button === 1) { 
+        let manga = mangaInfo.find(manga => manga.mangaId === mangaId)
+          event.preventDefault();
+          let currentUrl = `${manga?.urlBase}${manga?.slugList[manga.currentIndex+1]||manga?.slugList.at(-1)}`
+          window.open(currentUrl)
+        }
+      };  
+      
+    const handleContextChapter = () => {
+        handleChapterOpen()
+        handleContextClose()
+    }
+
+    const handleContextCategory = () => {
+        handleCatOpen()
+        handleContextClose()
+    }
+
+    const handleContextRemove = () => {
+        handleRemoveOpen()
+        handleContextClose()
+    }
+
+    const handleContextOpen = () => {
+        if (!mangaInfo) return
+        let currentUrl = `${mangaInfo[modalIndex]?.urlBase}${mangaInfo[modalIndex]?.slugList[mangaInfo[modalIndex].currentIndex+1]||mangaInfo[modalIndex]?.slugList.at(-1)}`
+        window.open(currentUrl)
+        handleContextClose()
+    }
+
+    const SkeletonCard = () => (
+        <Card sx={{ width: 320, height: 350, backgroundColor: "black", color: "white" }}>
+          <CardActionArea sx={{ height: "100%" }}>
+            <Skeleton variant="rectangular" height={200} />
+            <CardContent>
+              <Skeleton variant="text" height={30} width="80%" />
+              <Skeleton variant="text" height={20} width="60%" />
+              <Skeleton variant="text" height={20} width="40%" />
+            </CardContent>
+          </CardActionArea>
+        </Card>
+      )
 
     useEffect(() => {
         getUserManga()
-        
-        // console.log(fetchPath==='/.proxy'? '/.proxy/image':import.meta.env.VITE_IMG_URL)
     }, [])
 
-    if (!mangaInfo) return LoadingScreen()
+    if (!mangaInfo) return (
+        <div className='cardContainer' style={{display:"flex", justifyContent:"center", justifyItems:"center"}}>
+            {Array.from({ length: 24 }).map((_, i) => <SkeletonCard key={`skeleton-${i}`} />)}
+        </div>
+    ) 
+    
     return (
     <div className='viewTrackerContainer' style={{display:"flex", justifyContent:"center", flexDirection: "column"}}>
         <div className='mangaOverviewModal' id="overviewModal">
@@ -799,23 +856,24 @@ export default function tracked() {
                 if (a[key] < b[key]) return -1*orderVal
                 return 0
             }).map((data, i) => 
-                <Card sx={{ width: 320, height: 350, backgroundColor: "black", color: "white"}}>
-                <CardActionArea onClick={(e) => openMangaOverview(data.mangaId)}>
+                <Card sx={{ width: 320, height: 350, backgroundColor: "black", color: "white"}} onContextMenu={(e) => handleContextMenu(e, data.mangaId)}>
+                <CardActionArea onClick={(e) => openMangaOverview(data.mangaId)} onAuxClick={(e) => handleAuxClick(e, data.mangaId)}>
                   <CardMedia
                     component="img"
                     height="200"
                     image={`${fetchPath==='/.proxy'? '/.proxy/image':import.meta.env.VITE_IMG_URL}/${data.mangaId}`}
                     alt={`Cover for ${data.mangaName}`}
                     style={{objectPosition:"top"}}
+                    loading='lazy'
                   />
                   <CardContent sx={{height:150}}>
                   <Tooltip title={data.mangaName} enterDelay={700}>
                     <Typography gutterBottom variant="h5" component="div" style={{"display": "-webkit-box",
-          "WebkitBoxOrient": "vertical",
-          "WebkitLineClamp": 2,
-          "overflow": "hidden",
-          "textOverflow": "ellipsis",
-          "maxHeight": "2.6em"}}>
+                        "WebkitBoxOrient": "vertical",
+                        "WebkitLineClamp": 2,
+                        "overflow": "hidden",
+                        "textOverflow": "ellipsis",
+                        "maxHeight": "2.6em"}}>
                         {data.mangaName}
                       </Typography>
                     </Tooltip>
@@ -848,6 +906,19 @@ export default function tracked() {
                 </CardActionArea>
             </Card>
 
+            <Menu
+                open={anchorPosition !== null}
+                onClose={handleContextClose}
+                anchorReference="anchorPosition"
+                anchorPosition={
+                anchorPosition ? { top: anchorPosition.top, left: anchorPosition.left } : undefined
+                }
+            >
+                <MenuItem onClick={handleContextOpen}>Open</MenuItem>
+                <MenuItem onClick={handleContextChapter}>Change Chapter</MenuItem>
+                <MenuItem onClick={handleContextCategory}>Change Category</MenuItem>
+                <MenuItem onClick={handleContextRemove} sx={{ color: 'error.main' }}>Remove</MenuItem>
+            </Menu>
         </div>
     </div>
     )

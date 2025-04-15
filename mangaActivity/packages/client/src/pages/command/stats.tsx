@@ -1,17 +1,9 @@
-import {authStore} from '../../stores/authStore'
 import { toast } from 'react-toastify'
 import React, { useEffect } from "react"
 import './stats.css'
 import { fetchPath } from '../../vars';
 
 export default function stats() {
-
-  const auth = authStore.getState();
-  // console.log(auth)
-  if (!auth) {
-    console.log("No Auth!")
-    return <></>;
-  }
   
   async function retrieveStats() {
     const resp = await fetch(`${fetchPath}/api/data/pull/userStats`, {
@@ -19,10 +11,6 @@ export default function stats() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          "access_token": auth.access_token,
-          "authId": null
-        }),
       })
       if (!resp.ok) return toast.error('Unable to fetch User Stats!')
       const data:{userStats:{"chaptersRead":number, "chaptersUnread":number, "unreadManga": number, "readManga": number},"globalStats":{"trackedManga":number,"totalTrackedChapters":number,"newMangaCount":number,"newChapterCount":number}} = await resp.json()

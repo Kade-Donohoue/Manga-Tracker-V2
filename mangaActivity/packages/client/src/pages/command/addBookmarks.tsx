@@ -1,4 +1,3 @@
-import {authStore} from '../../stores/authStore';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import React, { useEffect } from "react"
@@ -75,13 +74,6 @@ export default function addBookmarks() {
   const [userChoice, setUserChoice] = React.useState<boolean>(false)
   const [addedMangaCount, setAddedMangaCount] = React.useState<number>(0)
 
-  const auth = authStore.getState();
-  // console.log(auth)
-  if (!auth) {
-    console.log("No Auth!")
-    return <></>;
-  }
-
   /**
    * sends urls in selected folder to server 1 by 1 with provided category
    * @returns toast error or nothing
@@ -125,8 +117,6 @@ export default function addBookmarks() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          "access_token": auth.access_token,
-          "authId": null,
           "userCat": selectedCat?.value,
           "urls": currentUrls
         }),

@@ -85,7 +85,7 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
     const currentIndex = chapters.findIndex((chapter) => chapter.url === currentChapterUrl)
     console.log(chapters[currentIndex])
     const chapterIndex = chapters.findIndex((chapter) => chapter.url === chapterUrl)
-    return chapterIndex > currentIndex
+    return chapterIndex >= currentIndex
   }
 
   const handleTooltipOpen = () => setTooltipOpen(true)

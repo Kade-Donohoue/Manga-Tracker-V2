@@ -1,4 +1,3 @@
-import {authStore} from '../../stores/authStore'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import React, { useEffect } from "react"
@@ -56,13 +55,6 @@ export default function removeManga() {
   const [dropOptions, setDropOptions] = React.useState<dropdownOption[]>()
   const [selectedOption, setSelectedOption] = React.useState<{value: string; label: string;} | null>(null)
 
-  const auth = authStore.getState();
-  // console.log(auth)
-  if (!auth) {
-    console.log("No Auth!")
-    return <></>;
-  }
-
   async function submitManga() {
     setIsLoading(true)
     if (isLoading) return toast.error('Already adding!')
@@ -90,8 +82,6 @@ export default function removeManga() {
             'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-            "access_token": auth.access_token,
-            "authId": null,
             "mangaId": selectedOption.value
             }),
         })
@@ -146,8 +136,6 @@ export default function removeManga() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          "access_token": auth.access_token,
-          "authId": null,
           "userCat": "%"
         }),
       })

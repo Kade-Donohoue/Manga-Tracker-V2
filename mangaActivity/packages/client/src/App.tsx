@@ -3,8 +3,6 @@ import {BrowserRouter as Router, Routes, Route, Link, useLocation} from 'react-r
 import { toast, ToastContainer } from 'react-toastify';
 
 import * as Scrollable from './components/Scrollable'
-import {AuthProvider} from './components/AuthProvider'
-import { authStore } from './stores/authStore';
 import DesignSystemProvider from './components/DesignSystemProvider'
 import { setCatOptions, catOptions, fetchPath, setFetchPath } from './vars';
 
@@ -15,7 +13,6 @@ import addManga from './pages/command/addManga'
 import removeManga from './pages/command/removeManga'
 import stats from './pages/command/stats'
 import tracked from './pages/command/viewTracked'
-import debug from './pages/debug'
 import addBookmarks from './pages/command/addBookmarks'
 import settings from './pages/settings';
 
@@ -32,10 +29,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 
 import * as S from './AppStyles'
 import { IconButton } from '@mui/material';
-import { App as capApp } from '@capacitor/app';
-import { start } from './actions/authActions';
-import { Capacitor } from '@capacitor/core';
-import { SignedIn, SignedOut, SignIn, SignUp } from "@clerk/clerk-react";
+import { RedirectToSignIn, SignedIn, SignedOut, SignIn, SignUp } from "@clerk/clerk-react";
 
 interface CenteredPageProps {
   children: React.ReactNode;
@@ -59,41 +53,70 @@ export default function App(): React.ReactElement {
 
   return (
     <div style={{"width": "100%", "height": "100%"}}>
-      <SignedOut>
-        <Router>
-          <Routes>
-            <Route path="/" element={
-              <CenteredPage>
-                <SignIn signUpUrl="/sign-up" />
-              </CenteredPage>
-            } />
-            <Route path="/sign-up" element={
-              <CenteredPage>
-                <SignUp signInUrl="/" />
-              </CenteredPage>
-            } />
-          </Routes>
-        </Router>
-      </SignedOut>
-      <SignedIn>
-        <DesignSystemProvider>
-        <ToastContainer
-          position="top-right"
-          autoClose={5000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss={false}
-          draggable
-          pauseOnHover
-          theme="dark"
-        />
-          <Router>
-            <RootedApp />
-          </Router>
-        </DesignSystemProvider>
-      </SignedIn>
+      <Router>
+        <Routes>
+          {/* Public routes */}
+          <Route
+            path="/sign-in"
+            element={
+              <SignedOut>
+                <CenteredPage>
+                  <SignIn signUpUrl="/sign-up" />
+                </CenteredPage>
+              </SignedOut>
+            }
+          />
+          <Route
+            path="/sign-up"
+            element={
+              <SignedOut>
+                <CenteredPage>
+                  <SignUp signInUrl="/sign-in" />
+                </CenteredPage>
+              </SignedOut>
+            }
+          />
+
+          {/* Protected app */}
+          <Route
+            path="/*"
+            element={
+              <div>
+                <SignedIn>
+                  <DesignSystemProvider>
+                    <ToastContainer
+                      position="top-right"
+                      autoClose={5000}
+                      hideProgressBar={false}
+                      newestOnTop={false}
+                      closeOnClick
+                      rtl={false}
+                      pauseOnFocusLoss={false}
+                      draggable
+                      pauseOnHover
+                      theme="dark"
+                    />
+                    <RootedApp />
+                  </DesignSystemProvider>
+                </SignedIn>
+                <SignedOut>
+                  <RedirectToSignIn signInFallbackRedirectUrl={'/sign-in'}/>
+                </SignedOut>
+              </div>
+            }
+          />
+
+          {/* Catch-all for unauthenticated access to protected pages */}
+          <Route
+            path="*"
+            element={
+              <SignedOut>
+                <RedirectToSignIn signInFallbackRedirectUrl={'/sign-in'}/>
+              </SignedOut>
+            }
+          />
+        </Routes>
+      </Router>
     </div>
   );
 }
@@ -112,17 +135,17 @@ const routes: Record<string, AppRoute> = {
     icon: HomeIcon,
     component: Home,
   },
-  customExternalLink: {
-    path: '/feed',
-    name: 'Feed',
-    icon: DynamicFeedIcon,
-    component: feed
-  },
   tracked: {
     path: '/tracked',
     name: 'View Tracked',
     icon: ArtTrackIcon,
     component: tracked
+  },
+  feed: {
+    path: '/feed',
+    name: 'Feed',
+    icon: DynamicFeedIcon,
+    component: feed
   },
   addManga: {
     path: '/addManga',
@@ -174,17 +197,11 @@ function RootedApp(): React.ReactElement {
     // Function to fetch user categories
     async function getCats() {
       try {
-        const auth = authStore.getState();
-
         const response = await fetch(`${fetchPath}/api/data/pull/pullUserCategories`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            access_token: auth.access_token,
-            authId: null,
-          }),
         });
 
         if (!response.ok) {

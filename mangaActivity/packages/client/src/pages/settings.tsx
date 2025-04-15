@@ -4,7 +4,6 @@ import Button from '@mui/material/Button';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import IconButton from '@mui/material/IconButton';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { authStore } from '../stores/authStore';
 import { dropdownOption } from '../types';
 import { toast } from 'react-toastify';
 import { fetchPath } from '../vars';
@@ -43,7 +42,6 @@ export default function settings() {
   const [localCats, setLocalCats] = React.useState<dropdownOption[]>(catOptions)
   const [rows, setRows] = React.useState<GridRowsProp>(convertToDataGrid(catOptions))
   const [rowModesModel, setRowModesModel] = React.useState<GridRowModesModel>({})
-  const auth = authStore.getState()
 
   const [openDeleteUserModal, setOpenDeleteUserModal] = React.useState(false);
   const handleOpenDeleteModal = () => setOpenDeleteUserModal(true);
@@ -76,8 +74,6 @@ export default function settings() {
               'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-              "access_token": auth.access_token,
-              "authId": null,
               "newCatList": JSON.stringify(newCats.filter((cat) => cat.value.includes('user:')))
           }),
     })
@@ -92,24 +88,11 @@ export default function settings() {
       headers: {
           'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-          "access_token": auth.access_token,
-          "authId": null,
-      })
     })
 
     handleCloseDeleteModal()
     if (!resp.ok) return toast.error('Unable to remove user Data Please Contact an Admin!')
     toast.success('All User Data Removed!')
-  }
-
-  async function logoutUser() {
-    const cookies = new Cookies();
-    cookies.remove('access_token')
-
-    authStore.setState({
-      access_token: undefined, user: undefined,
-    })
   }
 
   //dataGridFeatures

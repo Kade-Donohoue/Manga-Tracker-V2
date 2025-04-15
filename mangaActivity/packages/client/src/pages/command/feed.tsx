@@ -1,5 +1,3 @@
-import discordSdk from '../../discordSdk'
-import {authStore} from '../../stores/authStore'
 import {customStyles} from '../../styled/index'
 import {LoadingScreen} from '../../components/LoadingScreen'
 import Select from 'react-select'
@@ -22,7 +20,6 @@ export default function feed():JSX.Element {
   const [currentCard, setCurrentCard] = React.useState(0)
   const [isLoadingStart, setIsLoadingStart] = React.useState(false)
   const [showError,setShowError] = React.useState(true)
-  const auth = authStore.getState()
 
   const [selectedCat, setSelectedCat] = React.useState<dropdownOption | null>(catOptions[0])
   const [selectedOrd, setSelectedOrd] = React.useState<dropdownOption | null>(ordOptions[0])
@@ -39,8 +36,6 @@ export default function feed():JSX.Element {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          "access_token": auth.access_token,
-          "authId": null,
           "userCat": selectedCat?.value,
           "sortOrd": selectedOrd?.value,
           "sortMeth": selectedMethod?.value
@@ -86,8 +81,6 @@ export default function feed():JSX.Element {
           'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-          "access_token": auth.access_token,
-          "authId": null,
           "mangaId": mangaDetails[currentCard].mangaId,
           "interactionTime": Date.now()
       }),
@@ -138,8 +131,6 @@ export default function feed():JSX.Element {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        "access_token": auth.access_token,
-        "authId": null,
         "newIndex": newIndex,
         "mangaId": mangaId
       }),
@@ -178,16 +169,6 @@ export default function feed():JSX.Element {
         progress: 0
     })
   }
-
-  if (!auth) {
-    console.log("No Auth!")
-    discordSdk.close(RPCCloseCodes.TOKEN_REVOKED, "Restart Activity to Continue!")
-    return <div>Restart Activity</div>
-  }
-  // if (mangaDetails.length<=0) {
-  //   console.log(mangaDetails)
-  //   return <></>
-  // }
 
   const [chapterOpen, setChapterOpen] = React.useState(false)
   const handleChapterOpen = () => setChapterOpen(true)
@@ -243,11 +224,7 @@ export default function feed():JSX.Element {
               onClick={(e) => {
               const slugs = mangaDetails[currentCard].slugList
               // console.log(links[mangaDetails[currentCard].currentIndex])
-               if (fetchPath === '/.proxy') {
-                discordSdk.commands.openExternalLink({url: mangaDetails[currentCard].urlBase+slugs[mangaDetails[currentCard].currentIndex+1]})
-               } else {
-                window.open(mangaDetails[currentCard].urlBase+slugs[mangaDetails[currentCard].currentIndex+1])
-               }
+              window.open(mangaDetails[currentCard].urlBase+slugs[mangaDetails[currentCard].currentIndex+1])
                 
             }}
             >Read Next</button>
@@ -259,11 +236,7 @@ export default function feed():JSX.Element {
             <button className="action-button" 
               onClick={(e) => {
                 const slugs = mangaDetails[currentCard].slugList
-              if (fetchPath === '/.proxy') {
-                discordSdk.commands.openExternalLink({url: mangaDetails[currentCard].urlBase+slugs[slugs.length-1]!});
-               } else {
                 window.open(mangaDetails[currentCard].urlBase+slugs[slugs.length-1]!)
-               }
               
             }}>Read Latest</button>
             <span className="chapter-number">Chapter {mangaDetails[currentCard].chapterTextList[mangaDetails[currentCard].chapterTextList.length-1]}</span>
@@ -271,11 +244,7 @@ export default function feed():JSX.Element {
           <div className="button-wrapper">
             <button className="action-button" 
               onClick={(e) => {
-                if (fetchPath === '/.proxy') {
-                  discordSdk.commands.openExternalLink({url: mangaDetails[currentCard].urlBase+mangaDetails[currentCard].slugList[mangaDetails[currentCard].currentIndex]});
-                } else {
-                  window.open(mangaDetails[currentCard].urlBase+mangaDetails[currentCard].slugList[mangaDetails[currentCard].currentIndex])
-                }
+                window.open(mangaDetails[currentCard].urlBase+mangaDetails[currentCard].slugList[mangaDetails[currentCard].currentIndex])
               
             }}>Read Current</button>
             <span className="chapter-number">Chapter {mangaDetails[currentCard].chapterTextList[mangaDetails[currentCard].currentIndex]}</span>

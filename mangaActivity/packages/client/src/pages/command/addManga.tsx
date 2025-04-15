@@ -1,7 +1,5 @@
-import discordSdk from '../../discordSdk'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import {authStore} from '../../stores/authStore'
 import Select, { StylesConfig } from 'react-select'
 import React, { useEffect } from "react"
 import './addManga.css'
@@ -53,13 +51,6 @@ export default function addManga() {
   const [isLoading, setIsLoading] = React.useState(false)
   const [selectedCat, setSelectedCat] = React.useState<dropdownOption | null>(catOptions[0])
 
-  const auth = authStore.getState();
-  // console.log(auth)
-  if (!auth) {
-    console.log("No Auth!")
-    return <></>;
-  }
-
   async function submitManga() {
     if (isLoading) return toast.error('Already adding!')
     let notif = toast.loading("Adding Manga!", {closeOnClick: true, draggable: true,})
@@ -95,8 +86,6 @@ export default function addManga() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          "access_token": auth.access_token,
-          "authId": null,
           "userCat": selectedCat?.value,
           "urls": urlList
         }),
