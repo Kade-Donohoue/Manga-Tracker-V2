@@ -1,5 +1,13 @@
 # **Change Logs**
 
+## Change Log 2.0.2
+ - New context menu for view tracked manga
+ - New Cookies Banner
+ - Logged out redirect now works
+ - mangaActivity folder renamed to website to better represent what it does
+ - removed old auth code
+ - added more zod validation on server
+
 ## Change Log 2.0.1
  - server URL is now correctly set when in production
  - started adding color selector for categories (WIP)

@@ -8,7 +8,7 @@
     "email": "kade.donohoue@gmail.com"
   },
   "private": true,
-  "version": "2.0.1",
+  "version": "2.0.2",
   "scripts": {
     "test": "$npm_execpath run tsc",
     "dev": "vite --mode dev --host",
