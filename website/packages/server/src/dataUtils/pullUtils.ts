@@ -1,33 +1,43 @@
-import {Env, userDataRow, mangaDataRowReturn, mangaDataRowProcessed, mangaDetails} from '../types'
+import {Env, mangaDetailsSchema} from '../types'
 import {verifyIndexRange} from '../utils'
 
 export async function getUnreadManga(authId:string, userCat:string = '%', sortMethod:string = 'interactTime', sortOrd:string = 'ASC', env: Env) {
     try {
         console.log({"authId": authId, "userCat": userCat, "sortMethod": sortMethod, "sortOrd":sortOrd})
-        
-        var userManga:mangaDetails[]|null = (await env.DB.prepare(
+
+        var userManga = mangaDetailsSchema.array().safeParse((await env.DB.prepare(
             `SELECT mangaData.mangaName, userData.mangaId, mangaData.urlBase, mangaData.slugList, mangaData.chapterTextList, mangaData.updateTime, userData.currentIndex, userData.currentChap, userData.userCat, userData.interactTime FROM userData JOIN mangaData ON (userData.mangaId = mangaData.mangaId) WHERE userData.userId = ? AND userCat LIKE ? ORDER BY ${sortMethod} ${sortOrd}`
         )
             .bind(authId, userCat)
-            .all()).results as any
+            .all()).results as any)
+
+        // if (userManga instanceof Response) return new Response(JSON.stringify({message:`No user data found for ${authId} with the cat ${userCat}`}), {status: 404}) // returns zod errors
         
-        if (!userManga) {
+        if (!userManga.success) {
+            return new Response(
+                JSON.stringify({
+                message: `Internal Server Error!`,
+                errors: userManga.error.errors,
+                }),
+                { status: 500 }
+            );
+        }
+        
+        const mangaList = userManga.data;
+
+        if (!mangaList) {
             console.log({"message": 'No User data found!', "authId":authId, "userCat":userCat})
             return new Response(JSON.stringify({message:`No user data found for ${authId} with the cat ${userCat}`}), {status: 404})
         }
+          
+        // removes manga where you are on latest chapter
+        for (let i = mangaList.length -1; i >= 0; i--) {
+            let manga = mangaList[i]
 
-        for (let i = userManga.length -1; i >= 0; i--) {
-            let manga = userManga[i]
-
-            if (typeof manga.chapterTextList === "string" && typeof manga.slugList === "string") {
-                userManga[i].chapterTextList = manga.chapterTextList.split(',')
-                userManga[i].slugList = manga.slugList.split(',')
-            }
-
-            if (userManga[i].slugList.length-1 <= userManga[i].currentIndex) userManga.splice(i,1)
+            if (manga.slugList.length-1 <= manga.currentIndex) mangaList.splice(i,1)
         }
 
-        return new Response(JSON.stringify({mangaDetails: userManga}), {status: 200})
+        return new Response(JSON.stringify({mangaDetails: mangaList}), {status: 200})
     } catch (error) {
         console.error("Error:", error);
         return new Response(JSON.stringify({message:'unknown error occured'}), {status: 500})
@@ -37,23 +47,30 @@ export async function getUnreadManga(authId:string, userCat:string = '%', sortMe
 export async function getManga(authId:string, mangaId:string, env: Env) {
     try {
 
-        let userManga:mangaDetails = ((await env.DB.prepare("SELECT mangaData.mangaName, userData.mangaId, mangaData.urlBase, mangaData.slugList, mangaData.chapterTextList, mangaData.updateTime, userData.currentIndex, userData.userCat, userData.interactTime FROM userData JOIN mangaData ON (userData.mangaId = mangaData.mangaId) WHERE userData.userId = ?  AND userData.mangaId = ? LIMIT 1")
+        let userManga = mangaDetailsSchema.safeParse((await env.DB.prepare("SELECT mangaData.mangaName, userData.mangaId, mangaData.urlBase, mangaData.slugList, mangaData.chapterTextList, mangaData.updateTime, userData.currentIndex, userData.userCat, userData.interactTime FROM userData JOIN mangaData ON (userData.mangaId = mangaData.mangaId) WHERE userData.userId = ?  AND userData.mangaId = ? LIMIT 1")
             .bind(authId, mangaId).first()) as any)
             
-        if (!userManga) {
-            return new Response(JSON.stringify({message:'Unable to get Manga Data'}), {status: 500})
-        }
+            if (!userManga.success) {
+                return new Response(
+                    JSON.stringify({
+                    message: `Internal Server Error!`,
+                    errors: userManga.error.errors,
+                    }),
+                    { status: 500 }
+                );
+            }
+            
+            const manga = userManga.data;
+    
+            if (!manga) {
+                console.log({"message": 'Manga Not found!', "authId":authId, "mangaId":mangaId})
+                return new Response(JSON.stringify({message:`Manga Not found!`}), {status: 404})
+            }
 
-        if ("string" === typeof userManga.chapterTextList && "string" === typeof userManga.slugList) {
-            userManga.chapterTextList = userManga.chapterTextList.split(',')
-            userManga.slugList = userManga.slugList.split(',')
-        }
-
-        return new Response(JSON.stringify({mangaDetails: userManga}), {status: 200})
+        return new Response(JSON.stringify({mangaDetails: manga}), {status: 200})
     } catch (error) {
         console.error("Error:", error);
         return new Response(JSON.stringify({message:'unknown error occured'}), {status: 500})
-        return [];
     }
 }
 
@@ -65,18 +82,26 @@ export async function getUserManga(authId:string, env:Env) {
             .all()
 
         queryTimeDebug+= userRes.meta.duration
-        let userManga:mangaDetails[] = userRes.results as any
+        let userManga = mangaDetailsSchema.array().safeParse(userRes.results)
 
-        for (var manga of userManga) {
-            if ("string" === typeof manga.chapterTextList && "string" === typeof manga.slugList) {
-                manga.chapterTextList = manga.chapterTextList.split(',')
-                manga.slugList = manga.slugList.split(',')
-            }
+        if (!userManga.success) {
+            return new Response(
+                JSON.stringify({
+                message: `Internal Server Error!`,
+                errors: userManga.error.errors,
+                }),
+                { status: 500 }
+            );
         }
         
-        // console.log(`Query took ${queryTimeDebug} milliseconds to process`)
+        const mangaList = userManga.data;
 
-        return new Response(JSON.stringify({mangaDetails: userManga}), {status:200})
+        if (!mangaList) {
+            console.log({"message": 'No User data found!', "authId":authId})
+            return new Response(JSON.stringify({message:`No user data found for ${authId}`}), {status: 404})
+        }
+
+        return new Response(JSON.stringify({mangaDetails: mangaList}), {status:200})
     } catch (err) {
         console.error("Error:", err);
         return new Response(JSON.stringify({message: 'an unknown error occurred'}), {status:500});

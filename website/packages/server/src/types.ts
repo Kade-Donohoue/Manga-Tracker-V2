@@ -36,6 +36,13 @@ export const userDataRow = z.object({
   interactTime: z.coerce.number().int().min(0),
 })
 
+export const mangaDetailsSchema = mangaDataRow.merge(z.object({
+  currentIndex: z.coerce.number().int().min(0),
+  currentChap: z.coerce.number(),
+  userCat: z.string(),
+  interactTime: z.coerce.number().int().min(0),
+}))
+
 export const statsDataRow = z.object({
   timestamp: z.string(),
   type: z.string(),
@@ -80,15 +87,17 @@ const sortMethodSchema = z
   .string()
   .transform((val) => val.toLowerCase())
   .refine((val) =>
-    ['manganame', 'mangaid', 'updatetime', 'interacttime'].includes(val), {
+    ['manganame', /*'mangaid',*/ 'usercat', 'updatetime', 'interacttime', 'currentindex'].includes(val), {
     message: 'Invalid sort method',
   })
   .transform((val) => {
     const map: Record<string, string> = {
       manganame: 'mangaData.mangaName',
-      mangaid: 'userData.mangaId',
+      // mangaid: 'userData.mangaId',
+      usercat: 'userData.userCat',
       updatetime: 'mangaData.updateTime',
       interacttime: 'userData.interactTime',
+      currentindex: 'userData.currentIndex',
     };
     return map[val];
 })
@@ -110,17 +119,17 @@ export type getMangaType = z.infer<typeof mangaIdSchema>
 
 export const addMangaSchema = z.object({
   urls: z.coerce.string().array().min(1),
-  userCat: z.coerce.string().min(5)
+  userCat: z.coerce.string().min(1)
 })
 
 export const updateCurrentIndexSchema = z.object({
-  newIndex: z.coerce.number(),
+  newIndex: z.coerce.number().min(0),
   mangaId: z.coerce.string().uuid(),
 })
 
 export const updateInteractTimeSchema = z.object({
   mangaId: z.coerce.string().uuid(),
-  interactionTime: z.coerce.number(),
+  interactionTime: z.coerce.number().default(Date.now()),
 })
 
 export const changeMangaCatSchema = z.object({
@@ -129,31 +138,8 @@ export const changeMangaCatSchema = z.object({
 })
 
 export const updateUserCategoriesSchema = z.object({
-  newCatList: z.array(z.coerce.string()),
+  newCatList: z.coerce.string(),
 })
-
-export interface mangaDetails {
-  mangaName:string,
-  mangaId:string,
-  urlBase: string,
-  slugList: string|string[],
-  chapterTextList: string|string[], 
-  updateTime: string,
-  currentIndex: number,
-  currentChap: number,
-  userCat: string,
-  interactTime: number
-}
-
-export interface userDataRow {
-  "mangaId": string,
-  "userID": string,
-  "mangaName": string,
-  "currentIndex": number,
-  "currentChap": number,
-  "userCat": string,
-  "interactTime": number
-}
 
 export interface mangaDataRowReturn {
   "mangaId": string,

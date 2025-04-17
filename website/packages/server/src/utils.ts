@@ -70,6 +70,7 @@ export async function zodParse<T extends ZodSchema<any>>( request: Request, sche
     const json = await request.json();
     return schema.parse(json);
   } catch (err) {
-    return new Response('Bad Request, unable to parse', { status: 400 });
+    console.log(err)
+    return new Response(JSON.stringify({message: 'Bad Request, unable to parse', err: err}), { status: 400 });
   }
 }

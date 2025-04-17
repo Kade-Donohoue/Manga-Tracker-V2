@@ -60,38 +60,46 @@ export async function saveManga(authId:string, urls:string[], userCat:string = '
 
         if (newMangaInfo.length <= 0) return new Response(JSON.stringify({results: userReturn}), {status: 200})
 
-        const mangaRowTestStmts:D1PreparedStatement[] = newMangaInfo.map(mangaInfo => env.DB.prepare("SELECT * FROM mangaData WHERE mangaName = ? LIMIT 1") //check if manga has matching name
-            .bind(mangaInfo.mangaName))
+        //check if manga already in DB if so update otherwise insert new magna
+        const mangaNames = newMangaInfo.map(m => m.mangaName)
 
-        let mangaTestResults:{results:mangaDataRowReturn[]}[] = await env.DB.batch(mangaRowTestStmts) as any
-        // console.log(mangaRowTest)
-        
-        const currentTime = new Date().toLocaleDateString("en-US", {year: "numeric", month: "numeric", day: "numeric", timeZone: "America/Los_Angeles", timeZoneName: "short", hour: "numeric", minute: "numeric", hour12: true })
-        
-        let boundAddStmtsArrs:D1PreparedStatement[][] = await Promise.all(mangaTestResults.map(async (testResult:{results:mangaDataRowReturn[]}, index:number) => {
-            
-            let newBoundStmt:D1PreparedStatement[] = []
+        const selectQuery = `SELECT mangaId, mangaName FROM mangaData WHERE mangaName IN (${mangaNames.map(() => '?').join(', ')})`
 
-            let mangaId = testResult?.results?.[0]?.mangaId||uuidv4().toString() //use existing id or create new one if not exist
+        const existingMangaRows = await env.DB.prepare(selectQuery).bind(...mangaNames).all() as { results: { mangaId: string, mangaName: string }[] }
+
+        const existingMangaMap = new Map(existingMangaRows.results.map(row => [row.mangaName, row.mangaId]))
+
+        const currentTime = new Date().toLocaleDateString("en-US", {
+        year: "numeric", month: "numeric", day: "numeric",
+        timeZone: "America/Los_Angeles", timeZoneName: "short",
+        hour: "numeric", minute: "numeric", hour12: true
+        })
+
+        const boundAddStmtsArrs: D1PreparedStatement[][] = await Promise.all(newMangaInfo.map(async (manga) => {
+            const newBoundStmt: D1PreparedStatement[] = []
+
+            const mangaId = existingMangaMap.get(manga.mangaName) || uuidv4().toString()
 
             console.log("Binding values:", {
                 mangaId,
-                mangaName: newMangaInfo[index]?.mangaName,
-                urlBase: newMangaInfo[index]?.urlBase,
-                slugList: newMangaInfo[index]?.slugList,
-                chapterTextList: newMangaInfo[index]?.chapterTextList,
+                mangaName: manga.mangaName,
+                urlBase: manga.urlBase,
+                slugList: manga.slugList,
+                chapterTextList: manga.chapterTextList,
                 updateTime: currentTime
-            });
+            })
 
             newBoundStmt.push(env.DB.prepare(
                 'INSERT INTO mangaData (mangaId,mangaName,urlBase,slugList,chapterTextList,updateTime) VALUES (?,?,?,?,?,?) ON CONFLICT(mangaId) DO UPDATE SET urlBase = excluded.urlBase, slugList = excluded.slugList, chapterTextList = excluded.chapterTextList, updateTime = excluded.updateTime'
-            ).bind(mangaId, newMangaInfo[index].mangaName, newMangaInfo[index].urlBase, newMangaInfo[index].slugList, newMangaInfo[index].chapterTextList, currentTime))
+            ).bind(mangaId, manga.mangaName, manga.urlBase, manga.slugList, manga.chapterTextList, currentTime))
 
             newBoundStmt.push(env.DB.prepare(
-                'Insert INTO userData (userId, mangaId, currentIndex, currentChap, userCat, interactTime) VALUES (?,?,?,?,?,?) ON CONFLICT(userID, mangaId) DO UPDATE SET currentIndex = excluded.currentIndex, currentChap = excluded.currentChap, userCat = excluded.userCat, interactTime = excluded.interactTime'
-            ).bind(authId, mangaId, newMangaInfo[index].currentIndex, newMangaInfo[index].chapterTextList.split(',')[newMangaInfo[index].currentIndex], userCat, Date.now()))
-            
-            await env.IMG.put(mangaId, new Uint8Array(newMangaInfo[index].iconBuffer.data).buffer, {httpMetadata:{contentType:"image/jpeg"}}) //Save Cover Image with title as mangaId
+                'INSERT INTO userData (userId, mangaId, currentIndex, currentChap, userCat, interactTime) VALUES (?,?,?,?,?,?) ON CONFLICT(userID, mangaId) DO UPDATE SET currentIndex = excluded.currentIndex, currentChap = excluded.currentChap, userCat = excluded.userCat, interactTime = excluded.interactTime'
+            ).bind(authId, mangaId, manga.currentIndex, manga.chapterTextList.split(',')[manga.currentIndex], userCat, Date.now()))
+
+            await env.IMG.put(mangaId, new Uint8Array(manga.iconBuffer.data).buffer, {
+                httpMetadata: { contentType: "image/jpeg" }
+            })
 
             return newBoundStmt
         }))
@@ -115,8 +123,8 @@ export async function saveManga(authId:string, urls:string[], userCat:string = '
         if (env.ENVIRONMENT != 'production') return new Response(JSON.stringify({results: userReturn, dataMetric: dbMetrics, statMetric: statMetric, newManga: newMangaCount}))
         return new Response(JSON.stringify({results: userReturn}))
     } catch (error) {
-        console.error("Error:", error);
-        return new Response(JSON.stringify({message: 'an unknown error occured' + error}), {status:500});
+        console.error("Error:", error)
+        return new Response(JSON.stringify({message: 'an unknown error occured' + error}), {status:500})
     }
 }
 
