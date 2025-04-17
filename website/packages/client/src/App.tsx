@@ -30,6 +30,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import * as S from './AppStyles'
 import { IconButton } from '@mui/material';
 import { RedirectToSignIn, SignedIn, SignedOut, SignIn, SignUp } from "@clerk/clerk-react";
+import CookieBanner from './components/cookies';
 
 interface CenteredPageProps {
   children: React.ReactNode;
@@ -117,6 +118,7 @@ export default function App(): React.ReactElement {
           />
         </Routes>
       </Router>
+      <CookieBanner/>
     </div>
   );
 }
