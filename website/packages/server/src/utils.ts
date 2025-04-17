@@ -1,3 +1,4 @@
+import { z, ZodSchema } from 'zod';
 import {Env} from './types';
 import { createClerkClient } from '@clerk/backend'
 
@@ -46,17 +47,29 @@ export async function validateServerAuth(path: string[], req: Request, env: Env,
   return new Response(JSON.stringify({Message: "Unauthorized"}), {status:401})
 }
 
+/**
+ * Validates index is within array length
+ * @param index Index to validate
+ * @param listLength Length of list
+ * @returns index or last index of array
+ */
 export function verifyIndexRange(index:number, listLength:number) {
   if (index < 0 ) return 0
   if (index < listLength) return index
   return listLength-1
 }
 
-export function validateCategory(category:string):string {
-  if (category.toLowerCase() === "manganame") return "mangaData.mangaName"
-  if (category.toLowerCase() === "mangaid") return "userData.mangaId"
-  if (category.toLowerCase() === "updatetime") return "mangaData.updateTime"
-  if (category.toLowerCase() === "interacttime") return "userData.interactTime"
-  return "Invalid Category"
-  
+/**
+ * Parses request with zod schema
+ * @param request Client Request
+ * @param schema Zod Schema to parse request with
+ * @returns parsed body based on provided schema
+ */
+export async function zodParse<T extends ZodSchema<any>>( request: Request, schema: T): Promise<z.infer<T> | Response> {
+  try {
+    const json = await request.json();
+    return schema.parse(json);
+  } catch (err) {
+    return new Response('Bad Request, unable to parse', { status: 400 });
+  }
 }

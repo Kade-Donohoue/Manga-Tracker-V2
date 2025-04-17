@@ -1,17 +1,12 @@
 import {Env, userDataRow, mangaDataRowReturn, mangaDataRowProcessed, mangaDetails} from '../types'
-import {verifyIndexRange, validateCategory} from '../utils'
+import {verifyIndexRange} from '../utils'
 
 export async function getUnreadManga(authId:string, userCat:string = '%', sortMethod:string = 'interactTime', sortOrd:string = 'ASC', env: Env) {
     try {
-
-        const selectedCategory = validateCategory(sortMethod)
-        const selectedSortOrd:'DESC'|'ASC' = sortOrd.toUpperCase() ==='DESC'?'DESC':'ASC'
-
-        if (selectedCategory === "Invalid Category") return new Response(JSON.stringify({message: 'Invalid Category'}), {status: 400}) 
-
         console.log({"authId": authId, "userCat": userCat, "sortMethod": sortMethod, "sortOrd":sortOrd})
+        
         var userManga:mangaDetails[]|null = (await env.DB.prepare(
-            `SELECT mangaData.mangaName, userData.mangaId, mangaData.urlBase, mangaData.slugList, mangaData.chapterTextList, mangaData.updateTime, userData.currentIndex, userData.currentChap, userData.userCat, userData.interactTime FROM userData JOIN mangaData ON (userData.mangaId = mangaData.mangaId) WHERE userData.userId = ? AND userCat LIKE ? ORDER BY ${selectedCategory} ${selectedSortOrd}`
+            `SELECT mangaData.mangaName, userData.mangaId, mangaData.urlBase, mangaData.slugList, mangaData.chapterTextList, mangaData.updateTime, userData.currentIndex, userData.currentChap, userData.userCat, userData.interactTime FROM userData JOIN mangaData ON (userData.mangaId = mangaData.mangaId) WHERE userData.userId = ? AND userCat LIKE ? ORDER BY ${sortMethod} ${sortOrd}`
         )
             .bind(authId, userCat)
             .all()).results as any
@@ -65,7 +60,7 @@ export async function getManga(authId:string, mangaId:string, env: Env) {
 export async function getUserManga(authId:string, env:Env) {
     try {
         let queryTimeDebug = 0
-        const userRes = await env.DB.prepare('SELECT mangaData.mangaName, userData.mangaId, mangaData.urlBase, mangaData.slugList, mangaData.chapterTextList, mangaData.updateTime, userData.currentIndex, userData.userCat, userData.interactTime FROM userData JOIN mangaData ON (userData.mangaId = mangaData.mangaId) WHERE userData.userId = ?')
+        const userRes = await env.DB.prepare('SELECT mangaData.mangaName, userData.mangaId, mangaData.urlBase, mangaData.slugList, mangaData.chapterTextList, mangaData.updateTime, userData.currentChap, userData.currentIndex, userData.userCat, userData.interactTime FROM userData JOIN mangaData ON (userData.mangaId = mangaData.mangaId) WHERE userData.userId = ?')
             .bind(authId)
             .all()
 

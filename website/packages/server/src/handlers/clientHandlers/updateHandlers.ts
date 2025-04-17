@@ -1,25 +1,35 @@
-import {Env} from '../../types';
+import {Env, updateCurrentIndexSchema, updateInteractTimeSchema, changeMangaCatSchema, updateUserCategoriesSchema} from '../../types';
 import {updateCurrentIndex, updateInteractTime, changeMangaCat, updateUserCategories} from '../../dataUtils/updateUtils'
+import { zodParse } from '../../utils';
 
 export default async function updateHandler(path: string[], request: Request, env: Env, userId: string) {
-    var body = {"userCat":"", "sortMeth":"%", "sortOrd":"", "url":"", "newIndex":"", "mangaId":"", "interactionTime":"", "newCat":"", "newData":[], "newCatList":"", "amountNewChapters":0}
-    try {
-        body = await request.json()
-    } catch {
-        return new Response(JSON.stringify({message: 'Bad Data'}), {status:400})
-    }
-
     switch (path[2]) {
-        case 'updateCurrentIndex':
+        case 'updateCurrentIndex': {
+            const body = await zodParse(request, updateCurrentIndexSchema)
+            if (body instanceof Response) return body // returns zod errors
+        
             return await updateCurrentIndex(userId, body.newIndex, body.mangaId, env)
-        case 'updateInteractTime':
+        }
+        case 'updateInteractTime': {
+            const body = await zodParse(request, updateInteractTimeSchema)
+            if (body instanceof Response) return body // returns zod errors
+        
             return await updateInteractTime(userId, body.mangaId, body.interactionTime, env)
-        case 'changeMangaCat':
+        }
+        case 'changeMangaCat': {
+            const body = await zodParse(request, changeMangaCatSchema)
+            if (body instanceof Response) return body // returns zod errors
+        
             return await changeMangaCat(userId, body.mangaId, body.newCat, env)
+        }
         // case 'bulkUpdateMangaInfo':
         //     // console.log(body.toString())
         //     return await bulkUpdateMangaInfo(body.newData, body.amountNewChapters, env)
-        case 'updateUserCategories':
+        case 'updateUserCategories': {
+            const body = await zodParse(request, updateUserCategoriesSchema)
+            if (body instanceof Response) return body // returns zod errors
+        
             return await updateUserCategories(userId, body.newCatList, env)
+        }
     }
 }

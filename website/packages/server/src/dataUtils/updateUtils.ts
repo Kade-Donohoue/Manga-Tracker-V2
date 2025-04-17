@@ -1,6 +1,6 @@
 import {Env, mangaReturn} from '../types'
 
-export async function updateCurrentIndex(authId:string, newIndex:string, mangaId: string, env:Env) {
+export async function updateCurrentIndex(authId:string, newIndex:number, mangaId: string, env:Env) {
     try {
         if ( !newIndex || !mangaId ) return new Response(JSON.stringify({message: "Invalid Argument"}), {status:400})
 
@@ -14,7 +14,7 @@ export async function updateCurrentIndex(authId:string, newIndex:string, mangaId
     }
 }
 
-export async function updateInteractTime(authId:string, mangaId:string, interactTime:string, env:Env) {
+export async function updateInteractTime(authId:string, mangaId:string, interactTime:number, env:Env) {
     try{
         await env.DB.prepare('UPDATE userData SET interactTime = ? WHERE userID = ? AND mangaId = ?')
                 .bind(interactTime, authId, mangaId)

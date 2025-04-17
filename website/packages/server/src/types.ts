@@ -76,6 +76,62 @@ export const updateData = z.array(z.object({
 
 export type updateDataType = z.infer<typeof updateData>
 
+const sortMethodSchema = z
+  .string()
+  .transform((val) => val.toLowerCase())
+  .refine((val) =>
+    ['manganame', 'mangaid', 'updatetime', 'interacttime'].includes(val), {
+    message: 'Invalid sort method',
+  })
+  .transform((val) => {
+    const map: Record<string, string> = {
+      manganame: 'mangaData.mangaName',
+      mangaid: 'userData.mangaId',
+      updatetime: 'mangaData.updateTime',
+      interacttime: 'userData.interactTime',
+    };
+    return map[val];
+})
+
+export const getUnreadSchema = z.object({
+  userCat: z.coerce.string(),
+  sortMeth: sortMethodSchema,
+  sortOrd: z.enum(['ASC', 'DESC']),
+});
+
+export type getUnreadType = z.infer<typeof getUnreadSchema>
+
+export const mangaIdSchema = z.object({
+  mangaId: z.coerce.string().uuid(),
+});
+var body = {"userCat":"", "urls":[]}
+export type getMangaType = z.infer<typeof mangaIdSchema>
+
+
+export const addMangaSchema = z.object({
+  urls: z.coerce.string().array().min(1),
+  userCat: z.coerce.string().min(5)
+})
+
+export const updateCurrentIndexSchema = z.object({
+  newIndex: z.coerce.number(),
+  mangaId: z.coerce.string().uuid(),
+})
+
+export const updateInteractTimeSchema = z.object({
+  mangaId: z.coerce.string().uuid(),
+  interactionTime: z.coerce.number(),
+})
+
+export const changeMangaCatSchema = z.object({
+  mangaId: z.coerce.string().uuid(),
+  newCat: z.coerce.string(),
+})
+
+export const updateUserCategoriesSchema = z.object({
+  newCatList: z.array(z.coerce.string()),
+})
+
 export interface mangaDetails {
   mangaName:string,
   mangaId:string,
