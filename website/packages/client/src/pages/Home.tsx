@@ -5,9 +5,8 @@ export default function Home() {
     <div style={{padding: 32}}>
       Welcome to the Manga Bot. The one stop shop for your manga tracking needs!<br></br>
       Currently 
-      <a style={{color:"lightblue", textDecoration:"underline"}} href='https://manganato.com/'> Manganato</a>, 
+      <a style={{color:"lightblue", textDecoration:"underline"}} href='https://www.manganato.gg/'> Manganato</a>, 
       <a style={{color:"lightblue", textDecoration:"underline"}} href='https://asuracomic.net/'> Asura Scans</a>, 
-      {/* <a style={{color:"lightblue", textDecoration:"underline"}} href='https://reaper-scans.com/'> Reaper-Scans</a>,  */}
       <a style={{color:"lightblue", textDecoration:"underline"}} href='https://reaperscans.com/'> Reaper Scans</a>,
       <a style={{color:"lightblue", textDecoration:"underline"}} href='https://comick.io/home2'> Comick</a>, 
       and 
