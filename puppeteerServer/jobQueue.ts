@@ -23,7 +23,7 @@ export const comickQueue = new Queue('Comick Manga Queue', {
 })
 
 const mainGetWorker = new Worker('Get Manga Queue', mangaGetProc, {connection, concurrency:config.queue.instances, name:'universal'})
-const comickGetWorker = new Worker('Comick Manga Queue', mangaGetProc, {connection, concurrency:1, limiter:{max: 1, duration: 5000}, name: 'comick'})
+const comickGetWorker = new Worker('Comick Manga Queue', mangaGetProc, {connection, concurrency:1, limiter:{max: 66, duration: 1000}, name: 'comick'}) //66 assuming 3 fetch per job, bump to 100 if not fetching images(update) 
 
 let browser:Browser|null = null
 export async function getBrowser() {
