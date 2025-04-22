@@ -32,3 +32,21 @@ export type mangaUrlCheck = {
     value:string, 
     statusCode: number
 }
+
+export const getOpts = {
+    schema: {
+        querystring: {
+            urls: {type: 'array'},
+            pass: {type: 'string'}
+        }
+    }
+}
+
+export const checkOpts = {
+    schema: {
+        querystring: {
+            fetchIds: {type: 'array'},
+            pass: {type: 'string'}
+        }
+    }
+}

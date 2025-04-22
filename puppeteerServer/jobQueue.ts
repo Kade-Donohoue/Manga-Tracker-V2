@@ -18,11 +18,12 @@ export const getQueue = new Queue('Get Manga Queue', {
     connection
 })
 
-export const updateQueue = new Queue('Update Manga Queue', {
+export const comickQueue = new Queue('Comick Manga Queue', {
     connection
 })
 
-const mainGetWorker = new Worker('Get Manga Queue', mangaGetProc, {connection, concurrency:config.queue.instances})
+const mainGetWorker = new Worker('Get Manga Queue', mangaGetProc, {connection, concurrency:config.queue.instances, name:'universal'})
+const comickGetWorker = new Worker('Comick Manga Queue', mangaGetProc, {connection, concurrency:1, limiter:{max: 1, duration: 5000}, name: 'comick'})
 
 let browser:Browser|null = null
 export async function getBrowser() {
@@ -53,9 +54,9 @@ async function shutdown() {
     console.info('Shutting Down!')
     try {
         await mainGetWorker.close()
+        await comickGetWorker.close()
 
         await getQueue.close()
-        await updateQueue.close()
     
         if (browser) await browser.close() 
     } catch (error) {
@@ -69,3 +70,32 @@ async function shutdown() {
 
     process.exit(0)
 }
+
+if (config.logging.verboseLogging) {
+    mainGetWorker.on('ready', () => {
+        console.log('Main worker ready');
+      });
+      mainGetWorker.on('error', (err) => {
+        console.error('Main worker error:', err);
+      });
+      mainGetWorker.on('failed', (job, err) => {
+        console.error(`Main worker job ${job.id} failed:`, err);
+      });
+      mainGetWorker.on('completed', (job) => {
+        console.log(`Main worker job ${job.id} completed`);
+      });
+      
+      comickGetWorker.on('ready', () => {
+        console.log('Comick worker ready');
+      });
+      comickGetWorker.on('error', (err) => {
+        console.error('Comick worker error:', err);
+      });
+      comickGetWorker.on('failed', (job, err) => {
+        console.error(`Comick job ${job.id} failed:`, err);
+      });
+      comickGetWorker.on('completed', (job) => {
+        console.log(`Comick job ${job.id} completed`);
+      });
+}
+

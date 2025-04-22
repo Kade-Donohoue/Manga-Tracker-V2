@@ -3,6 +3,7 @@ import {match} from '../util'
 import sharp from 'sharp'
 import { getBrowser } from "../jobQueue"
 import { Job } from 'bullmq'
+import { fetchData } from '../types'
 
 /**
  * Gets the chapter list from ChapManganato
@@ -16,8 +17,8 @@ import { Job } from 'bullmq'
  *  "iconBuffer": base64 icon for manga
  * }
  */
-export async function getManga(url:string, icon:boolean = true, ignoreIndex = false, job:Job) {
-    throw new Error('Manga: MANGANATO CURRENTLY DISABLED!')
+export async function getManga(url:string, icon:boolean = true, ignoreIndex = false, job:Job):Promise<fetchData> {
+    // throw new Error('Manga: MANGANATO CURRENTLY DISABLED!')
     
     let lastTimestamp:number = Date.now()
     const browser = await getBrowser()
@@ -26,11 +27,13 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
     try {
         page.setDefaultNavigationTimeout(1000) // timeout nav after 1 sec
         page.setRequestInterception(true)
+        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0')
+        await page.setExtraHTTPHeaders({'accept-language': 'en-US,en;q=0.9'})
 
         let allowAllRequests:boolean = false
         const allowRequests = ['manganato']
         const forceAllow = ['404_not_found.png']
-        const blockRequests = ['.css', '.js', 'facebook', 'fbcdn.net', 'bidgear', '.png', '.jpg', '.svg']
+        const blockRequests = ['.css', '.js', 'facebook', 'fbcdn.net', 'bidgear', '.png', '.jpg', '.svg', '.webp']
         page.on('request', (request) => {
 
             if (allowAllRequests) {
@@ -67,61 +70,71 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         await job.updateProgress(20)
         job.log(logWithTimestamp('Chapter Page Loaded. Fetching Data'))
 
-        const chapterDropdown = await page.waitForSelector('body > div.body-site > div:nth-child(1) > div.panel-navigation > select', {timeout: 500})
+        const chapterDropdown = await page.waitForSelector('.navi-change-chapter', {timeout: 500})
 
-        const urlList = await chapterDropdown?.evaluate(() => Array.from(
-            document.querySelectorAll('body > div.body-site > div:nth-child(1) > div.panel-navigation > select > option'),
-            a => `${(window as any).$navi_change_chapter_address}${a.getAttribute('data-c')}`
-        ).reverse())
+        const titleSelect = await page.waitForSelector('div.breadcrumb:nth-child(3) > p:nth-child(1) > span:nth-child(3) > a:nth-child(1)')
+        const mangaName = await titleSelect?.evaluate(el => el.innerText)
+        const overviewUrl = await titleSelect?.evaluate(el => el.getAttribute('href'))
 
-        const chapterTextList = await chapterDropdown?.evaluate(() => Array.from(
-            document.querySelectorAll('body > div.body-site > div:nth-child(1) > div.panel-navigation > select > option'),
-            a => `Chapter ${a.getAttribute('data-c')}`
-        ).reverse())
+        // Extract the text values
+        const urlList = chapterDropdown
+            ? (await chapterDropdown.evaluate(select =>
+                Array.from(select.querySelectorAll('option')).map(option =>
+                    option.getAttribute('data-c').split('chapter-').at(-1)
+                )
+                )).reverse()
+            : [];
+
 
         
-        if (urlList.length <= 0 || urlList.length != chapterTextList.length) throw new Error('Manga: Issue fetching chapters! Please Contact and Admin!')
-
-        const titleSelect = await page.waitForSelector('body > div.body-site > div:nth-child(1) > div.panel-breadcrumb > a:nth-child(3)')
-        const mangaName = await titleSelect?.evaluate(el => el.innerText)
+        if (urlList.length <= 0) throw new Error('Manga: Issue fetching chapters! Please Contact and Admin!')
 
         job.log(logWithTimestamp('Chapter Data Fetched'))
         await job.updateProgress(40)
 
         var resizedImage:Buffer|null = null
-        var iconBuffer:Buffer|null|undefined = null
+        // var iconBuffer:Buffer|null|undefined = null
         if (icon) {
             job.log(logWithTimestamp('Loading Overview Page'))
             await page.setJavaScriptEnabled(false)
-            await page.goto(await titleSelect?.evaluate(el => el.getAttribute('href')), {timeout: 10000})
 
             job.log(logWithTimestamp('Overview page loaded'))
             await job.updateProgress(60)
 
-            await page.evaluate(() => {
-                const images = document.querySelectorAll('img')
-                images.forEach(img => img.onerror = null)
-            })
-
-            const photoPage = await page.waitForSelector('body > div.body-site > div.container.container-main > div.container-main-left > div.panel-story-info > div.story-info-left > span.info-image > img')
-            const photo = await photoPage?.evaluate(el => el.src)
-
             job.log(logWithTimestamp('Loading Cover Image'))
-            allowAllRequests = true
-            const icon = await page.goto(photo!, {timeout: 10000})
+
+            console.log('https://img-r1.2xstorage.com/thumb/'+overviewUrl.split('/').at(-1)+'.webp')
+            const iconBuffer = await (await fetch('https://img-r1.2xstorage.com/thumb/'+overviewUrl.split('/').at(-1)+'.webp', 
+              {
+                headers: {
+                    "Host": "img-r1.2xstorage.com",
+                    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:137.0) Gecko/20100101 Firefox/137.0",
+                    "Accept": "image/avif,image/webp,image/png,image/svg+xml,image/*;q=0.8,*/*;q=0.5",
+                    "Accept-Language": "en-US,en;q=0.5",
+                    "Referer": "https://www.manganato.gg/",
+                    "Sec-Fetch-Dest": "image",
+                    "Sec-Fetch-Mode": "no-cors",
+                    "Sec-Fetch-Site": "cross-site",
+                    "Pragma": "no-cache",
+                    "Cache-Control": "no-cache",
+                }
+              }
+            )).arrayBuffer()
             job.log(logWithTimestamp('Cover Image Loaded saving now!'))
             await job.updateProgress(80)
 
-            iconBuffer = await icon?.buffer()
+            console.log(iconBuffer)
             resizedImage = await sharp(iconBuffer!)
                 .resize(480, 720)
-                .toBuffer()
+                .toBuffer();
         }
         await job.updateProgress(90)
         await page.close()
         job.log(logWithTimestamp('All Data Fetched processing now'))
         
-        const currIndex = urlList.indexOf(url)
+        console.log(url.split('chapter-').at(-1))
+        console.log(urlList)
+        const currIndex = urlList.indexOf(url.split('chapter-').at(-1))
 
         if (currIndex == -1 && !ignoreIndex) {
             throw new Error("Manga: Unable to find current chapter. Please retry or contact Admin!")
@@ -129,7 +142,7 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
 
         job.log(logWithTimestamp('Done'))
         await job.updateProgress(100)
-        return {"mangaName": mangaName, "urlList": urlList.join(','), "chapterTextList": chapterTextList.join(','), "currentIndex": currIndex, "iconBuffer": resizedImage}
+        return {"mangaName": mangaName, urlBase: overviewUrl+'/chapter-', slugList: urlList.join(','), "chapterTextList": urlList.join(','), "currentIndex": currIndex, "iconBuffer": resizedImage}
     } catch (err) {
         job.log(logWithTimestamp(`Error: ${err}`))
         console.warn('Unable to fetch data for: ' + url)

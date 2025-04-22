@@ -1,6 +1,6 @@
 import { Job, Queue, QueueEvents } from 'bullmq'
-import {getQueue, updateQueue, getBrowser} from './jobQueue'
-import {updateCollector} from './types'
+import {getQueue, comickQueue, getBrowser} from './jobQueue'
+import {checkOpts, getOpts, updateCollector} from './types'
 import {validMangaCheck} from './util'
 import './mangaGetProc'
 import fastify from 'fastify'
@@ -18,44 +18,14 @@ app.listen({port: port, host: host}, async function(err, address) {
     if (config.queue.clearQueuesAtStart) {
         console.log('Clearing Queue! If this isn\'t the behavior you want change it in config.json')
         await getQueue.obliterate({force:true})
-        await updateQueue.obliterate({force:true})
+        await comickQueue.obliterate({force:true})
     }
-    await getBrowser()//called to initiate browser to help prevent multiple being opened
+    await getBrowser()//called to initiate browser otherwise if multiple jobs run at same time multiple browsers can be opened
 
     if (config.updateSettings.updateAtStart) updateAllManga()
     console.log(`Puppeteer server listening at: ${address}`)
 })
 
-//currently not used may be deprecated
-app.get('/updateManga', async function(req, res) {
-    let {pass, url} = req.query as {pass: string, url: string}
-
-    // console.log(pass)
-    if (pass != config.serverCom.serverPassWord) return res.status(401).send({message: "Unauthorized"})
-
-    const webSite = validMangaCheck(url)
-    if (webSite.success === false) return res.status(webSite.statusCode).send({message: webSite.value})
-
-    const job = await getQueue.add('User Update Manga', {
-        type: webSite.value,
-        url: url, 
-        getIcon: false,
-        update: false
-    }, {priority: 2, removeOnComplete: config.queue.removeCompleted, removeOnFail: config.queue.removeFailed})
-
-    const response = {fetchId: job.id}
-    if (config.logging.verboseLogging) console.log(response)
-    res.send(response)
-})
-
-const getOpts = {
-    schema: {
-        querystring: {
-            urls: {type: 'array'},
-            pass: {type: 'string'}
-        }
-    }
-}
 app.get('/getManga', getOpts, async function(req, res) {
     let {pass, urls} = req.query as {pass: string, urls: string[]}
 
@@ -64,7 +34,8 @@ app.get('/getManga', getOpts, async function(req, res) {
     if (pass != config.serverCom.serverPassWord) return res.status(401).send({message: "Unauthorized"})
 
     let errors:{message:string, url:string}[] = []
-    let batchedJobs:{name:string,data:any,opts:any}[] = []
+    const universalJobs:{data:any,name:string,opts:any}[] = []
+    const comickJobs:{data:any,name:string,opts:any}[] = []
     for (const url of urls) {
         const webSite = validMangaCheck(url)
         if (webSite.success === false) {
@@ -72,33 +43,42 @@ app.get('/getManga', getOpts, async function(req, res) {
             continue
         }
 
-        batchedJobs.push({
-            name: 'User Full Fetch', 
+        const job = {
+            name: webSite.value,
             data: {
-            type: webSite.value,
-            url: url.trim(), 
-            getIcon: true,
-            update: false
-            }, 
-            opts: {priority: 1, removeOnComplete: config.queue.removeCompleted, removeOnFail: config.queue.removeFailed}
-        })
+                type: webSite.value,
+                url: url.trim(), 
+                getIcon: true,
+                update: false
+            },
+            opts: {
+                priority: 1,
+                removeOnComplete: config.queue.removeCompleted,
+                removeOnFail: config.queue.removeFailed,
+                name: webSite.value
+            }
+        }
+
+        if (webSite.value === 'comick') {
+            comickJobs.push(job);
+        } else {
+            universalJobs.push(job);
+        }
     }
+    await getQueue.addBulk(universalJobs)
+    await comickQueue.addBulk(comickJobs)
 
-    const jobs = await getQueue.addBulk(batchedJobs)
-
+    const [universalAdded, comickAdded] = await Promise.all([
+        getQueue.addBulk(universalJobs),
+        comickQueue.addBulk(comickJobs)
+    ])
+    
+    const jobs = [...universalAdded, ...comickAdded]
+    
     const response = {addedManga: jobs.map(job => {return {fetchId: job.id, url:job.data.url}}), errors: errors}
     res.send(response)
 })
 
-
-const checkOpts = {
-    schema: {
-        querystring: {
-            fetchIds: {type: 'array'},
-            pass: {type: 'string'}
-        }
-    }
-}
 app.get('/checkStatus/get', checkOpts, async function(req, res) {
     let {pass, fetchIds} = req.query as {pass: string, fetchIds: string[]}
     // console.log(fetchIds)
@@ -108,7 +88,15 @@ app.get('/checkStatus/get', checkOpts, async function(req, res) {
     let data:{fetchId:string,status:string,statusCode:number,data:any}[] = []
     for (const fetchId of fetchIds) {
         let job = await getQueue.getJob(fetchId)
+
         if (!job) {
+            job = await comickQueue.getJob(fetchId);
+        }
+
+        console.log('status check current job: ')
+        console.log(job)
+        if (!job) {
+            console.log('Job Not Found!')
             data.push({fetchId:fetchId, status:"Not Found", statusCode:404,data:null}) 
             continue
         }
@@ -124,71 +112,91 @@ app.get('/checkStatus/get', checkOpts, async function(req, res) {
         if (config.queue.instantClearJob) await job.remove()
     }
 
+    console.log(data)
     res.status(200).send({currentStatus: data})    
 })
 
 async function updateAllManga() {
     let date = new Date()
     if (config.updateSettings.autoUpdateInfo) console.log(`Updating all manga at ${date.toLocaleString()}`)
-    const resp = await fetch(`${config.serverCom.serverUrl}/serverReq/data/getAllManga`, {
-        method: 'GET',
-        headers: {
-            "Content-Type": "application/json",
-            "pass": config.serverCom.serverPassWord
-        }
-    })
-    if (config.logging.verboseLogging) console.log(resp)
-    if (resp.status!=200) return console.log('issue fetching data to update all manga:' )
+    try {
+        const resp = await fetch(`${config.serverCom.serverUrl}/serverReq/data/getAllManga`, {
+            method: 'GET',
+            headers: {
+                "Content-Type": "application/json",
+                "pass": config.serverCom.serverPassWord
+            }
+        })
+        if (config.logging.verboseLogging) console.log(resp)
+        if (resp.status!=200) return console.log('issue fetching data to update all manga:' )
 
-    const returnData:{mangaId:string, urlBase:string, slugList:string, mangaName:string}[] = (await resp.json()).data
-    if (config.logging.verboseLogging) console.log(returnData.length)
-    // console.log(returnData)
-    let batchId = Date.now()
-    let batchedJobs:{data:any,name:string,opts:any}[] = []
-    let invalidCount = 0
-    for (var i = 0; i < returnData.length; i++) {
+        const returnData:{mangaId:string, urlBase:string, slugList:string, mangaName:string}[] = (await resp.json()).data
+        if (config.logging.verboseLogging) console.log(returnData.length)
+        // console.log(returnData)
+        let batchId = Date.now()
+        // let batchedJobs:{data:any,name:string,opts:any}[] = []
+        const universalJobs:{data:any,name:string,opts:any}[] = []
+        const comickJobs:{data:any,name:string,opts:any}[] = []
+        let invalidCount = 0
+        for (var i = 0; i < returnData.length; i++) {
 
-        let firstChapUrl = ''
-        if (returnData[i].slugList.indexOf(',') == -1) {
-            if (returnData[i].slugList.length <= 0) {
-                console.log("Unable to find first chap skipping: " + returnData[i].mangaId)
-                if (config.logging.verboseLogging) console.log(returnData[i].slugList)
+            let firstChapUrl = ''
+            if (returnData[i].slugList.indexOf(',') == -1) {
+                if (returnData[i].slugList.length <= 0) {
+                    console.log("Unable to find first chap skipping: " + returnData[i].mangaId)
+                    if (config.logging.verboseLogging) console.log(returnData[i].slugList)
+                    invalidCount++
+                    continue
+                } else {
+                    firstChapUrl = returnData[i].urlBase+returnData[i].slugList.substring(0, returnData[i].slugList.length)
+                }
+            } else {
+                firstChapUrl = returnData[i].urlBase+returnData[i].slugList.substring(0, returnData[i].slugList.indexOf(','))
+            }
+            if (config.logging.verboseLogging) console.log(firstChapUrl)
+
+            const webSite = validMangaCheck(firstChapUrl)
+            if (webSite.success === false) {
+                console.log(`Disabled or Invalid URL in database, ${webSite.value}! Check your config and the database Skipping for now. mangaId:${returnData[i].mangaId}`)
                 invalidCount++
                 continue
-            } else {
-                firstChapUrl = returnData[i].urlBase+returnData[i].slugList.substring(0, returnData[i].slugList.length)
             }
-        } else {
-            firstChapUrl = returnData[i].urlBase+returnData[i].slugList.substring(0, returnData[i].slugList.indexOf(','))
-        }
-        if (config.logging.verboseLogging) console.log(firstChapUrl)
+            if (config.logging.verboseLogging) console.log(returnData[i])
 
-        const webSite = validMangaCheck(firstChapUrl)
-        if (webSite.success === false) {
-            console.log(`Disabled or Invalid URL in database, ${webSite.value}! Check your config and the database Skipping for now. mangaId:${returnData[i].mangaId}`)
-            invalidCount++
-            continue
-        }
-        if (config.logging.verboseLogging) console.log(returnData[i])
+            const job = {
+                name: webSite.value,
+                data: {
+                    type: webSite.value,
+                    url: firstChapUrl,
+                    mangaId: returnData[i].mangaId,
+                    getIcon: config.updateSettings.refetchImgs,
+                    update: true,
+                    length: returnData.length - invalidCount,
+                    oldSlugList: returnData[i].slugList,
+                    batchId: batchId
+                },
+                opts: {
+                    priority: 2,
+                    removeOnComplete: config.queue.removeCompleted,
+                    removeOnFail: config.queue.removeFailed,
+                    attempts: 2,
+                    name: webSite.value
+                }
+            }
 
-        batchedJobs.push({
-            name: 'Auto Update Manga',
-            data: {
-                type: webSite.value,
-                url: firstChapUrl,
-                mangaId: returnData[i].mangaId, 
-                getIcon: config.updateSettings.refetchImgs,
-                update: true,    
-                length: returnData.length-invalidCount,
-                oldSlugList: returnData[i].slugList,
-                batchId: batchId
-            },
-            opts: {priority: 2, removeOnComplete: config.queue.removeCompleted, removeOnFail: config.queue.removeFailed, attempts: 2}
-        })
+            if (webSite.value === 'comick') {
+                comickJobs.push(job);
+            } else {
+                universalJobs.push(job);
+            }
+        }
+        await getQueue.addBulk(universalJobs)
+        await comickQueue.addBulk(comickJobs)
+
+        if (config.logging.verboseLogging) console.log('Jobs Added to Queue')
+    } catch (err) {
+        console.error(err)
     }
-    await getQueue.addBulk(batchedJobs)
-
-    if (config.logging.verboseLogging) console.log('Jobs Added to Queue')
 }
 
 let dataCollector:updateCollector[] = []
