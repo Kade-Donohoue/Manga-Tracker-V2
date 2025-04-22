@@ -8,13 +8,14 @@ const path = require('path');
 const connection = { host: '127.0.0.1', port: 6379 };
 
 const getQueue = new Queue('Get Manga Queue', { connection });
+const getComickQueue = new Queue('Comick Manga Queue', { connection });
 
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath('/admin/queues');
 
 // Create the Bull Board instance
 createBullBoard({
-  queues: [new BullMQAdapter(getQueue)],
+  queues: [new BullMQAdapter(getQueue), new BullMQAdapter(getComickQueue)],
   serverAdapter,
 });
 
@@ -23,7 +24,7 @@ const app = express();
 // Custom API to fetch jobs sorted by processing time
 app.get('/admin/api/sorted-jobs', async (req, res) => {
   try {
-    const jobs = await getQueue.getJobs(['completed', 'failed']);
+    const jobs = [...await getQueue.getJobs(['completed', 'failed']), ...await getComickQueue.getJobs(['completed', 'failed'])];
 
     const jobsWithProcessTime = jobs.map(job => {
       const processTime = job.finishedOn ? job.finishedOn - job.processedOn : null;
