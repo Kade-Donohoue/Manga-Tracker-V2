@@ -23,12 +23,12 @@ export const comickQueue = new Queue('Comick Manga Queue', {
 })
 
 const mainGetWorker = new Worker('Get Manga Queue', mangaGetProc, {connection, concurrency:config.queue.instances, name:'universal'})
-const comickGetWorker = new Worker('Comick Manga Queue', mangaGetProc, {connection, concurrency:1, limiter:{max: 66, duration: 1000}, name: 'comick'}) //66 assuming 3 fetch per job, bump to 100 if not fetching images(update) 
+const comickGetWorker = new Worker('Comick Manga Queue', mangaGetProc, {connection, concurrency:1, limiter:{max: 1, duration: 1200}, name: 'comick'})
 
 let browser:Browser|null = null
 export async function getBrowser() {
     if (!browser) {
-        browser = await puppeteer.launch({headless: true, devtools: false, ignoreHTTPSErrors: true, args: ['--disable-gpu, --enable-features=NetworkService', '--no-sandbox', '--disable-setuid-sandbox','--mute-audio']})
+        browser = await puppeteer.launch({headless: true, devtools: false, acceptInsecureCerts: true, args: ['--disable-gpu, --enable-features=NetworkService', '--no-sandbox', '--disable-setuid-sandbox','--mute-audio']})
         if (config.logging.verboseLogging) console.log('Stated Puppeteer!')
     }
     return browser

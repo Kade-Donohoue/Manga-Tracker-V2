@@ -1,5 +1,11 @@
 # **Change Logs**
 
+## Change Log 2.0.3
+ - upgraded puppeteer server packages
+ - adjusted comick timing
+ - fixes bugs preventing updates from being uploaded
+ - moved some logs under verbose logging
+
 ## Change Log 2.0.2
  - New context menu for view tracked manga
  - New Cookies Banner

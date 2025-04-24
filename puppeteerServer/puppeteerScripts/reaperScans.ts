@@ -120,7 +120,7 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         await page.close()
         job.log(logWithTimestamp('All Data Fetched Processing'))
         
-        console.log(url.replace(`https://reaperscans.com/series/${seriesSlug}/`, ''))
+        if (config.logging.verboseLogging) console.log(url.replace(`https://reaperscans.com/series/${seriesSlug}/`, ''))
         const currIndex = chapterSlugs.indexOf(url.replace(`https://reaperscans.com/series/${seriesSlug}/`, ''))
 
         if (currIndex == -1 && !ignoreIndex) {
@@ -135,7 +135,8 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
             "slugList": chapterSlugs.join(','), 
             "chapterTextList": chapterText.join(','), 
             "currentIndex": currIndex, 
-            "iconBuffer": resizedImage}
+            "iconBuffer": resizedImage
+        }
     } catch (err) {
         job.log(logWithTimestamp(`Error: ${err}`))
         console.warn(`Unable to fetch data for: ${url}`)

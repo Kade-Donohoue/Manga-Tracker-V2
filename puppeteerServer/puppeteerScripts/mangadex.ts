@@ -57,6 +57,11 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         let slugList = []
         let chapterTestList = []
         chapterData.data.forEach((data) => {
+            let chapCheckIndex = chapterTestList.indexOf(data.attributes.chapter)
+            if (chapCheckIndex != -1) {
+              let isOlder = new Date(data.attributes.publishAt) < new Date(chapterData.data[chapCheckIndex].attributes.publishAt)
+              if (isOlder) slugList[chapCheckIndex] = data.id
+            }
             slugList.push(data.id)
             chapterTestList.push(data.attributes.chapter ?? 'Unknown')
         })

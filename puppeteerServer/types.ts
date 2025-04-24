@@ -7,6 +7,18 @@ export type fetchData = {
     "iconBuffer":Buffer|null
 }
 
+export type dataType = {
+    type: string;
+    url: string;
+    mangaId: string;
+    getIcon: boolean;
+    update: boolean;
+    length: number;
+    oldSlugList: string;
+    batchId: number;
+  };
+  
+
 export type updateCollector = {
     batchId:number,
     batchData: {
@@ -36,8 +48,12 @@ export type mangaUrlCheck = {
 export const getOpts = {
     schema: {
         querystring: {
-            urls: {type: 'array'},
-            pass: {type: 'string'}
+            type: 'object',
+            properties: {
+                urls: {type: 'array'},
+                pass: {type: 'string'}
+            },
+            required: ['urls', 'pass']
         }
     }
 }
@@ -45,8 +61,12 @@ export const getOpts = {
 export const checkOpts = {
     schema: {
         querystring: {
-            fetchIds: {type: 'array'},
-            pass: {type: 'string'}
+            type: 'object',
+            properties: {
+                fetchIds: {type: 'array'},
+                pass: {type: 'string'}
+            },
+            required: ['fetchIds', 'pass']
         }
     }
 }

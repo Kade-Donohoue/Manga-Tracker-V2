@@ -103,7 +103,7 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
 
             job.log(logWithTimestamp('Loading Cover Image'))
 
-            console.log('https://img-r1.2xstorage.com/thumb/'+overviewUrl.split('/').at(-1)+'.webp')
+            if (config.logging.verboseLogging) console.log('https://img-r1.2xstorage.com/thumb/'+overviewUrl.split('/').at(-1)+'.webp')
             const iconBuffer = await (await fetch('https://img-r1.2xstorage.com/thumb/'+overviewUrl.split('/').at(-1)+'.webp', 
               {
                 headers: {
@@ -123,7 +123,6 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
             job.log(logWithTimestamp('Cover Image Loaded saving now!'))
             await job.updateProgress(80)
 
-            console.log(iconBuffer)
             resizedImage = await sharp(iconBuffer!)
                 .resize(480, 720)
                 .toBuffer();
@@ -132,8 +131,11 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         await page.close()
         job.log(logWithTimestamp('All Data Fetched processing now'))
         
-        console.log(url.split('chapter-').at(-1))
-        console.log(urlList)
+        if (config.logging.verboseLogging) {
+            console.log(url.split('chapter-').at(-1))
+            console.log(urlList)
+        }
+        
         const currIndex = urlList.indexOf(url.split('chapter-').at(-1))
 
         if (currIndex == -1 && !ignoreIndex) {

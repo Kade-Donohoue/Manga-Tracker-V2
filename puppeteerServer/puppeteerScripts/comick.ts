@@ -33,7 +33,8 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         if (config.logging.verboseLogging) console.log('comic Data: ', comicData)
         await job.updateProgress(20)
         job.log(logWithTimestamp('comic Data Retrieved!'))
-        
+        await new Promise(r => setTimeout(r, 500))
+
         job.log(logWithTimestamp('Fetching Chapter Data'))
         const chapterReq = await fetch(`https://api.comick.fun/comic/${comicData.comic.hid}/chapters?lang=en&limit=${comicData.comic.chapter_count > 60 ? comicData.comic.chapter_count : 60}`)
         if (!chapterReq.ok) throw new Error('Manga: Unable to fetch chapter Data!')

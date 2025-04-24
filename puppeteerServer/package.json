@@ -4,13 +4,13 @@
     "start": "npx tsc && node ./dist/app.js"
   },
   "dependencies": {
-    "bullmq": "^5.12.8",
-    "fastify": "^4.28.1",
-    "puppeteer": "^22.9.0",
+    "bullmq": "^5.49.2",
+    "fastify": "^4.29.0",
+    "puppeteer": "^24.7.1",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-adblocker": "^2.13.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
-    "sharp": "^0.33.4",
+    "sharp": "^0.34.1",
     "typescript": "^5.5.4"
   }
 }

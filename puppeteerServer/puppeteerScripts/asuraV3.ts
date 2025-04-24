@@ -104,7 +104,7 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
 
         if (!overViewURL) throw new Error('Manga: Unable to get base URL!')
 
-        console.log(overViewURL)
+        // console.log(overViewURL)
         job.log(logWithTimestamp(overViewURL))
         await job.updateProgress(35)
         
