@@ -1,7 +1,6 @@
 import { dropdownOption } from "./types"
-import { useState } from "react"
 
-export let catOptions = [
+export let catOptions:dropdownOption[] = [
     {value: "reading", label: "Reading"},
     {value: "notreading", label: "Not Reading"},
     {value: "dropped", label: "Dropped"},

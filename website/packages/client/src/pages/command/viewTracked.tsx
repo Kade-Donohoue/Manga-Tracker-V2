@@ -1,6 +1,5 @@
 import {dropdownOption, mangaDetails, } from '../../types'
 import {customStyles} from '../../styled/index'
-import {LoadingScreen} from '../../components/LoadingScreen'
 import React, { ChangeEvent, useEffect } from "react"
 import { toast } from 'react-toastify'
 import Card from '@mui/material/Card'
@@ -309,11 +308,8 @@ export default function tracked() {
         })
     }
 
-    function findCatLabel(catVal:string) {
-        for (const cat of catOptions) {
-            if (catVal == cat.value) return cat.label
-        }
-        return "Category Removed"
+    function findCat(catVal:string):dropdownOption {
+        return catOptions.find((cat) => cat.value === catVal)||{value:"unknown",label:"Unknown"}
     }
 
     function confirmRemovalDialog() {
@@ -378,10 +374,6 @@ export default function tracked() {
                 >
                 Submit
                 </Button>
-                {/* <Button onClick={(e) => {
-                    changeUserCat(mangaInfo[modalIndex].mangaId)
-                    handleCatClose()
-                }}>Submit</Button> */}
                 <SvgIcon onClick={handleCatClose} sx={{position: "absolute", top: 10, right: 10}}>
                     <CancelIcon sx={{color: "white"}}/>
                 </SvgIcon>
@@ -768,7 +760,7 @@ export default function tracked() {
                 onChange={handleSearchChange}
                 variant="outlined"
                 size="small"
-                className="inputField"
+                // className="inputField"
                 sx={{
                     "& .MuiOutlinedInput-root": {
                       "& fieldset": {
@@ -783,7 +775,7 @@ export default function tracked() {
                     },
                   }}            
                 InputProps={{
-                    style: { background: "inherit", borderColor: "#ccc"}
+                    sx: { background: "inherit", borderColor: "#ccc"}
                 }}
             />
 
@@ -886,7 +878,7 @@ export default function tracked() {
                             </tr>
                             <tr>
                                 <td>Category: </td>
-                                <td>{findCatLabel(data.userCat)}</td>
+                                <td style={{color:findCat(data.userCat)?.color||'lightgray'}}>{findCat(data.userCat)?.label}</td>
                             </tr>
                         </tbody>
                       </table>

@@ -31,25 +31,6 @@ function createWindow() {
 
   win.maximize();
   win.show();
-
-
-
-  // session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
-  //   if (permission === 'cookies') {
-  //     return callback(true);
-  //   }
-  //   callback(false);
-  // });
-
-  // session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-  //   callback({
-  //     responseHeaders: {
-  //       ...details.responseHeaders,
-  //       'Access-Control-Allow-Origin': ['*'], // Allow all origins
-  //       'Access-Control-Allow-Credentials': ['true'], // Enable credentials
-  //     },
-  //   });
-  // });
   
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (url.includes('clerk.') || url.includes('oauth')) {
@@ -59,58 +40,7 @@ function createWindow() {
     return { action: 'allow' };
   });
 
-
-  // // OAuth flow
-  // ipcMain.on('open-oauth', (event, url) => {
-  //   const oauthWindow = new BrowserWindow({
-  //     width: 600,
-  //     height: 800,
-  //     parent: win,
-  //     modal: true,
-  //     show: false,
-  //     webPreferences: {
-  //       nodeIntegration: false,
-  //       contextIsolation: true,
-  //     },
-  //   });
-
-  //   oauthWindow.loadURL(url); // Use the OAuth URL
-  //   oauthWindow.once('ready-to-show', () => {
-  //     oauthWindow.show();
-  //   });
-
-  //   oauthWindow.webContents.on('will-navigate', (event, newUrl) => {
-  //     // Check if the URL is our redirect URI
-  //     if (newUrl.startsWith('https://manga.kdonohoue.com/electron')) {
-  //       const parsedUrl = new URL(newUrl);
-  //       const params = parsedUrl.searchParams.toString(); // Get all query params as a string
-    
-  //       if (win) {
-  //         // Append search params to the existing main window URL
-  //         const currentUrl = new URL(win.webContents.getURL());
-  //         currentUrl.search = params; // Add query params
-  //         const updatedUrl = currentUrl.toString();
-    
-  //         console.log('Updated main window URL:', updatedUrl);
-    
-  //         // Use the updated URL without reloading the entire React app
-  //         win.loadURL(updatedUrl);
-  //       }
-    
-  //       const code = parsedUrl.searchParams.get('code');
-  //       console.log('Received OAuth code:', code);
-  //       oauthWindow.close();
-  //     }
-  //   });
-    
-
-  //   oauthWindow.on('closed', () => {
-  //     // Handle window close
-  //   });
-  // });
 };
-
-
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

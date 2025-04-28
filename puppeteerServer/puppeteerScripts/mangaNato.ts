@@ -97,19 +97,34 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
         if (icon) {
             job.log(logWithTimestamp('Loading Overview Page'))
             await page.setJavaScriptEnabled(false)
+            allowAllRequests = true
+
+            await page.goto(overviewUrl)
+
+            await page.evaluate(() => {
+                const images = document.querySelectorAll('img')
+                images.forEach(img => img.onerror = null)
+            })
 
             job.log(logWithTimestamp('Overview page loaded'))
+            await job.updateProgress(50)
+
+            const photoElement = await page.waitForSelector('div.manga-info-top > div.manga-info-pic > img')
+
+            const photoUrl = await photoElement?.evaluate(el => el.src)
+
+            job.log(logWithTimestamp('Photo Page Fetched'))
             await job.updateProgress(60)
 
             job.log(logWithTimestamp('Loading Cover Image'))
 
-            if (config.logging.verboseLogging) console.log('https://img-r1.2xstorage.com/thumb/'+overviewUrl.split('/').at(-1)+'.webp')
-            const iconBuffer = await (await fetch('https://img-r1.2xstorage.com/thumb/'+overviewUrl.split('/').at(-1)+'.webp', 
+            if (config.logging.verboseLogging) console.log(photoUrl)
+            const iconBuffer = await fetch(photoUrl, 
               {
                 headers: {
                     "Host": "img-r1.2xstorage.com",
                     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:137.0) Gecko/20100101 Firefox/137.0",
-                    "Accept": "image/avif,image/webp,image/png,image/svg+xml,image/*;q=0.8,*/*;q=0.5",
+                    // "Accept": "image/avif,image/webp,image/png,image/svg+xml,image/*;q=0.8,*/*;q=0.5",
                     "Accept-Language": "en-US,en;q=0.5",
                     "Referer": "https://www.manganato.gg/",
                     "Sec-Fetch-Dest": "image",
@@ -119,11 +134,14 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
                     "Cache-Control": "no-cache",
                 }
               }
-            )).arrayBuffer()
+            )
+
+            if (config.logging.verboseLogging) console.log(iconBuffer)
+            if (!iconBuffer.ok) throw new Error('Manga: Unable to fetch cover image contact an admin!')
             job.log(logWithTimestamp('Cover Image Loaded saving now!'))
             await job.updateProgress(80)
 
-            resizedImage = await sharp(iconBuffer!)
+            resizedImage = await sharp(await iconBuffer.arrayBuffer())
                 .resize(480, 720)
                 .toBuffer();
         }

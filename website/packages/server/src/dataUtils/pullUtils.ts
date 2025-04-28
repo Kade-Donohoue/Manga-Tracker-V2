@@ -203,26 +203,16 @@ export async function getUpdateData(env:Env, pass:string|null) {
 
 export async function pullUserCategories(authId:string, env:Env) {
     try {
-        let categories = [
-            {value: "reading", label: "Reading"},
-            {value: "notreading", label: "Not Reading"},
-            {value: "dropped", label: "Dropped"},
-            {value: "hold", label: "Hold"},
-            {value: "finished", label: "Finished"},
-            {value: "inqueue", label: "In Queue"},
-            {value: "other", label: "Other"},
-            {value: "unsorted", label: "Uncategorized"},
-            {value: "%", label: "Any"}
-        ]
+        // let categories:{value:string,label:string,color?:string} = []
 
         const results = await env.DB.prepare('Select categories FROM userSettings WHERE userID = ?')
                 .bind(authId)
                 .first<{categories: string}>()
 
         // return default categories if no categories are found for user
-        if (!results) return new Response(JSON.stringify({message: "No Custom Cats", cats: categories}), {status:200})
+        if (!results) return new Response(JSON.stringify({message: "No Custom Cats", cats: []}), {status:200})
         
-        return new Response(JSON.stringify({message:"Success", cats: categories.concat(JSON.parse(results.categories))}), {status:200})
+        return new Response(JSON.stringify({message:"Success", cats: JSON.parse(results.categories)}), {status:200})
 
     } catch (err) {
         console.warn("Error with updateInteractTime: " + err)

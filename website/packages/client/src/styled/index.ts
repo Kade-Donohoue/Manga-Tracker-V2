@@ -36,9 +36,9 @@ export const customStyles: StylesConfig<dropdownOption, false> = {
     margin: '0', 
     padding: '2px',
   }),
-  singleValue: (provided) => ({
+  singleValue: (provided, state) => ({
     ...provided,
-    color: '#fff',
+    color: state.data.color||'#fff',
     margin: '0', 
   }),
   menuList: (provided) => ({
@@ -54,7 +54,7 @@ export const customStyles: StylesConfig<dropdownOption, false> = {
   option: (provided, state) => ({
     ...provided,
     backgroundColor: state.isSelected ? '#6b6b6b' : '#121212',
-    color: '#fff',
+    color: state.data.color||'#fff',
     '&:hover': {
       backgroundColor: '#6b6b6b',
     },

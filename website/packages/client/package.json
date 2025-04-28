@@ -79,7 +79,6 @@
     "oauth-pkce": "^0.0.7",
     "react": "^18.3.1",
     "react-color": "^2.19.3",
-    "react-cookie": "^7.2.0",
     "react-device-detect": "^2.2.3",
     "react-dom": "^18.3.1",
     "react-json-tree": "^0.19.0",
@@ -88,8 +87,7 @@
     "react-select": "^5.8.0",
     "react-toastify": "^10.0.5",
     "react-use": "^17.5.0",
-    "web-vitals": "^2.1.4",
-    "zustand": "4.1.4"
+    "web-vitals": "^2.1.4"
   },
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",

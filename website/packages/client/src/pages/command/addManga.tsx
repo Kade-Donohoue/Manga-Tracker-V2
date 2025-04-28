@@ -5,47 +5,8 @@ import React, { useEffect } from "react"
 import './addManga.css'
 import { catOptions, fetchPath } from '../../vars'
 import { dropdownOption } from '../../types'
+import {customStyles} from '../../styled/index'
 
-const customStyles: StylesConfig<dropdownOption, false> = {
-  control: (provided, state) => ({
-    ...provided,
-    width: '100%',
-    backgroundColor: '#121212',
-    margin: "8px 0",
-  }),
-  input: (provided) => ({
-    ...provided,
-    color: '#fff',
-    margin: '0', // Remove default margin to match regular select
-    padding: '2px', // Adjust padding to prevent overflow
-  }),
-  singleValue: (provided) => ({
-    ...provided,
-    color: '#fff',
-    margin: '0', // Remove default margin to prevent overflow
-  }),
-  menuList: (provided) => ({
-    ...provided,
-    padding: '0',
-  }),
-  menu: (provided) => ({
-    ...provided,
-    backgroundColor: '#121212',
-    borderRadius: '4px',
-    marginTop: '0',
-  }),
-  option: (provided, state) => ({
-    ...provided,
-    backgroundColor: state.isSelected ? '#6b6b6b' : '#121212',
-    color: '#fff',
-    '&:hover': {
-      backgroundColor: '#6b6b6b',
-    },
-    padding: '12px 20px', // Match padding of regular select options
-  }),
-}
-
-// Note: we're still using the anchor tag, to ensure standard accessibility UX
 export default function addManga() {
   const [showError,setShowError] = React.useState(true)
   const [isLoading, setIsLoading] = React.useState(false)

@@ -211,11 +211,20 @@ function RootedApp(): React.ReactElement {
           return;
         }
 
-        const catData: { message: string; cats: { value: string; label: string }[] } = await response.json();
-        setCatOptions(catData.cats); // Assuming setCatOptions is defined in your component
+        const catData: { message: string; cats: { value: string; label: string; color?: string }[] } = await response.json()
+
+        const updatedCats = catOptions.map((defaultCat) => {
+          const userCat = catData.cats.find((cat) => cat.value === defaultCat.value);
+          return userCat ? { ...defaultCat, color: userCat.color || defaultCat.color } : defaultCat;
+        })
+    
+        const customCats = catData.cats.filter((cat) => !catOptions.some((defaultCat) => defaultCat.value === cat.value))
+        const finalCatList = [...updatedCats, ...customCats]
+    
+        setCatOptions(finalCatList)
       } catch (error) {
-        console.error(error);
-        toast.error('Unable to get User Cats');
+        console.error(error)
+        toast.error('Unable to get User Cats')
       }
     }
 
