@@ -37,7 +37,9 @@ export async function getUnreadManga(authId:string, userCat:string = '%', sortMe
             if (manga.slugList.length-1 <= manga.currentIndex) mangaList.splice(i,1)
         }
 
-        return new Response(JSON.stringify({mangaDetails: mangaList}), {status: 200})
+        const expiresAt = (await env.KV.get('expiresAt')||Date.now()+1*60*1000)//1 hr from now if no expiresAt is strored
+
+        return new Response(JSON.stringify({mangaDetails: mangaList, expiresAt: expiresAt}), {status: 200})
     } catch (error) {
         console.error("Error:", error);
         return new Response(JSON.stringify({message:'unknown error occured'}), {status: 500})
@@ -50,24 +52,26 @@ export async function getManga(authId:string, mangaId:string, env: Env) {
         let userManga = mangaDetailsSchema.safeParse((await env.DB.prepare("SELECT mangaData.mangaName, userData.mangaId, mangaData.urlBase, mangaData.slugList, mangaData.chapterTextList, mangaData.updateTime, userData.currentIndex, userData.userCat, userData.interactTime FROM userData JOIN mangaData ON (userData.mangaId = mangaData.mangaId) WHERE userData.userId = ?  AND userData.mangaId = ? LIMIT 1")
             .bind(authId, mangaId).first()) as any)
             
-            if (!userManga.success) {
-                return new Response(
-                    JSON.stringify({
-                    message: `Internal Server Error!`,
-                    errors: userManga.error.errors,
-                    }),
-                    { status: 500 }
-                );
-            }
-            
-            const manga = userManga.data;
-    
-            if (!manga) {
-                console.log({"message": 'Manga Not found!', "authId":authId, "mangaId":mangaId})
-                return new Response(JSON.stringify({message:`Manga Not found!`}), {status: 404})
-            }
+        if (!userManga.success) {
+            return new Response(
+                JSON.stringify({
+                message: `Internal Server Error!`,
+                errors: userManga.error.errors,
+                }),
+                { status: 500 }
+            );
+        }
+        
+        const manga = userManga.data;
 
-        return new Response(JSON.stringify({mangaDetails: manga}), {status: 200})
+        if (!manga) {
+            console.log({"message": 'Manga Not found!', "authId":authId, "mangaId":mangaId})
+            return new Response(JSON.stringify({message:`Manga Not found!`}), {status: 404})
+        }
+
+        const expiresAt = (await env.KV.get('expiresAt')||Date.now()+1*60*1000)//1 hr from now if no expiresAt is strored
+
+        return new Response(JSON.stringify({mangaDetails: manga, expiresAt: expiresAt}), {status: 200})
     } catch (error) {
         console.error("Error:", error);
         return new Response(JSON.stringify({message:'unknown error occured'}), {status: 500})
@@ -101,7 +105,9 @@ export async function getUserManga(authId:string, env:Env) {
             return new Response(JSON.stringify({message:`No user data found for ${authId}`}), {status: 404})
         }
 
-        return new Response(JSON.stringify({mangaDetails: mangaList}), {status:200})
+        const expiresAt = (await env.KV.get('expiresAt')||Date.now()+1*60*60*1000)//1 hr from now if no expiresAt is strored
+
+        return new Response(JSON.stringify({mangaDetails: mangaList, expiresAt: expiresAt}), {status:200})
     } catch (err) {
         console.error("Error:", err);
         return new Response(JSON.stringify({message: 'an unknown error occurred'}), {status:500});
@@ -116,7 +122,10 @@ export async function getAllManga(env:Env, pass:string|null) {
         const allManga:[{mangaName:string, mangaId:string}] = (await env.DB.prepare('SELECT mangaName, mangaId FROM mangaData')
                 .all()).results as any
         // console.log(allManga)
-        return new Response(JSON.stringify({allData: allManga}), {status:200})
+
+        const expiresAt = (await env.KV.get('expiresAt')||Date.now()+1*60*1000)//1 hr from now if no expiresAt is strored
+
+        return new Response(JSON.stringify({allData: allManga, expiresAt:expiresAt}), {status:200})
     } catch (err) {
         console.error("Error:", err);
         return new Response(JSON.stringify({message: 'an unknown error occured'}), {status:500});
@@ -125,11 +134,6 @@ export async function getAllManga(env:Env, pass:string|null) {
 
 export async function userStats(authId:string, env:Env) {
     try{
-        // 
-        
-        // if (validationRes instanceof Response) return validationRes
-        // authId = validationRes
-
         let results = await env.DB.batch([
             env.DB.prepare(`SELECT u.currentIndex, u.mangaId, m.chapterTextList, u.userCat FROM userData u JOIN mangaData m ON u.mangaId = m.mangaId WHERE u.userID = ?`).bind(authId),
             env.DB.prepare('SELECT COUNT(*) AS total FROM mangaData'),
@@ -181,7 +185,9 @@ export async function userStats(authId:string, env:Env) {
         const userStats = {"chaptersRead":read, "chaptersUnread":unreadChapters, "unreadManga": unreadManga, "readManga": userManga.length}
         const mangaStats = {"trackedManga": mangaCount?.total||0, "totalTrackedChapters":totalChapters, "newMangaCount": newCount?.total||0, "newChapterCount": updateCount?.total||0}
 
-        return new Response(JSON.stringify({userStats: userStats, globalStats: mangaStats}), {status:200})
+        const expiresAt = (await env.KV.get('expiresAt')||Date.now()+1*60*1000)//1 hr from now if no expiresAt is strored
+
+        return new Response(JSON.stringify({userStats: userStats, globalStats: mangaStats, expiresAt:expiresAt}), {status:200})
     } catch (err) {
         console.error("Error:", err);
         return new Response(JSON.stringify({message: 'an unknown error occurred' + err}), {status:500});

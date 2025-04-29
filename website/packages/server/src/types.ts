@@ -13,6 +13,7 @@ export interface Env {
   CF_ACCESS_CLIENT_SECRET?: string;
   DB: D1Database;
   IMG: R2Bucket;
+  KV: KVNamespace;
   PUPPETEER_SERVER: string;
   SERVER_PASSWORD: string;
   CLERK_SECRET_KEY: string;
