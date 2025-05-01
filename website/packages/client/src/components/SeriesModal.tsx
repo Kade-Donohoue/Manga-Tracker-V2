@@ -15,19 +15,12 @@ import {
 } from '@mui/material'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 
-interface Chapter {
-  title: string
-  url: string
-  key: number
-}
+import { mangaDetails } from '../types' // Update path if needed
 
 interface SeriesModalProps {
   open: boolean
-  onClose: () => void
-  title: string
-  imageUrl: string
-  chapters: Chapter[]
-  currentChapterUrl: string
+  manga: mangaDetails | null
+  onUnsetManga: () => void
   onRemove: () => void
   onChangeCategory: () => void
   onChangeChap: () => void
@@ -35,23 +28,20 @@ interface SeriesModalProps {
 
 const SeriesModal: React.FC<SeriesModalProps> = ({
   open,
-  onClose,
-  title,
-  imageUrl,
-  chapters,
-  currentChapterUrl,
+  manga,
+  onUnsetManga,
   onRemove,
   onChangeCategory,
   onChangeChap
 }) => {
-  const [selectedChapterUrl, setSelectedChapterUrl] = useState(currentChapterUrl)
-  const [tooltipOpen, setTooltipOpen] = useState(false)
   const listRef = useRef<HTMLUListElement | null>(null)
+  const [tooltipOpen, setTooltipOpen] = useState(false)
+
+  const currentChapterUrl = manga ? manga.urlBase + manga.slugList[manga.currentIndex] : ''
 
   useEffect(() => {
-    if (open) {
+    if (open && manga) {
       const timer = setTimeout(() => {
-        console.log(currentChapterUrl)
         if (listRef.current) {
           const currentChapterElement = listRef.current.querySelector(
             `[data-url="${currentChapterUrl}"]`
@@ -64,12 +54,18 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
 
       return () => clearTimeout(timer)
     }
-  }, [currentChapterUrl, open])
+  }, [currentChapterUrl, open, manga])
 
-  // Handle list item click to open chapter URL
+  if (!manga) return null
+
+  const chapters = manga.slugList.map((slug, index) => ({
+    title: manga.chapterTextList[index],
+    url: manga.urlBase + slug,
+    key: index
+  }))
+
   const handleChapterClick = (url: string) => {
     window.open(url, '_blank')
-    setSelectedChapterUrl(url)
   }
 
   const handleJumpToLatestChapter = () => {
@@ -80,58 +76,49 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
     }
   }
 
-  // Check if the chapter is before the current one
   const isChapterRead = (chapterUrl: string) => {
     const currentIndex = chapters.findIndex((chapter) => chapter.url === currentChapterUrl)
-    console.log(chapters[currentIndex])
     const chapterIndex = chapters.findIndex((chapter) => chapter.url === chapterUrl)
     return chapterIndex >= currentIndex
   }
 
-  const handleTooltipOpen = () => setTooltipOpen(true)
-  const handleTooltipClose = () => setTooltipOpen(false)
-
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <Dialog open={open} onClose={onUnsetManga} maxWidth="md" fullWidth>
       <DialogTitle>
-        <Tooltip title={title} enterDelay={500} leaveDelay={200} open={tooltipOpen} onClose={handleTooltipClose} onOpen={handleTooltipOpen}>
+        <Tooltip
+          title={manga.mangaName}
+          enterDelay={500}
+          leaveDelay={200}
+          open={tooltipOpen}
+          onClose={() => setTooltipOpen(false)}
+          onOpen={() => setTooltipOpen(true)}
+        >
           <Typography
             variant="h5"
             sx={{
-              fontSize: { xs: '1.2rem', sm: '1.5rem' }, // Adjust title font size for mobile
+              fontSize: { xs: '1.2rem', sm: '1.5rem' },
               fontWeight: 'bold',
               display: '-webkit-box',
               WebkitBoxOrient: 'vertical',
               overflow: 'hidden',
-              WebkitLineClamp: 2, // Limiting title to 2 lines
-              textOverflow: 'ellipsis', // Ellipsis after 2 lines
-              textAlign: 'center', // Center title on mobile
-              overflowWrap: 'break-word', // Ensure the title wraps on smaller screens
+              WebkitLineClamp: 2,
+              textOverflow: 'ellipsis',
+              textAlign: 'center',
+              overflowWrap: 'break-word',
             }}
-            onClick={handleTooltipOpen}
+            onClick={() => setTooltipOpen(true)}
           >
-            {title}
+            {manga.mangaName}
           </Typography>
         </Tooltip>
-
       </DialogTitle>
+
       <DialogContent dividers>
         <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={3}>
-          {/* Image Container */}
-          <Box
-            sx={{
-            //   width: '100%',
-            //   maxWidth: '240px',
-            //   height: 'auto',
-            //   borderRadius: 16,
-            //   boxShadow: '0 6px 14px rgba(0, 0, 0, 0.1)',
-            //   objectFit: 'cover',
-              mb: { xs: 3, sm: 0 }, // Margin bottom on mobile
-            }}
-          >
+          <Box>
             <img
-              src={imageUrl}
-              alt={title}
+              src={`${import.meta.env.VITE_IMG_URL}/${manga.mangaId || 'mangaNotFoundImage'}`}
+              alt={manga.mangaName}
               style={{
                 width: '100%',
                 maxWidth: '360px',
@@ -142,7 +129,6 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
             />
           </Box>
 
-          {/* Chapters and Controls */}
           <Box flex={1} sx={{ overflowY: 'auto', maxHeight: '60vh' }}>
             <Typography variant="body1" gutterBottom>
               Click on a chapter or jump to the current/latest chapter:
@@ -167,20 +153,20 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
                   sx={{
                     borderRadius: 2,
                     bgcolor: 'transparent',
-                    opacity: isChapterRead(chapter.url) ? 0.6 : 1, // Dimming read chapters
-                    textDecoration: isChapterRead(chapter.url) ? 'line-through' : 'none', // Strikethrough for read chapters
+                    opacity: isChapterRead(chapter.url) ? 0.6 : 1,
+                    textDecoration: isChapterRead(chapter.url) ? 'line-through' : 'none',
                     '&:hover': {
-                      bgcolor: 'rgba(0, 0, 0, 0.08)', // Change on hover
+                      bgcolor: 'rgba(0, 0, 0, 0.08)',
                     },
                   }}
                 >
                   <ListItemText
-                    primary={'Chapter ' + chapter.title}
+                    primary={`Chapter ${chapter.title}`}
                     primaryTypographyProps={{
                       style: {
                         fontWeight: chapter.url === currentChapterUrl ? 'bold' : 'normal',
                         color: chapter.url === currentChapterUrl ? '#1976d2' : 'inherit',
-                        fontSize: '14px', // Smaller text for mobile
+                        fontSize: '14px',
                       },
                     }}
                   />
@@ -195,6 +181,7 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
           </Box>
         </Box>
       </DialogContent>
+
       <DialogActions>
         <Button onClick={onRemove} color="error" variant="contained">
           Remove
@@ -205,7 +192,7 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
         <Button onClick={onChangeCategory} color="primary" variant="contained">
           Change Category
         </Button>
-        <Button onClick={onClose} variant="outlined">
+        <Button onClick={onUnsetManga} variant="outlined">
           Close
         </Button>
       </DialogActions>

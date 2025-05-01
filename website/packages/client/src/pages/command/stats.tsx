@@ -1,36 +1,50 @@
+import React from "react"
+import { useQuery } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
-import React, { useEffect } from "react"
 import './stats.css'
-import { fetchPath } from '../../vars';
+import { fetchPath } from '../../vars'
 
-export default function stats() {
-  
-  async function retrieveStats() {
-    const resp = await fetch(`${fetchPath}/api/data/pull/userStats`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-      if (!resp.ok) return toast.error('Unable to fetch User Stats!')
-      const data:{userStats:{"chaptersRead":number, "chaptersUnread":number, "unreadManga": number, "readManga": number},"globalStats":{"trackedManga":number,"totalTrackedChapters":number,"newMangaCount":number,"newChapterCount":number}} = await resp.json()
-
-    document.getElementById('userTrackedMangaCount')!.innerHTML = data.userStats.readManga?.toString()||"???"
-    document.getElementById('userUnreadMangaCount')!.innerHTML = data.userStats.unreadManga?.toString()||"???"
-    document.getElementById('userReadCount')!.innerHTML = data.userStats.chaptersRead?.toString()||"???"
-    document.getElementById('userUnreadCount')!.innerHTML = data.userStats.chaptersUnread?.toString()||"???"
-
-    document.getElementById('globalTrackedMangaCount')!.innerHTML = data.globalStats.trackedManga?.toString()||"???"
-    document.getElementById('globalTrackChapters')!.innerHTML = data.globalStats.totalTrackedChapters?.toString()||"???"
-    document.getElementById('globalNewMangaCount')!.innerHTML = data.globalStats.newMangaCount?.toString()||"???"
-    document.getElementById('globalNewChapCount')!.innerHTML = data.globalStats.newChapterCount?.toString()||"???"
+type StatsResponse = {
+  userStats: {
+    chaptersRead: number
+    chaptersUnread: number
+    unreadManga: number
+    readManga: number
+  },
+  globalStats: {
+    trackedManga: number
+    totalTrackedChapters: number
+    newMangaCount: number
+    newChapterCount: number
   }
+}
 
-  useEffect(() => {
-    retrieveStats()
-  }, [])
+async function fetchUserMangaStats(): Promise<StatsResponse> {
+  const resp = await fetch(`${fetchPath}/api/data/pull/userStats`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+  if (!resp.ok) {
+    toast.error('Unable to fetch User Stats!')
+    throw new Error('Unable to fetch User Stats!')
+  }
+  return resp.json()
+}
 
-//   if (!mangaList) return <></>
+export default function Stats() {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['userManga', 'stats'],
+    queryFn: fetchUserMangaStats,
+    staleTime: 5*60*1000
+  })
+
+  if (isLoading) return <div className="statistics-container">Loading stats...</div>
+  if (isError || !data) return <div className="statistics-container">Failed to load stats.</div>
+
+  const { userStats, globalStats } = data
+
   return (
     <div className="statistics-container">
       <div className="statistics-section">
@@ -38,19 +52,19 @@ export default function stats() {
         <div className="statistics-box">
           <div className="statistics-item">
             <p>Tracked Manga</p>
-            <h3 id="userTrackedMangaCount">???</h3>
+            <h3>{userStats.readManga ?? '???'}</h3>
           </div>
           <div className="statistics-item">
             <p>Unread Manga</p>
-            <h3 id="userUnreadMangaCount">???</h3>
+            <h3>{userStats.unreadManga ?? '???'}</h3>
           </div>
           <div className="statistics-item">
             <p>Read Chapters</p>
-            <h3 id="userReadCount">???</h3>
+            <h3>{userStats.chaptersRead ?? '???'}</h3>
           </div>
           <div className="statistics-item">
             <p>Unread Chapters</p>
-            <h3 id="userUnreadCount">???</h3>
+            <h3>{userStats.chaptersUnread ?? '???'}</h3>
           </div>
         </div>
       </div>
@@ -59,22 +73,22 @@ export default function stats() {
         <div className="statistics-box">
           <div className="statistics-item">
             <p>Tracked Manga</p>
-            <h3 id="globalTrackedMangaCount">???</h3>
+            <h3>{globalStats.trackedManga ?? '???'}</h3>
           </div>
           <div className="statistics-item">
             <p>Tracked Chapters</p>
-            <h3 id="globalTrackChapters">???</h3>
+            <h3>{globalStats.totalTrackedChapters ?? '???'}</h3>
           </div>
           <div className="statistics-item">
             <p>New Manga (30 Days)</p>
-            <h3 id="globalNewMangaCount">???</h3>
+            <h3>{globalStats.newMangaCount ?? '???'}</h3>
           </div>
           <div className="statistics-item">
             <p>New Chapters (30 Days)</p>
-            <h3 id="globalNewChapCount">???</h3>
+            <h3>{globalStats.newChapterCount ?? '???'}</h3>
           </div>
         </div>
       </div>
     </div>
-  );
+  )
 }

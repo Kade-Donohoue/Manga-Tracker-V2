@@ -1,10 +1,11 @@
 import * as React from 'react'
 import {BrowserRouter as Router, Routes, Route, Link, useLocation} from 'react-router-dom'
 import { toast, ToastContainer } from 'react-toastify';
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 
 import * as Scrollable from './components/Scrollable'
 import DesignSystemProvider from './components/DesignSystemProvider'
-import { setCatOptions, catOptions, fetchPath, setFetchPath } from './vars';
+import { setCatOptions, defaultCategoryOptions, fetchPath, setFetchPath } from './vars';
 
 
 import Home from './pages/Home'
@@ -31,6 +32,7 @@ import * as S from './AppStyles'
 import { IconButton } from '@mui/material';
 import { RedirectToSignIn, SignedIn, SignedOut, SignIn, SignUp } from "@clerk/clerk-react";
 import CookieBanner from './components/cookies';
+import { dropdownOption } from './types';
 
 interface CenteredPageProps {
   children: React.ReactNode;
@@ -51,6 +53,8 @@ const CenteredPage: React.FC<CenteredPageProps> = ({ children }) => (
 
 // Add contexts here
 export default function App(): React.ReactElement {
+
+  const queryClient = new QueryClient();
 
   return (
     <div style={{"width": "100%", "height": "100%"}}>
@@ -97,7 +101,9 @@ export default function App(): React.ReactElement {
                       pauseOnHover
                       theme="dark"
                     />
-                    <RootedApp />
+                    <QueryClientProvider client={queryClient}>
+                      <RootedApp />
+                    </QueryClientProvider>
                   </DesignSystemProvider>
                 </SignedIn>
                 <SignedOut>
@@ -197,40 +203,74 @@ function RootedApp(): React.ReactElement {
       setFetchPath(import.meta.env.VITE_SERVER_URL);
     }
     // Function to fetch user categories
-    async function getCats() {
-      try {
-        const response = await fetch(`${fetchPath}/api/data/pull/pullUserCategories`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
+    // async function getCats() {
+    //   try {
+    //     const response = await fetch(`${fetchPath}/api/data/pull/pullUserCategories`, {
+    //       method: 'POST',
+    //       headers: {
+    //         'Content-Type': 'application/json',
+    //       },
+    //     });
 
-        if (!response.ok) {
-          toast.error('Unable to get User Cats');
-          return;
-        }
+    //     if (!response.ok) {
+    //       toast.error('Unable to get User Cats');
+    //       return;
+    //     }
 
-        const catData: { message: string; cats: { value: string; label: string; color?: string }[] } = await response.json()
+    //     const catData: { message: string; cats: { value: string; label: string; color?: string }[] } = await response.json()
 
-        const updatedCats = catOptions.map((defaultCat) => {
-          const userCat = catData.cats.find((cat) => cat.value === defaultCat.value);
-          return userCat ? { ...defaultCat, color: userCat.color || defaultCat.color } : defaultCat;
-        })
+    //     const updatedCats = catOptions.map((defaultCat) => {
+    //       const userCat = catData.cats.find((cat) => cat.value === defaultCat.value);
+    //       return userCat ? { ...defaultCat, color: userCat.color || defaultCat.color } : defaultCat;
+    //     })
     
-        const customCats = catData.cats.filter((cat) => !catOptions.some((defaultCat) => defaultCat.value === cat.value))
-        const finalCatList = [...updatedCats, ...customCats]
+    //     const customCats = catData.cats.filter((cat) => !catOptions.some((defaultCat) => defaultCat.value === cat.value))
+    //     const finalCatList = [...updatedCats, ...customCats]
     
-        setCatOptions(finalCatList)
-      } catch (error) {
-        console.error(error)
-        toast.error('Unable to get User Cats')
-      }
-    }
+    //     setCatOptions(finalCatList)
+    //   } catch (error) {
+    //     console.error(error)
+    //     toast.error('Unable to get User Cats')
+    //   }
+    // }
 
-    // Call getCats on component mount
-    getCats();
+    // // Call getCats on component mount
+    // getCats();
   }, []);
+
+  useQuery<dropdownOption[], Error>({
+    queryKey: ['userCategories'],
+    queryFn: () => fetchUserCategories(fetchPath, defaultCategoryOptions),
+    staleTime: 1000 * 60 * 60, 
+    gcTime: Infinity,
+  })
+
+  const fetchUserCategories = async (fetchPath: string, catOptions: dropdownOption[]): Promise<dropdownOption[]> => {
+    const response = await fetch(`${fetchPath}/api/data/pull/pullUserCategories`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+  
+    if (!response.ok) {
+      toast.error('Unable to get User Cats');
+      throw new Error('Failed to fetch user categories');
+    }
+  
+    const catData: { message: string; cats: dropdownOption[] } = await response.json();
+  
+    const updatedCats = catOptions.map((defaultCat) => {
+      const userCat = catData.cats.find((cat) => cat.value === defaultCat.value);
+      return userCat ? { ...defaultCat, color: userCat.color || defaultCat.color } : defaultCat;
+    });
+  
+    const customCats = catData.cats.filter(
+      (cat) => !catOptions.some((defaultCat) => defaultCat.value === cat.value)
+    );
+  
+    return [...updatedCats, ...customCats];
+  };  
 
   const [sideBarExpanded, setSideBarExpanded] = React.useState<boolean>(true)
 

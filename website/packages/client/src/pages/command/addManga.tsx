@@ -3,14 +3,22 @@ import 'react-toastify/dist/ReactToastify.css'
 import Select, { StylesConfig } from 'react-select'
 import React, { useEffect } from "react"
 import './addManga.css'
-import { catOptions, fetchPath } from '../../vars'
+import { fetchPath } from '../../vars'
 import { dropdownOption } from '../../types'
 import {customStyles} from '../../styled/index'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 export default function addManga() {
+
+  const { data: catOptions, isError } = useQuery<dropdownOption[], Error>({
+    queryKey: ['userCategories'],
+  })
+
   const [showError,setShowError] = React.useState(true)
   const [isLoading, setIsLoading] = React.useState(false)
-  const [selectedCat, setSelectedCat] = React.useState<dropdownOption | null>(catOptions[0])
+  const [selectedCat, setSelectedCat] = React.useState<dropdownOption | null>(catOptions?.[0]||null)
+
+  const queryClient = useQueryClient();
 
   async function submitManga() {
     if (isLoading) return toast.error('Already adding!')
@@ -73,6 +81,7 @@ export default function addManga() {
       }
 
 
+      queryClient.invalidateQueries({ queryKey: ['userManga'] });
       urlBox!.value = ""
       if (errorLog.length == 0) {
         toast.update(notif, {
