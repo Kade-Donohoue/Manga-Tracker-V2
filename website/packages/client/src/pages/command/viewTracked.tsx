@@ -27,6 +27,7 @@ import ChangeChapterModal from '../../components/changeChapterModal';
 import ChangeCategoryModal from '../../components/changeCategoryModal';
 import { useQuery } from '@tanstack/react-query';
 import SeriesCard from '../../components/SeriesCard';
+import { fetchUserCategories } from '../../utils';
 
 const sortOptions: { label: string; value: keyof mangaDetails | 'search' }[] = [
   { label: 'Title Search', value: 'search' },
@@ -42,6 +43,9 @@ export default function tracked() {
 
   const { data: catOptions, isError } = useQuery<dropdownOption[], Error>({
       queryKey: ['userCategories'],
+      queryFn: () => fetchUserCategories(),
+      staleTime: 1000 * 60 * 60, 
+      gcTime: Infinity,
     })
 
   const [filterOption, setFilterOption] = React.useState<dropdownOption | null>(catOptions?.[8]||null);
@@ -126,16 +130,19 @@ export default function tracked() {
     let score = 0;
     let lastIndex = -1;
 
+    if (str === pattern) return 0;
+    if (str.startsWith(pattern)) return 1;
+
     for (let char of pattern) {
       const index = str.indexOf(char, lastIndex + 1);
-      if (index === -1) return Infinity; // No match found for letter return -1, possible subtract score instead of -1
+      if (index === -1) return 100; // No match found for letter return -1, possible subtract score instead of -1
 
       score += index - lastIndex;
       lastIndex = index;
     }
 
-    const lengthDifference = str.length-pattern.length
-    score += lengthDifference*0.5
+    // const lengthDifference = str.length-pattern.length
+    // score += lengthDifference*0.5
 
     return score;
   }
@@ -144,6 +151,8 @@ export default function tracked() {
     const patternWords = pattern.toLowerCase().split(/\s+/);
     const strWords = str.toLowerCase().split(/\s+/);
   
+    console.log(strWords)
+
     let totalScore = 0;
     for (const pWord of patternWords) {
       let bestScore = Infinity;
@@ -151,9 +160,10 @@ export default function tracked() {
         const score = fuzzyMatch(pWord, sWord); 
         if (score < bestScore) bestScore = score;
       }
-      totalScore += bestScore === Infinity ? 10 : bestScore;
+      totalScore += bestScore;
     }
-    // console.log(`Matching "${pattern}" to "${str}" =>`, totalScore);
+    if (totalScore === Infinity) return -1
+    console.log(`Matching "${pattern}" to "${str}" =>`, totalScore);
     return totalScore;
   }
   
@@ -422,6 +432,7 @@ export default function tracked() {
               data={data}
               handleContextMenu={handleContextMenu}
               openMangaOverview={openMangaOverview}
+              key={data.mangaId}
             />
           ))}
 

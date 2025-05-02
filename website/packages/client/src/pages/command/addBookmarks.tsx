@@ -8,6 +8,7 @@ import { fetchPath } from '../../vars';
 import Button from '@mui/material/Button'
 import ButtonGroup from '@mui/material/ButtonGroup'
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { fetchUserCategories } from '../../utils';
 
 const customStyles: StylesConfig<dropdownOption, false> = {
     control: (provided, state) => ({
@@ -66,8 +67,11 @@ interface BookmarkNode {
 
 export default function addBookmarks() {
   const { data: catOptions, isError } = useQuery<dropdownOption[], Error>({
-    queryKey: ['userCategories'],
-  })
+      queryKey: ['userCategories'],
+      queryFn: () => fetchUserCategories(),
+      staleTime: 1000 * 60 * 60, 
+      gcTime: Infinity,
+    })
 
   const [files, setFiles] = React.useState<any>(undefined)
   const [folders, setFolders] = React.useState<dropdownOption[]>([])

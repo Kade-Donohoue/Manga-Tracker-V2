@@ -38,6 +38,7 @@ import { SignOutButton, UserProfile } from '@clerk/clerk-react';
 import { Popover } from '@mui/material';
 import { SketchPicker } from "react-color";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { fetchUserCategories } from '../utils';
 
 interface dataGridRow {
   id: string,
@@ -54,8 +55,11 @@ interface EditFooterProps extends Partial<HTMLAttributes<HTMLDivElement>> {
 export default function settings() {
 
   const { data: catOptions, isError } = useQuery<dropdownOption[], Error>({
-    queryKey: ['userCategories'],
-  })
+      queryKey: ['userCategories'],
+      queryFn: () => fetchUserCategories(),
+      staleTime: 1000 * 60 * 60, 
+      gcTime: Infinity,
+    })
 
   const [editRows, setEditRows] = React.useState<string[]>([])
   const [localCats, setLocalCats] = React.useState<dropdownOption[]>(catOptions || [])
@@ -345,10 +349,6 @@ export default function settings() {
             <SignOutButton>
               <Button startIcon={<LogoutIcon />}>Logout</Button>
             </SignOutButton>
-            {/* <Box>
-              <Button startIcon={<DeleteIcon/>} onClick={handleOpenDeleteModal}>Remove User Data</Button>
-              
-            </Box> */}
           </AccordionDetails>
         </Accordion>
 

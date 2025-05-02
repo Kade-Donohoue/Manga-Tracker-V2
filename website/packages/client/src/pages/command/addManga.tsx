@@ -7,12 +7,16 @@ import { fetchPath } from '../../vars'
 import { dropdownOption } from '../../types'
 import {customStyles} from '../../styled/index'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { fetchUserCategories } from '../../utils'
 
 export default function addManga() {
 
   const { data: catOptions, isError } = useQuery<dropdownOption[], Error>({
-    queryKey: ['userCategories'],
-  })
+      queryKey: ['userCategories'],
+      queryFn: () => fetchUserCategories(),
+      staleTime: 1000 * 60 * 60, 
+      gcTime: Infinity,
+    })
 
   const [showError,setShowError] = React.useState(true)
   const [isLoading, setIsLoading] = React.useState(false)

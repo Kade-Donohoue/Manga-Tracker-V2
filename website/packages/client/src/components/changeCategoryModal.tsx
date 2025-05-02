@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import { fetchPath } from '../vars'
 import { dropdownOption, mangaDetails } from '../types'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { fetchUserCategories } from '../utils';
 
 interface ChangeCategoryModalProps {
   open: boolean;
@@ -55,8 +56,11 @@ export default function ChangeCategoryModal({
   const queryClient = useQueryClient();
 
   const { data: catOptions, isError } = useQuery<dropdownOption[], Error>({
-    queryKey: ['userCategories'],
-  })
+      queryKey: ['userCategories'],
+      queryFn: () => fetchUserCategories(),
+      staleTime: 1000 * 60 * 60, 
+      gcTime: Infinity,
+    })
 
   const [newCat, setNewCat] = React.useState<dropdownOption | null>(catOptions?catOptions[0]:null);
 

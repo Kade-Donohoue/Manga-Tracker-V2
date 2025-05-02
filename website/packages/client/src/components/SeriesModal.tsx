@@ -95,6 +95,7 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
         >
           <Typography
             variant="h5"
+            component="span"
             sx={{
               fontSize: { xs: '1.2rem', sm: '1.5rem' },
               fontWeight: 'bold',

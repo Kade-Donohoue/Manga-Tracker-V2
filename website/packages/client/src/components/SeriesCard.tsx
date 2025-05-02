@@ -11,6 +11,7 @@ import {
 import { dropdownOption, mangaDetails } from '../types';
 import { fetchPath } from '../vars'
 import { useQuery } from '@tanstack/react-query';
+import { fetchUserCategories } from '../utils';
 
 
 
@@ -27,8 +28,11 @@ export default function SeriesCard({
 }: Props) {
 
   const { data: catOptions, isError } = useQuery<dropdownOption[], Error>({
-    queryKey: ['userCategories'],
-  })
+      queryKey: ['userCategories'],
+      queryFn: () => fetchUserCategories(),
+      staleTime: 1000 * 60 * 60, 
+      gcTime: Infinity,
+    })
 
   const findCat = (catVal: string): dropdownOption => {
     return (
@@ -100,6 +104,7 @@ export default function SeriesCard({
           </Tooltip>
           <Typography
             variant="body2"
+            component="div"
             color="text.secondary"
             sx={{
               color: 'lightgray',
