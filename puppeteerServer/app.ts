@@ -126,7 +126,7 @@ async function updateAllManga() {
             method: 'GET',
             headers: {
                 "Content-Type": "application/json",
-                "pass": config.serverCom.serverPassWord
+                "pass": config.serverCom.serverPassWord,
             }
         })
         if (config.logging.verboseLogging) console.log(resp)
@@ -319,7 +319,8 @@ async function sendUpdate(batch: updateCollector) {
                 },
                 body: JSON.stringify({
                     "newData": batch.batchData.newData,
-                    "amountNewChapters": batch.batchData.newChapterCount
+                    "amountNewChapters": batch.batchData.newChapterCount,
+                    "expiresAt": Date.now()+config.updateSettings.updateDelay+5000//5 extra seconds compared to what this pull took
                 }),
             })
 

@@ -5,6 +5,7 @@ import {Env, updateData} from '../../types';
 const updateMangaSchema = z.object({
     newData: updateData,
     amountNewChapters: z.number(),
+    expiresAt: z.number()
 });
 
 export default async function dataHandler(path: string[], request: Request, env: Env, userId: string) {
@@ -28,7 +29,7 @@ export default async function dataHandler(path: string[], request: Request, env:
             if (!result.success) {
                 return new Response(JSON.stringify(result.error.format()), { status: 400 });
             }
-            return await updateManga(result.data.newData, result.data.amountNewChapters, env);
+            return await updateManga(result.data.newData, result.data.amountNewChapters, result.data.expiresAt, env);
             
         default:
             return new Response('Not found', {status: 404}); 

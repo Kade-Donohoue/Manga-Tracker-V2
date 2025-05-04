@@ -5,6 +5,7 @@ import Select, { StylesConfig } from 'react-select'
 import './removeManga.css'
 import { mangaDetails, mangaInfo } from '../../types'
 import { fetchPath } from '../../vars'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 const customStyles: StylesConfig<dropdownOption, false> = {
   control: (provided, state) => ({
@@ -51,13 +52,18 @@ interface dropdownOption {
   }
 
 export default function removeManga() {
-  const [isLoading, setIsLoading] = React.useState(false)
-  const [dropOptions, setDropOptions] = React.useState<dropdownOption[]>()
+  const [isLoadingRemove, setIsLoadingRemove] = React.useState(false)
+  const { data: mangaListOptions, isLoading: isMangaListLoading, error: mangaListError } = useQuery({
+    queryKey: ['userManga', 'removeManga'],
+    queryFn: fetchUserManga,
+  })
   const [selectedOption, setSelectedOption] = React.useState<{value: string; label: string;} | null>(null)
 
-  async function submitManga() {
-    setIsLoading(true)
-    if (isLoading) return toast.error('Already adding!')
+  const queryClient = useQueryClient();
+
+  async function removeManga() {
+    setIsLoadingRemove(true)
+    if (isLoadingRemove) return toast.error('Already Removing!')
     let notif = toast.loading("Removing Manga!")
     try {
       // console.log(selectedOption)
@@ -72,7 +78,7 @@ export default function removeManga() {
         draggable: true,
         progress: 0
       })
-      setIsLoading(false)
+      setIsLoadingRemove(false)
       return
     }
 
@@ -87,6 +93,7 @@ export default function removeManga() {
         })
 
         if (reply.status==200) {
+            queryClient.invalidateQueries({ queryKey: ['userManga'] });
             toast.update(notif, {
               render: "Manga Successfully Removed!", 
               type: "success", 
@@ -97,7 +104,6 @@ export default function removeManga() {
               draggable: true,
               progress: 0
             })
-            retrieveMangaList()
             setSelectedOption(null)
         } else {
           const data:{message:string, url:string} = await reply.json()
@@ -113,7 +119,7 @@ export default function removeManga() {
           })
         }
 
-        setIsLoading(false)
+        setIsLoadingRemove(false)
     } catch (error) {
       toast.update(notif, {
         render: "An Unknown Error has Occured", 
@@ -125,37 +131,36 @@ export default function removeManga() {
         draggable: true,
         progress: 0
       })
-      setIsLoading(false)
+      setIsLoadingRemove(false)
     }
   } 
   
-  async function retrieveMangaList() {
+  async function fetchUserManga(): Promise<dropdownOption[]> {
     const resp = await fetch(`${fetchPath}/api/data/pull/getUserManga`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          "userCat": "%"
-        }),
-      })
-
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userCat: "%" }),
+    })
+  
     if (!resp.ok) {
-      var errData:{message:string, url:string} = await resp.json()
-      toast.error(errData.message||"Unable to Fetch Manga! Reload the Page or Contact an Admin!")
-      return 
+      const errData: { message: string; url: string } = await resp.json()
+      toast.error(errData.message || "Unable to Fetch Manga! Reload the Page or Contact an Admin!")
+      throw new Error(errData.message || 'Failed to fetch')
     }
-    const data:{mangaDetails:mangaDetails[]} = await resp.json()
-    var options:dropdownOption[] = []
-    for (var i = data.mangaDetails.length-1; i >= 0; i--) {
-      options.push({value: data.mangaDetails[i].mangaId, label: data.mangaDetails[i].mangaName})
-    }
-    setDropOptions(options)
+  
+    const data: { mangaDetails: mangaDetails[] } = await resp.json()
+  
+    return data.mangaDetails
+      .slice()
+      .reverse()
+      .map((m) => ({
+        value: m.mangaId,
+        label: m.mangaName,
+      }))
   }
-
-  useEffect(() => {
-    retrieveMangaList()
-  }, [])
+  
 
 //   if (!mangaList) return <></>
   return (
@@ -167,12 +172,12 @@ export default function removeManga() {
         className="removeSelect" 
         value={selectedOption} 
         onChange={setSelectedOption} 
-        options={dropOptions} 
+        options={mangaListOptions} 
         styles={customStyles} 
         isClearable={true} 
-        isLoading={(dropOptions) ? false:true} 
+        isLoading={(mangaListOptions) ? false:true} 
         />
-      <button className="removeButton" type="submit" onClick={submitManga}>{isLoading? 'Loading...':'Remove Manga!'}</button>
+      <button className="removeButton" type="submit" onClick={removeManga}>{isLoadingRemove? 'Loading...':'Remove Manga!'}</button>
     </div>
   );
 }

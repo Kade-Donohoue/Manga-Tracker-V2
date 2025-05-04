@@ -4,7 +4,7 @@ import Select from 'react-select'
 import React from "react"
 import './feed.css'
 import { mangaDetails, dropdownOption } from '../../types'
-import { catOptions, ordOptions, methodOptions, fetchPath } from '../../vars'
+import { ordOptions, methodOptions, fetchPath } from '../../vars'
 import { RPCCloseCodes } from '@discord/embedded-app-sdk'
 import Box from '@mui/material/Box'
 import Modal from '@mui/material/Modal'
@@ -14,17 +14,29 @@ import CircularProgress from '@mui/material/CircularProgress'
 import { toast } from 'react-toastify'
 import CancelIcon from '@mui/icons-material/Cancel'
 import {modalStyle} from '../../AppStyles'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { fetchUserCategories } from '../../utils'
 
 export default function feed():JSX.Element {
+
+  const { data: catOptions, isError } = useQuery<dropdownOption[], Error>({
+      queryKey: ['userCategories'],
+      queryFn: () => fetchUserCategories(),
+      staleTime: 1000 * 60 * 60, 
+      gcTime: Infinity,
+    })
+
   const [mangaDetails, setMangaDetails] = React.useState<mangaDetails[]>([]);
   const [currentCard, setCurrentCard] = React.useState(0)
   const [isLoadingStart, setIsLoadingStart] = React.useState(false)
   const [showError,setShowError] = React.useState(true)
 
-  const [selectedCat, setSelectedCat] = React.useState<dropdownOption | null>(catOptions[0])
+  const [selectedCat, setSelectedCat] = React.useState<dropdownOption | null>(catOptions?.[0]||null)
   const [selectedOrd, setSelectedOrd] = React.useState<dropdownOption | null>(ordOptions[0])
   const [selectedMethod, setSelectedMethod] = React.useState<dropdownOption | null>(methodOptions[0])
   const [newChapter, setChapter] = React.useState<dropdownOption | null>(null)
+
+  const queryClient = useQueryClient();
 
   async function updateCard() {
     try {
@@ -137,6 +149,7 @@ export default function feed():JSX.Element {
     })
 
     if (reply.ok && mangaDetails) {
+      queryClient.invalidateQueries({ queryKey: ['userManga'] });
       var tmp:mangaDetails[] = [...mangaDetails]
       tmp[currentCard].interactTime = Date.now()
       tmp[currentCard].currentIndex = newIndex

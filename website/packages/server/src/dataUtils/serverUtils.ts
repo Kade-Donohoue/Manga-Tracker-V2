@@ -16,9 +16,10 @@ export async function getAllManga(env:Env) {
     }
 }
 
-export async function updateManga(newData:updateDataType, newChapterCount:number, env:Env) {
+export async function updateManga(newData:updateDataType, newChapterCount:number, expiresAt:number, env:Env) {
     try {
         console.log(newData)
+        await env.KV.put('expiresAt', expiresAt.toString())
         const stmt = env.DB.prepare('UPDATE mangaData SET urlBase = ?, slugList = ?, chapterTextList = ? WHERE mangaId = ?')
 
         var boundStmt:D1PreparedStatement[] = []

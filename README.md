@@ -1,11 +1,38 @@
 # Manga Tracker V2
- Tracks manga using puppeteer. Uses discord activities and commands for user interface. 
+ A web-based platform designed to streamline manga tracking across various websites. Built with Cloudflare, React, and Puppeteer, it offers a fast, reliable, and modern experience for manga readers. Users can easily browse and view chapters, add new manga to their collection, and access detailed reading statistics — all from a centralized, intuitive interface. Behind the scenes, Puppeteer automates data collection, while Cloudflare ensures high availability and performance.
 
-# Parts
-Each folder is a separate part of the bot and it has 3 main parts. 
-1. the activity which handles interacting with databases as well as providing the activity. 
-2. The puppeteer server. This handles fetching all manga data from websites and needs to be run locally 
-3. The Text Command server. This is made to run locally and processes commands fetches required data from activity backend as well as create images for the user. 
-4. the utils folder contains some tools primarily converting old manga bot db to new system
+## How to Use
 
-the first 2 are required while the text command and utils are optional. Each folder has its own readme with setup instructions. 
+There are two supported options for using **MangaTracker**:
+
+1. **Use the Hosted Version**  
+   Visit [**manga.kdonohoue.com**](https://manga.kdonohoue.com) to start tracking and reading manga instantly — no setup required.
+
+2. **Self-Host the App**  
+   Prefer running it yourself? You can deploy the app on your own infrastructure.  
+   Instructions for self-hosting are available below.
+
+
+## Self Hosting Instructions
+
+### Project Structure
+
+The project is organized into several root folders, each handling a specific part of the system.  
+Each folder includes its own `README.md` with setup instructions specific to that component.
+
+
+- **`utils/`**  
+  Contains various tools and scripts for tasks like viewing logs, migrating to new database versions, and other utility functions.
+
+- **`puppeteerServer/`**  
+  Responsible for collecting manga data from supported websites using Puppeteer. This is one of the required components for running the tracker.
+
+- **`website/`**  
+  Hosts both the Cloudflare server and the React-based web app. This is the main user interface and another required component for running the app.
+
+- **`slashCommandBot/`**  
+  A Discord bot that lets users interact with the tracker using slash commands. This component is optional.
+
+> 💡 **For the best experience**, it's recommended to use the **web app**.  
+> 📁 **Each folder has its own `README.md`** with setup instructions.  
+> 🔧 **Required for core functionality**: `puppeteerServer/` and `website/`

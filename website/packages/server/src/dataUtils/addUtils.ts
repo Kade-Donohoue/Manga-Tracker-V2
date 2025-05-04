@@ -1,6 +1,4 @@
-import { Status } from '@discord/embedded-app-sdk/output/schema/common'
 import {Env, mangaDataRowReturn, mangaReturn} from '../types'
-import { v4 as uuidv4 } from 'uuid'
 
 export async function saveManga(authId:string, urls:string[], userCat:string = 'unsorted', env:Env) {
     try {
@@ -28,7 +26,7 @@ export async function saveManga(authId:string, urls:string[], userCat:string = '
         let newMangaInfo:mangaReturn[] = [] 
         let userReturn:{url:string, message:string, success:boolean}[] = [...errors]
         while (waitingManga.size >= 1) {
-            await new Promise((resolve) => setTimeout(resolve, 5000))
+            await new Promise((resolve) => setTimeout(resolve, 500*waitingManga.size))
 
             let currentStatusRes = await fetch(`${env.PUPPETEER_SERVER}/checkStatus/get?fetchIds=${Array.from(waitingManga.keys()).join('&fetchIds=')}&pass=${env.SERVER_PASSWORD}`)
 
@@ -78,7 +76,7 @@ export async function saveManga(authId:string, urls:string[], userCat:string = '
         const boundAddStmtsArrs: D1PreparedStatement[][] = await Promise.all(newMangaInfo.map(async (manga) => {
             const newBoundStmt: D1PreparedStatement[] = []
 
-            const mangaId = existingMangaMap.get(manga.mangaName) || uuidv4().toString()
+            const mangaId = existingMangaMap.get(manga.mangaName) || crypto.randomUUID()
 
             console.log("Binding values:", {
                 mangaId,

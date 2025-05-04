@@ -1,6 +1,6 @@
 import { dropdownOption } from "./types"
 
-export let catOptions:dropdownOption[] = [
+export let defaultCategoryOptions:dropdownOption[] = [
     {value: "reading", label: "Reading"},
     {value: "notreading", label: "Not Reading"},
     {value: "dropped", label: "Dropped"},
@@ -13,7 +13,7 @@ export let catOptions:dropdownOption[] = [
 ]
 
 export function setCatOptions(newOptions:dropdownOption[]) {
-    catOptions = newOptions
+    // catOptions = newOptions
 }
   
 export const ordOptions:dropdownOption[] = [

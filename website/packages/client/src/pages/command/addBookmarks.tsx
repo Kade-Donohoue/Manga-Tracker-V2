@@ -3,10 +3,12 @@ import 'react-toastify/dist/ReactToastify.css';
 import React, { useEffect } from "react"
 import Select, { StylesConfig } from 'react-select'
 import './addBookmarks.css'
-import { catOptions, fetchPath } from '../../vars';
+import { fetchPath } from '../../vars';
 
 import Button from '@mui/material/Button'
 import ButtonGroup from '@mui/material/ButtonGroup'
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { fetchUserCategories } from '../../utils';
 
 const customStyles: StylesConfig<dropdownOption, false> = {
     control: (provided, state) => ({
@@ -64,15 +66,24 @@ interface BookmarkNode {
 
 
 export default function addBookmarks() {
+  const { data: catOptions, isError } = useQuery<dropdownOption[], Error>({
+      queryKey: ['userCategories'],
+      queryFn: () => fetchUserCategories(),
+      staleTime: 1000 * 60 * 60, 
+      gcTime: Infinity,
+    })
+
   const [files, setFiles] = React.useState<any>(undefined)
   const [folders, setFolders] = React.useState<dropdownOption[]>([])
   const [isLoading, setIsLoading] = React.useState(false)
   const [selectedFolder, setSelectedFolder] = React.useState<dropdownOption|null>(null)
-  const [selectedCat, setSelectedCat] = React.useState<dropdownOption | null>(catOptions[0])
+  const [selectedCat, setSelectedCat] = React.useState<dropdownOption | null>(catOptions?.[0]||null)
   const [showError, setShowError] = React.useState<boolean>(true)
   const [errorList, setErrorList] = React.useState<string[]>([])
   const [userChoice, setUserChoice] = React.useState<boolean>(false)
   const [addedMangaCount, setAddedMangaCount] = React.useState<number>(0)
+
+  const queryClient = useQueryClient();
 
   /**
    * sends urls in selected folder to server 1 by 1 with provided category
@@ -146,6 +157,7 @@ export default function addBookmarks() {
       setAddedMangaCount(addedCount)
       setUserChoice(true)
       // setFolders([])
+      queryClient.invalidateQueries({ queryKey: ['userManga'] });
       if (errorLog.length == 0) {
         toast.update(notif, {
           render: "Manga Successfully Added!", 
@@ -292,7 +304,7 @@ export default function addBookmarks() {
         <label className='addError' id='errorField' style={{display:(showError?'block':'none')}}>{errorList.map(error => <div>{error}</div>)}</label>
       </div>
       <ButtonGroup variant='contained' sx={{padding: "10px 0", alignSelf:"center", width: "95%"}}>
-          <Button sx={{width:"50%"}} onClick={(e) => {setUserChoice(false); setSelectedFolder(null); setSelectedCat(catOptions[0])}}>Add More Manga</Button>
+          <Button sx={{width:"50%"}} onClick={(e) => {setUserChoice(false); setSelectedFolder(null); setSelectedCat(catOptions?.[0]||null)}}>Add More Manga</Button>
           <Button sx={{width:"50%"}} onClick={(e) => setFolders([])}>Change File</Button>
       </ButtonGroup>
     </div>

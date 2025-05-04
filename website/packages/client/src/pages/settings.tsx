@@ -1,5 +1,5 @@
 import React, { ChangeEvent, HTMLAttributes, useState } from 'react';
-import { catOptions, setCatOptions } from '../vars'
+import { setCatOptions } from '../vars'
 import Button from '@mui/material/Button';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import IconButton from '@mui/material/IconButton';
@@ -37,6 +37,8 @@ import { modalStyle } from '../AppStyles';
 import { SignOutButton, UserProfile } from '@clerk/clerk-react';
 import { Popover } from '@mui/material';
 import { SketchPicker } from "react-color";
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { fetchUserCategories } from '../utils';
 
 interface dataGridRow {
   id: string,
@@ -51,16 +53,24 @@ interface EditFooterProps extends Partial<HTMLAttributes<HTMLDivElement>> {
 }
 
 export default function settings() {
+
+  const { data: catOptions, isError } = useQuery<dropdownOption[], Error>({
+      queryKey: ['userCategories'],
+      queryFn: () => fetchUserCategories(),
+      staleTime: 1000 * 60 * 60, 
+      gcTime: Infinity,
+    })
+
   const [editRows, setEditRows] = React.useState<string[]>([])
-  const [localCats, setLocalCats] = React.useState<dropdownOption[]>(catOptions)
-  const [rows, setRows] = React.useState<GridRowsProp>(convertToDataGrid(catOptions))
+  const [localCats, setLocalCats] = React.useState<dropdownOption[]>(catOptions || [])
+  const [rows, setRows] = React.useState<GridRowsProp>(convertToDataGrid(catOptions || []))
   const [rowModesModel, setRowModesModel] = React.useState<GridRowModesModel>({})
 
   const [openDeleteUserModal, setOpenDeleteUserModal] = React.useState(false);
   const handleOpenDeleteModal = () => setOpenDeleteUserModal(true);
   const handleCloseDeleteModal = () => setOpenDeleteUserModal(false);
 
-
+  const queryClient = useQueryClient();
 
   function convertToDataGrid(dropdownOptions: dropdownOption[]): GridRowsProp {
     let newData: dataGridRow[] = []
@@ -94,6 +104,8 @@ export default function settings() {
     })
 
     if (!resp.ok) toast.error('Unable to save Categories! Check network connection or contact an admin!')
+    queryClient.invalidateQueries({ queryKey: ['userCategories'] })
+
   }
 
   async function deleteUserData() {
@@ -176,7 +188,11 @@ export default function settings() {
     //sync with Categories V1
     let newRowsV1: dropdownOption[] = []
     for (const row of rows) {
-      newRowsV1.push(row.id === newRow.id ? { value: newRow.id, label: newRow.label } : { value: row.id, label: row.label })
+      const rowObject = row.id === newRow.id
+        ? { value: newRow.id, label: newRow.label, ...(newRow.color && { color: newRow.color }) }
+        : { value: row.id, label: row.label, ...(row.color && { color: row.color }) }
+
+      newRowsV1.push(rowObject)
     }
     // console.log(newRowsV1)
     setLocalCats(newRowsV1)
@@ -224,6 +240,15 @@ export default function settings() {
 
     postCats(newRowsV1)
   }
+
+  React.useEffect(() => {
+    if (!isError && catOptions) {
+      setLocalCats(catOptions);
+      setRows(convertToDataGrid(catOptions));
+    }
+  }, [catOptions, isError]);
+
+
 
   const columns: GridColDef[] = [
     { field: 'label', headerName: 'Category Title', width: 600, editable: true },
@@ -324,10 +349,6 @@ export default function settings() {
             <SignOutButton>
               <Button startIcon={<LogoutIcon />}>Logout</Button>
             </SignOutButton>
-            {/* <Box>
-              <Button startIcon={<DeleteIcon/>} onClick={handleOpenDeleteModal}>Remove User Data</Button>
-              
-            </Box> */}
           </AccordionDetails>
         </Accordion>
 

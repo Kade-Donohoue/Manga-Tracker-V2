@@ -1,7 +1,5 @@
 # Manga Activity
 
-This is based off of discord embedded app sdk playground. For more detailed information you can find it at https://github.com/discord/embedded-app-sdk. 
-
 ## Running your app locally
 
 ```
