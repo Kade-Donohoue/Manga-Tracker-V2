@@ -1,6 +1,4 @@
-import { Status } from '@discord/embedded-app-sdk/output/schema/common'
 import {Env, mangaDataRowReturn, mangaReturn} from '../types'
-import { v4 as uuidv4 } from 'uuid'
 
 export async function saveManga(authId:string, urls:string[], userCat:string = 'unsorted', env:Env) {
     try {
@@ -78,7 +76,7 @@ export async function saveManga(authId:string, urls:string[], userCat:string = '
         const boundAddStmtsArrs: D1PreparedStatement[][] = await Promise.all(newMangaInfo.map(async (manga) => {
             const newBoundStmt: D1PreparedStatement[] = []
 
-            const mangaId = existingMangaMap.get(manga.mangaName) || uuidv4().toString()
+            const mangaId = existingMangaMap.get(manga.mangaName) || crypto.randomUUID()
 
             console.log("Binding values:", {
                 mangaId,
