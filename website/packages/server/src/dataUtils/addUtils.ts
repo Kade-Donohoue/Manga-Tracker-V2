@@ -26,7 +26,7 @@ export async function saveManga(authId:string, urls:string[], userCat:string = '
         let newMangaInfo:mangaReturn[] = [] 
         let userReturn:{url:string, message:string, success:boolean}[] = [...errors]
         while (waitingManga.size >= 1) {
-            await new Promise((resolve) => setTimeout(resolve, 5000))
+            await new Promise((resolve) => setTimeout(resolve, 500*waitingManga.size))
 
             let currentStatusRes = await fetch(`${env.PUPPETEER_SERVER}/checkStatus/get?fetchIds=${Array.from(waitingManga.keys()).join('&fetchIds=')}&pass=${env.SERVER_PASSWORD}`)
 
