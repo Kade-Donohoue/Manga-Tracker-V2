@@ -89,11 +89,11 @@ export async function saveManga(authId:string, urls:string[], userCat:string = '
 
             newBoundStmt.push(env.DB.prepare(
                 'INSERT INTO mangaData (mangaId,mangaName,urlBase,slugList,chapterTextList,updateTime) VALUES (?,?,?,?,?,?) ON CONFLICT(mangaId) DO UPDATE SET urlBase = excluded.urlBase, slugList = excluded.slugList, chapterTextList = excluded.chapterTextList, updateTime = excluded.updateTime'
-            ).bind(mangaId, manga.mangaName, manga.urlBase, manga.slugList, manga.chapterTextList, currentTime))
+            ).bind(mangaId, manga.mangaName, manga.urlBase, manga.slugList, manga.chapterTextList.replace('.', '-'), currentTime))
 
             newBoundStmt.push(env.DB.prepare(
                 'INSERT INTO userData (userId, mangaId, currentIndex, currentChap, userCat, interactTime) VALUES (?,?,?,?,?,?) ON CONFLICT(userID, mangaId) DO UPDATE SET currentIndex = excluded.currentIndex, currentChap = excluded.currentChap, userCat = excluded.userCat, interactTime = excluded.interactTime'
-            ).bind(authId, mangaId, manga.currentIndex, manga.chapterTextList.split(',')[manga.currentIndex], userCat, Date.now()))
+            ).bind(authId, mangaId, manga.currentIndex, manga.chapterTextList.split(',')[manga.currentIndex].replace('.', '-'), userCat, Date.now()))
 
             await env.IMG.put(mangaId, new Uint8Array(manga.iconBuffer.data).buffer, {
                 httpMetadata: { contentType: "image/jpeg" }
