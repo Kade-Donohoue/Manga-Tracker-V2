@@ -162,7 +162,7 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
 
         job.log(logWithTimestamp('Done'))
         await job.updateProgress(100)
-        return {"mangaName": mangaName, urlBase: overviewUrl+'/chapter-', slugList: urlList.join(','), "chapterTextList": urlList.join(','), "currentIndex": currIndex, "iconBuffer": resizedImage}
+        return {"mangaName": mangaName, urlBase: overviewUrl+'/chapter-', slugList: urlList.join(','), "chapterTextList": urlList.join(',').replace('.', '-'), "currentIndex": currIndex, "iconBuffer": resizedImage}
     } catch (err) {
         job.log(logWithTimestamp(`Error: ${err}`))
         console.warn('Unable to fetch data for: ' + url)

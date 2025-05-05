@@ -310,7 +310,7 @@ async function mangaFailedEvent({ jobId }: { jobId: string }) {
 async function sendUpdate(batch: updateCollector) {
     console.log('Sending Manga Update!')
     if (batch.batchData.newData.length > 0) {
-        if (!config.updateSettings.refetchImgs) { // returns all manga togwrgwe if images not fetched
+        if (!config.updateSettings.refetchImgs) { // returns all manga together if images not fetched
             const resp = await fetch(`${config.serverCom.serverUrl}/serverReq/data/updateManga`, {
                 method: 'POST',
                 headers: {
