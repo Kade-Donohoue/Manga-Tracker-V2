@@ -84,6 +84,20 @@ export const updateData = z.array(z.object({
 
 export type updateDataType = z.infer<typeof updateData>
 
+export const newData = z.object({
+  mangaName: z.string().min(1),
+  urlBase: z.string(),
+  slugList: z.string(),
+  chapterTextList: z.string().transform((val) => val.replace(/-/g, ".")),
+  currentIndex: z.coerce.number(),
+  iconBuffer: z.object({
+    type: z.literal("Buffer"),
+    data: z.array(z.number().int().min(0).max(255)),
+  }),
+})
+
+export type newDataType = z.infer<typeof newData>
+
 const sortMethodSchema = z
   .string()
   .transform((val) => val.toLowerCase())
