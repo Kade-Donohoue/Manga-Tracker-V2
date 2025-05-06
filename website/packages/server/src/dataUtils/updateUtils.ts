@@ -2,13 +2,13 @@ import {Env, mangaReturn} from '../types'
 
 export async function updateCurrentIndex(authId:string, newIndex:number, mangaId: string, env:Env) {
     try {
-        if ( !newIndex || !mangaId ) return new Response(JSON.stringify({message: "Invalid Argument"}), {status:400})
-
         const res = await env.DB.prepare('UPDATE userData SET currentIndex = ?, interactTime = ? WHERE userID = ? AND mangaId = ?')
                 .bind(newIndex, Date.now(), authId, mangaId)
                 .run()
 
-        return new Response(JSON.stringify({message: "Success"}), {status:200})
+        if (res.success) return new Response(JSON.stringify({message: "Success"}), {status:200})
+
+        return new Response(JSON.stringify({message: "Unable to save!"}), {status:500})
     } catch (err) {
         return new Response(JSON.stringify({message: "An error occurred" + err}), {status:500})
     }

@@ -68,7 +68,20 @@ export function verifyIndexRange(index:number, listLength:number) {
 export async function zodParse<T extends ZodSchema<any>>( request: Request, schema: T): Promise<z.infer<T> | Response> {
   try {
     const json = await request.json();
-    return schema.parse(json);
+    const result = schema.safeParse(json);
+  
+    if (result.success) {
+      return result.data;
+    } else {
+      console.error("Zod validation failed:", result.error.format());
+      return new Response(
+        JSON.stringify({
+          message: "Validation error",
+          issues: result.error.issues,
+        }),
+        { status: 400 }
+      );
+    }
   } catch (err) {
     console.log(err)
     return new Response(JSON.stringify({message: 'Bad Request, unable to parse', err: err}), { status: 400 });
