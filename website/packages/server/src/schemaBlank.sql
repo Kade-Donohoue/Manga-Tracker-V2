@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS mangaData (
     urlBase TEXT NOT NULL,
     slugList TEXT NOT NULL,
     chapterTextList TEXT NOT NULL,
+    latestChapterText REAL NOT NULL,
     updateTime TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS userSettings (

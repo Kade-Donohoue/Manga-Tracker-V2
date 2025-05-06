@@ -20,12 +20,12 @@ export async function updateManga(newData:updateDataType, newChapterCount:number
     try {
         console.log(newData)
         await env.KV.put('expiresAt', expiresAt.toString())
-        const stmt = env.DB.prepare('UPDATE mangaData SET urlBase = ?, slugList = ?, chapterTextList = ? WHERE mangaId = ?')
+        const stmt = env.DB.prepare('UPDATE mangaData SET urlBase = ?, slugList = ?, chapterTextList = ?, latestChapterText = ? WHERE mangaId = ?')
 
         var boundStmt:D1PreparedStatement[] = []
         for (var i = 0; i < newData.length; i++) {
             // console.log(newData[i].chapterUrlList, newData[i].chapterTextList, newData[i].mangaId)
-            boundStmt.push(stmt.bind(newData[i].urlBase, newData[i].slugList, newData[i].chapterTextList, newData[i].mangaId))
+            boundStmt.push(stmt.bind(newData[i].urlBase, newData[i].slugList, newData[i].chapterTextList, newData[i].chapterTextList.slice(newData[i].chapterTextList.lastIndexOf(',')+1), newData[i].mangaId))
 
             if (newData[i].iconBuffer) {
                 await env.IMG.put(newData[i].mangaId, new Uint8Array(newData[i].iconBuffer!.data).buffer, {httpMetadata:{contentType:"image/jpeg"}}) //Save Cover Image with title as mangaId
@@ -53,22 +53,25 @@ export async function fixCurrentChaps(env: Env) {
             .bind(user.mangaId)
             .first<{ chapterTextList: string }>();
 
-
         if (!manga?.chapterTextList) continue;
 
         const chapterList = String(manga.chapterTextList)
-        .split(',')
-        .map((c) => c.trim());
-
+            .split(',') 
+            .map((c) => c.trim());
 
         const chapterText = chapterList[Number(user.currentIndex)] ?? -1;
+        const lastChap = chapterList[chapterList.length-1] ?? -1
 
         await env.DB
-          .prepare("UPDATE userData SET currentChap = ? WHERE mangaId = ? AND userID = ?")
-          .bind(chapterText, user.mangaId, user.userID)
-          .run();
+            .prepare("UPDATE userData SET currentChap = ? WHERE mangaId = ? AND userID = ?")
+            .bind(chapterText, user.mangaId, user.userID)
+            .run();
+
+        await env.DB
+            .prepare("UPDATE mangaData SET latestChapterText = ? WHERE mangaId = ?")
+            .bind(lastChap, user.mangaId)
+            .run();
       }
 
       return new Response("Fixed currentChap for all users.");
-
 }

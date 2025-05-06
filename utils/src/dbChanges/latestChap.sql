@@ -1,0 +1,1 @@
+ALTER TABLE mangaData ADD latestChapterText REAL NOT NULL DEFAULT "-1";
