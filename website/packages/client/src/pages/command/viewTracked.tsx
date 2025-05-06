@@ -27,7 +27,7 @@ import ChangeChapterModal from '../../components/changeChapterModal';
 import ChangeCategoryModal from '../../components/changeCategoryModal';
 import { useQuery } from '@tanstack/react-query';
 import SeriesCard from '../../components/SeriesCard';
-import { fetchUserCategories } from '../../utils';
+import { fetchUserCategories, getStoredValue } from '../../utils';
 
 const sortOptions: { label: string; value: keyof mangaDetails | 'search' }[] = [
   { label: 'Title Search', value: 'search' },
@@ -48,17 +48,34 @@ export default function tracked() {
       gcTime: Infinity,
     })
 
-  const [filterOption, setFilterOption] = React.useState<dropdownOption | null>(catOptions?.[8]||null);
+  const [filterOption, setFilterOption] = React.useState<dropdownOption | null>(getStoredValue('filterOption')||catOptions?.[8]||null);
   const [methodOption, setMethodOption] = React.useState<{
     label: string;
     value: string;
-  } | null>(sortOptions[0]);
+  } | null>(getStoredValue('methodOption')||sortOptions[0]);
   const [orderOption, setOrderOption] = React.useState<{
     value: string;
     label: string;
-  } | null>({ value: '1', label: 'Ascending' });
+  } | null>(getStoredValue('orderOption')||{ value: '1', label: 'Ascending' });
+
+  React.useEffect(() => {
+    localStorage.setItem('filterOption', JSON.stringify(filterOption));
+  }, [filterOption]);
+
+  React.useEffect(() => {
+    localStorage.setItem('methodOption', JSON.stringify(methodOption));
+  }, [methodOption]);
+
+  React.useEffect(() => {
+    localStorage.setItem('orderOption', JSON.stringify(orderOption));
+  }, [orderOption]);
+
   const [currentSearch, setSearch] = React.useState<string>('');
-  const [unreadChecked, setUnreadChecked] = React.useState<boolean>(false);
+  const [unreadChecked, setUnreadChecked] = React.useState<boolean>(getStoredValue('unreadChecked')||false);
+
+  React.useEffect(() => {
+    localStorage.setItem('unreadChecked', JSON.stringify(unreadChecked));
+  }, [unreadChecked]);
 
   //right click menu
   const [anchorPosition, setAnchorPosition] = React.useState<{
