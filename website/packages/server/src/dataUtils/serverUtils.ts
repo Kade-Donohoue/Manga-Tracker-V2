@@ -41,3 +41,34 @@ export async function updateManga(newData:updateDataType, newChapterCount:number
         return new Response(JSON.stringify({message: 'an unknown error occured'}), {status:500});
     }
 }
+
+export async function fixCurrentChaps(env: Env) {
+    const { results: users } = await env.DB
+        .prepare("SELECT userID, mangaId, currentIndex FROM userData")
+        .all();
+
+      for (const user of users) {
+        const manga = await env.DB
+            .prepare("SELECT chapterTextList FROM mangaData WHERE mangaId = ?")
+            .bind(user.mangaId)
+            .first<{ chapterTextList: string }>();
+
+
+        if (!manga?.chapterTextList) continue;
+
+        const chapterList = String(manga.chapterTextList)
+        .split(',')
+        .map((c) => c.trim());
+
+
+        const chapterText = chapterList[Number(user.currentIndex)] ?? -1;
+
+        await env.DB
+          .prepare("UPDATE userData SET currentChap = ? WHERE mangaId = ? AND userID = ?")
+          .bind(chapterText, user.mangaId, user.userID)
+          .run();
+      }
+
+      return new Response("Fixed currentChap for all users.");
+
+}
