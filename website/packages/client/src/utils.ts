@@ -28,3 +28,12 @@ export const fetchUserCategories = async (): Promise<dropdownOption[]> => {
 
   return [...updatedCats, ...customCats];
 };  
+
+export const getStoredValue = (key: string) => {
+  try {
+    const item = localStorage.getItem(key);
+    return item ? JSON.parse(item) : null;
+  } catch {
+    return null;
+  }
+};
