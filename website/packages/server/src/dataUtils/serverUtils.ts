@@ -44,34 +44,36 @@ export async function updateManga(newData:updateDataType, newChapterCount:number
 
 export async function fixCurrentChaps(env: Env) {
     const { results: users } = await env.DB
-        .prepare("SELECT userID, mangaId, currentIndex FROM userData")
+        .prepare("SELECT userData.userID, userData.mangaId, userData.currentIndex, mangaData.chapterTextList FROM userData JOIN mangaData ON userData.mangaId = mangaData.mangaId")
         .all();
 
-      for (const user of users) {
-        const manga = await env.DB
-            .prepare("SELECT chapterTextList FROM mangaData WHERE mangaId = ?")
-            .bind(user.mangaId)
-            .first<{ chapterTextList: string }>();
+    let batchedJobs:D1PreparedStatement[] = []
 
-        if (!manga?.chapterTextList) continue;
+    for (const user of users) {
+    // const manga = await env.DB
+    //     .prepare("SELECT chapterTextList FROM mangaData WHERE mangaId = ?")
+    //     .bind(user.mangaId)
+    //     .first<{ chapterTextList: string }>();
 
-        const chapterList = String(manga.chapterTextList)
-            .split(',') 
-            .map((c) => c.trim());
+    if (!user?.chapterTextList) continue;
 
-        const chapterText = chapterList[Number(user.currentIndex)] ?? -1;
-        const lastChap = chapterList[chapterList.length-1] ?? -1
+    const chapterList = String(user.chapterTextList)
+        .split(',') 
+        .map((c) => c.trim());
 
-        await env.DB
-            .prepare("UPDATE userData SET currentChap = ? WHERE mangaId = ? AND userID = ?")
-            .bind(chapterText, user.mangaId, user.userID)
-            .run();
+    const chapterText = chapterList[Number(user.currentIndex)] ?? -1;
+    const lastChap = chapterList[chapterList.length-1] ?? -1
 
-        await env.DB
-            .prepare("UPDATE mangaData SET latestChapterText = ? WHERE mangaId = ?")
-            .bind(lastChap, user.mangaId)
-            .run();
-      }
+    batchedJobs.push(env.DB
+        .prepare("UPDATE userData SET currentChap = ? WHERE mangaId = ? AND userID = ?")
+        .bind(chapterText, user.mangaId, user.userID))
 
-      return new Response("Fixed currentChap for all users.");
+    batchedJobs.push(env.DB
+        .prepare("UPDATE mangaData SET latestChapterText = ? WHERE mangaId = ?")
+        .bind(lastChap, user.mangaId))
+    }
+
+    await env.DB.batch(batchedJobs)
+
+    return new Response("Fixed currentChap for all users.");
 }
