@@ -99,8 +99,8 @@ export async function saveManga(authId:string, urls:string[], userCat:string = '
             })
 
             newBoundStmt.push(env.DB.prepare(
-                'INSERT INTO mangaData (mangaId,mangaName,urlBase,slugList,chapterTextList,updateTime) VALUES (?,?,?,?,?,?) ON CONFLICT(mangaId) DO UPDATE SET urlBase = excluded.urlBase, slugList = excluded.slugList, chapterTextList = excluded.chapterTextList, updateTime = excluded.updateTime'
-            ).bind(mangaId, manga.mangaName, manga.urlBase, manga.slugList, manga.chapterTextList, currentTime))
+                'INSERT INTO mangaData (mangaId,mangaName,urlBase,slugList,chapterTextList,latestChapterText,updateTime) VALUES (?,?,?,?,?,?,?) ON CONFLICT(mangaId) DO UPDATE SET urlBase = excluded.urlBase, slugList = excluded.slugList, chapterTextList = excluded.chapterTextList, updateTime = excluded.updateTime'
+            ).bind(mangaId, manga.mangaName, manga.urlBase, manga.slugList, manga.chapterTextList, manga.chapterTextList.slice(manga.chapterTextList.lastIndexOf(',')+1), currentTime))
 
             newBoundStmt.push(env.DB.prepare(
                 'INSERT INTO userData (userId, mangaId, currentIndex, currentChap, userCat, interactTime) VALUES (?,?,?,?,?,?) ON CONFLICT(userID, mangaId) DO UPDATE SET currentIndex = excluded.currentIndex, currentChap = excluded.currentChap, userCat = excluded.userCat, interactTime = excluded.interactTime'
