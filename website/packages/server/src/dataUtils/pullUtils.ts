@@ -132,13 +132,14 @@ export async function getAllManga(env:Env, pass:string|null) {
     }
 }
 
-export async function userStats(authId:string, env:Env) {
+export async function userStats(userId:string, env:Env) {
     try{
         let results = await env.DB.batch([
-            env.DB.prepare(`SELECT u.currentIndex, u.mangaId, m.chapterTextList, u.userCat FROM userData u JOIN mangaData m ON u.mangaId = m.mangaId WHERE u.userID = ?`).bind(authId),
+            env.DB.prepare(`SELECT u.currentIndex, u.mangaId, m.chapterTextList, u.userCat FROM userData u JOIN mangaData m ON u.mangaId = m.mangaId WHERE u.userID = ?`).bind(userId),
             env.DB.prepare('SELECT COUNT(*) AS total FROM mangaData'),
             env.DB.prepare('SELECT SUM(stat_value) AS total FROM stats WHERE type = "chapCount" AND timestamp > datetime("now", "-30 days")'),
-            env.DB.prepare('SELECT SUM(stat_value) AS total FROM stats WHERE type = "mangaCount" AND timestamp > datetime("now", "-30 days")')
+            env.DB.prepare('SELECT SUM(stat_value) AS total FROM stats WHERE type = "mangaCount" AND timestamp > datetime("now", "-30 days")'),
+            env.DB.prepare('SELECT SUM(FLOOR(currentChap)) AS total FROM userData WHERE userId = ?').bind(userId)
         ])
         console.log(results)
 
@@ -146,11 +147,12 @@ export async function userStats(authId:string, env:Env) {
         const mangaCount  = results[1].results[0] as {total: number}
         const updateCount = results[2].results[0] as {total: number}
         const newCount    = results[3].results[0] as {total: number}
+        const readChapter = results[4].results[0] as {total: number}
 
         console.log(mangaCount)
 
         let unreadChapters:number = 0
-        let read:number = 0
+        // let read:number = 0
         let unreadManga:number = 0
         let totalChapters:number = 0
 
@@ -171,7 +173,7 @@ export async function userStats(authId:string, env:Env) {
                 
                 if (currentChapNums) {
                     const currentReadChap = parseInt(currentChapNums[currentChapNums.length - 1])
-                    read+= currentReadChap
+                    // read+= currentReadChap
                     const currUnread = (latestChapNumber)-(currentReadChap)
                     // console.log(currUnread)
                     if (manga.userCat==='dropped') continue
@@ -182,7 +184,7 @@ export async function userStats(authId:string, env:Env) {
                 console.log({"message":'Issue fetching data for manga', "mangaId":manga.mangaId, "error":error})
             }
         }
-        const userStats = {"chaptersRead":read, "chaptersUnread":unreadChapters, "unreadManga": unreadManga, "readManga": userManga.length}
+        const userStats = {"chaptersRead":readChapter.total, "chaptersUnread":unreadChapters, "unreadManga": unreadManga, "readManga": userManga.length}
         const mangaStats = {"trackedManga": mangaCount?.total||0, "totalTrackedChapters":totalChapters, "newMangaCount": newCount?.total||0, "newChapterCount": updateCount?.total||0}
 
         const expiresAt = (await env.KV.get('expiresAt')||Date.now()+1*60*1000)//1 hr from now if no expiresAt is strored

@@ -1,4 +1,4 @@
-import {Env, mangaDataRowReturn, mangaReturn} from '../types'
+import {Env, mangaDataRowReturn, mangaReturn, newData, newDataType, updateData, updateDataType} from '../types'
 
 export async function saveManga(authId:string, urls:string[], userCat:string = 'unsorted', env:Env) {
     try {
@@ -23,7 +23,7 @@ export async function saveManga(authId:string, urls:string[], userCat:string = '
 
         const waitingManga = new Map<string, string>( addedManga.map(item => [item.fetchId, item.url]))
 
-        let newMangaInfo:mangaReturn[] = [] 
+        let newMangaInfo:newDataType[] = [] 
         let userReturn:{url:string, message:string, success:boolean}[] = [...errors]
         while (waitingManga.size >= 1) {
             await new Promise((resolve) => setTimeout(resolve, 500*waitingManga.size))
@@ -38,7 +38,18 @@ export async function saveManga(authId:string, urls:string[], userCat:string = '
                 if (currentJobStatus.statusCode === 202) { //still processing
                     continue
                 } else if (currentJobStatus.statusCode === 200) { //Finished
-                    newMangaInfo.push(currentJobStatus.data)
+                    const parsedData = newData.safeParse(currentJobStatus.data)
+
+                    if (parsedData.success) {
+                        console.log(parsedData.data)
+                        newMangaInfo.push(parsedData.data)
+                    } else {
+                        const formattedError = parsedData.error.format()
+                        console.error(formattedError)
+                        userReturn.push({url: waitingManga.get(currentJobStatus.fetchId) as string, message: parsedData.error.toString(), success: false})
+                        waitingManga.delete(currentJobStatus.fetchId)
+
+                    }
                     userReturn.push({url: waitingManga.get(currentJobStatus.fetchId) as string, message: 'Successfully added', success: true})
                     waitingManga.delete(currentJobStatus.fetchId)
                 } else if (currentJobStatus.statusCode === 500) {//failed
@@ -89,11 +100,11 @@ export async function saveManga(authId:string, urls:string[], userCat:string = '
 
             newBoundStmt.push(env.DB.prepare(
                 'INSERT INTO mangaData (mangaId,mangaName,urlBase,slugList,chapterTextList,updateTime) VALUES (?,?,?,?,?,?) ON CONFLICT(mangaId) DO UPDATE SET urlBase = excluded.urlBase, slugList = excluded.slugList, chapterTextList = excluded.chapterTextList, updateTime = excluded.updateTime'
-            ).bind(mangaId, manga.mangaName, manga.urlBase, manga.slugList, manga.chapterTextList.replace('.', '-'), currentTime))
+            ).bind(mangaId, manga.mangaName, manga.urlBase, manga.slugList, manga.chapterTextList, currentTime))
 
             newBoundStmt.push(env.DB.prepare(
                 'INSERT INTO userData (userId, mangaId, currentIndex, currentChap, userCat, interactTime) VALUES (?,?,?,?,?,?) ON CONFLICT(userID, mangaId) DO UPDATE SET currentIndex = excluded.currentIndex, currentChap = excluded.currentChap, userCat = excluded.userCat, interactTime = excluded.interactTime'
-            ).bind(authId, mangaId, manga.currentIndex, manga.chapterTextList.split(',')[manga.currentIndex].replace('.', '-'), userCat, Date.now()))
+            ).bind(authId, mangaId, manga.currentIndex, manga.chapterTextList.split(',')[manga.currentIndex], userCat, Date.now()))
 
             await env.IMG.put(mangaId, new Uint8Array(manga.iconBuffer.data).buffer, {
                 httpMetadata: { contentType: "image/jpeg" }

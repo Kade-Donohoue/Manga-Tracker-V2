@@ -146,7 +146,7 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
             </Button>
 
             <List ref={listRef} sx={{ maxHeight: 400, overflowY: 'auto', mt: 3 }}>
-              {chapters.map((chapter) => (
+              {chapters.reverse().map((chapter) => (
                 <ListItem
                   key={chapter.key}
                   onClick={() => handleChapterClick(chapter.url)}
