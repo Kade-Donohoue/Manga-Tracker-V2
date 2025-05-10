@@ -230,7 +230,7 @@ async function mangaCompleteFuction({ jobId }: { jobId: string }) {
 
             // console.log(job)
             batch.batchData.completedCount++
-            if ((job.returnvalue.iconBuffer) || (job.returnvalue.slugList && job.returnvalue.slugList != job.data.oldSlugList)) {
+            if (config.updateSettings.forceUpdateManga || ((job.returnvalue.iconBuffer) || (job.returnvalue.slugList && job.returnvalue.slugList != job.data.oldSlugList))) {
                 const oldSlugs = job.data.oldSlugList?.split(',') || []
                 const newSlugs = job.returnvalue.slugList?.split(',') || []
                 const newChapterCount = newSlugs.length - oldSlugs.length

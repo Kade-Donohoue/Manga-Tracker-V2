@@ -3,7 +3,7 @@ This is in charge of fetching all manga data from various sources
 
 # Supported Websites
 - MangaNato
-- Reaper Scans
+<!-- - Reaper Scans -->
 - AsuraScans
 - Comick
 - MangaDex
@@ -20,7 +20,7 @@ This is in charge of fetching all manga data from various sources
 ### Site Permissions
 - **allowManganatoScans**: Whether or not Manganato is allowed (default: `true`).
 - **allowMangaDex**: Whether or not MangaDex is allowed (default: `true`).
-- **allowReaperScans**: Whether or not to allow Reaper Scans (default: `true`).
+- **allowReaperScans**: Whether or not to allow Reaper Scans - Deprecated (default: `false`).
 - **allowAsura**: Whether or not to allow Asura Scans (default: `true`).
 - **allowComick**: Whether or not to allow Comick (default: `true`).
 
