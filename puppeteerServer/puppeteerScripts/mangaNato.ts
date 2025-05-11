@@ -72,7 +72,7 @@ export async function getManga(url:string, icon:boolean = true, ignoreIndex = fa
 
         const chapterDropdown = await page.waitForSelector('.navi-change-chapter', {timeout: 500})
 
-        const titleSelect = await page.waitForSelector('div.breadcrumb:nth-child(3) > p:nth-child(1) > span:nth-child(3) > a:nth-child(1)')
+        const titleSelect = await page.waitForSelector('div.breadcrumb:nth-child(6) > p:nth-child(1) > span:nth-child(3) > a:nth-child(1)')
         const mangaName = await titleSelect?.evaluate(el => el.innerText)
         const overviewUrl = await titleSelect?.evaluate(el => el.getAttribute('href'))
 

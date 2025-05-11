@@ -78,7 +78,7 @@ export default function ChangeChapterModal({
     if (!mangaInfo || !mangaId) return;
 
     const newIndex = mangaInfo.get(mangaId)?.chapterTextList.indexOf(newChapter.label);
-    if (newIndex === -1) {
+    if (newIndex === undefined ||newIndex === -1) {
       return toast.update(notif, {
         render: 'Internal Error Updating Chapter!',
         type: 'error',
@@ -93,7 +93,7 @@ export default function ChangeChapterModal({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ mangaId: mangaId, newIndex }),
+        body: JSON.stringify({ mangaId: mangaId, newIndex, currentChap: mangaInfo.get(mangaId)?.chapterTextList[newIndex] }),
       });
 
       if (reply.ok) {

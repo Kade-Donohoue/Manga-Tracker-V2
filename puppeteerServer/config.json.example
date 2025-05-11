@@ -2,7 +2,7 @@
   "sites": {
     "allowManganatoScans": true,
     "allowMangaDex": true,
-    "allowReaperScans": true,
+    "allowReaperScans": false,
     "allowAsura": true,
     "allowComick": true
   },

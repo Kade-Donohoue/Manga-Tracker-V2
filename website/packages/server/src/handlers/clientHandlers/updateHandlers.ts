@@ -8,7 +8,7 @@ export default async function updateHandler(path: string[], request: Request, en
             const body = await zodParse(request, updateCurrentIndexSchema)
             if (body instanceof Response) return body // returns zod errors
         
-            return await updateCurrentIndex(userId, body.newIndex, body.mangaId, env)
+            return await updateCurrentIndex(userId, body.newIndex, body.mangaId, body.currentChap, env)
         }
         case 'updateInteractTime': {
             const body = await zodParse(request, updateInteractTimeSchema)

@@ -1,9 +1,9 @@
 import {Env, mangaReturn} from '../types'
 
-export async function updateCurrentIndex(authId:string, newIndex:number, mangaId: string, env:Env) {
+export async function updateCurrentIndex(authId:string, newIndex:number, mangaId: string, currentChap:number, env:Env) {
     try {
-        const res = await env.DB.prepare('UPDATE userData SET currentIndex = ?, interactTime = ? WHERE userID = ? AND mangaId = ?')
-                .bind(newIndex, Date.now(), authId, mangaId)
+        const res = await env.DB.prepare('UPDATE userData SET currentIndex = ?, interactTime = ?, currentChap = ? WHERE userID = ? AND mangaId = ?')
+                .bind(newIndex, Date.now(), authId, mangaId, currentChap)
                 .run()
 
         if (res.success) return new Response(JSON.stringify({message: "Success"}), {status:200})
