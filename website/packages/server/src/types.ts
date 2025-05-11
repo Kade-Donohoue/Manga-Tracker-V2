@@ -140,6 +140,7 @@ export const addMangaSchema = z.object({
 export const updateCurrentIndexSchema = z.object({
   newIndex: z.coerce.number().min(0),
   mangaId: z.coerce.string().uuid(),
+  currentChap: z.coerce.number()
 })
 
 export const updateInteractTimeSchema = z.object({

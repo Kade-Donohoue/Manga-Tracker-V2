@@ -144,7 +144,8 @@ export default function feed():JSX.Element {
       },
       body: JSON.stringify({
         "newIndex": newIndex,
-        "mangaId": mangaId
+        "mangaId": mangaId,
+        "currentChap": mangaDetails.find((manga) => manga.mangaId === mangaId)?.chapterTextList[newIndex]
       }),
     })
 
