@@ -5,7 +5,6 @@ import React from "react"
 import './feed.css'
 import { mangaDetails, dropdownOption } from '../../types'
 import { ordOptions, methodOptions, fetchPath } from '../../vars'
-import { RPCCloseCodes } from '@discord/embedded-app-sdk'
 import Box from '@mui/material/Box'
 import Modal from '@mui/material/Modal'
 import Button from '@mui/material/Button'

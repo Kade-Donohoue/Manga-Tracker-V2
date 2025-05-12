@@ -1,5 +1,5 @@
 import React, { ChangeEvent, HTMLAttributes, useState } from 'react';
-import { setCatOptions } from '../vars'
+import { defaultCategoryOptions, setCatOptions } from '../vars'
 import Button from '@mui/material/Button';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import IconButton from '@mui/material/IconButton';
@@ -90,7 +90,11 @@ export default function settings() {
   async function postCats(newCats: dropdownOption[]) {
     setCatOptions(newCats)
 
-    const modifiedCats = newCats.filter((cat) => cat.color || cat.value.includes('user:'))
+    const modifiedCats = newCats.filter(
+      (cat) => 
+        (cat.color || cat.value.includes('user:')) ||
+        !defaultCategoryOptions.some(opt => opt.label === cat.label)
+    )
 
     console.log(modifiedCats)
     let resp = await fetch(`${fetchPath}/api/data/update/updateUserCategories`, {
@@ -256,7 +260,7 @@ export default function settings() {
       field: 'actions', headerName: 'Actions', type: 'actions', width: 100, getActions: ({ id }: { id: GridRowId }) => {
         const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit
 
-        if (!(id as string).includes('user:')) return []
+        // if (!(id as string).includes('user:')) return []
 
         if (isInEditMode) {
           return [
@@ -275,6 +279,15 @@ export default function settings() {
             />
           ]
         }
+        if (!(id as string).includes('user:')) return [
+          <GridActionsCellItem
+            icon={<EditIcon />}
+            label="Edit"
+            sx={{}}
+            onClick={handleEditClick(id)}
+            color="inherit"
+          />,
+        ]
         return [
           <GridActionsCellItem
             icon={<EditIcon />}
@@ -337,7 +350,7 @@ export default function settings() {
                 }}
                 rows={rows}
                 columns={columns}
-                isCellEditable={(params: any) => params.row.id.includes('user:')}
+                isCellEditable={(params: any) => true}
               />
             </Box>
           </AccordionDetails>

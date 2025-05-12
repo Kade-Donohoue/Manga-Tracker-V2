@@ -19,7 +19,7 @@ export const fetchUserCategories = async (): Promise<dropdownOption[]> => {
 
   const updatedCats = defaultCategoryOptions.map((defaultCat) => {
     const userCat = catData.cats.find((cat) => cat.value === defaultCat.value);
-    return userCat ? { ...defaultCat, color: userCat.color || defaultCat.color } : defaultCat;
+    return userCat ? userCat : defaultCat;
   });
 
   const customCats = catData.cats.filter(

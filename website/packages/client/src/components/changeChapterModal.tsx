@@ -93,7 +93,7 @@ export default function ChangeChapterModal({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ mangaId: mangaId, newIndex, currentChap: mangaInfo.get(mangaId)?.chapterTextList[newIndex] }),
+        body: JSON.stringify({ mangaId: mangaId, newIndex: newIndex, currentChap: mangaInfo.get(mangaId)?.chapterTextList[newIndex] }),
       });
 
       if (reply.ok) {
