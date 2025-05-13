@@ -111,6 +111,7 @@ export default function SeriesCard({
               position: 'absolute',
               bottom: 10,
             }}
+            onContextMenu={(e) => handleContextMenu(e, data.mangaId)}
           >
             <table>
               <tbody>

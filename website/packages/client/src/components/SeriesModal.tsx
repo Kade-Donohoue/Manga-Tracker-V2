@@ -12,10 +12,15 @@ import {
   Box,
   IconButton,
   Tooltip,
+  Menu,
+  MenuItem,
 } from '@mui/material'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 
 import { mangaDetails } from '../types' // Update path if needed
+import { fetchPath } from '../vars'
+import { toast } from 'react-toastify'
+import { useQueryClient } from '@tanstack/react-query'
 
 interface SeriesModalProps {
   open: boolean
@@ -36,6 +41,15 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
 }) => {
   const listRef = useRef<HTMLUListElement | null>(null)
   const [tooltipOpen, setTooltipOpen] = useState(false)
+
+  const queryClient = useQueryClient();
+
+  const [anchorPosition, setAnchorPosition] = React.useState<{
+    top: number;
+    left: number;
+    chapterIndex: number;
+} | null>(null);
+
 
   const currentChapterUrl = manga ? manga.urlBase + manga.slugList[manga.currentIndex] : ''
 
@@ -77,9 +91,85 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
   }
 
   const isChapterRead = (chapterUrl: string) => {
-    const currentIndex = chapters.findIndex((chapter) => chapter.url === currentChapterUrl)
-    const chapterIndex = chapters.findIndex((chapter) => chapter.url === chapterUrl)
-    return chapterIndex >= currentIndex
+    const currentIndex = chapters.findIndex((chapter) => chapter.url === currentChapterUrl);
+    const chapterIndex = chapters.findIndex((chapter) => chapter.url === chapterUrl);
+    return chapterIndex >= currentIndex;
+  }
+
+  const handleChapterContextMenu = (event: React.MouseEvent, chapterIndex: number) => {
+    if (anchorPosition) {
+      setAnchorPosition(null);
+      return;
+    }
+
+    event.preventDefault();
+    if (!manga) return;
+    setAnchorPosition({ top: event.clientY, left: event.clientX, chapterIndex });
+  }
+
+  const handleContextClose = () => {
+    setAnchorPosition(null);
+  };
+
+  const handleContextOpen = () => {
+    if (!manga || !anchorPosition) return;
+
+    const slug = manga.slugList[anchorPosition.chapterIndex] ?? manga.slugList.at(-1);
+    const currentUrl = `${manga.urlBase}${slug}`;
+
+    window.open(currentUrl);
+    handleContextClose();
+  }
+
+  const handleContextMarkRead = async () => {
+    const notif = toast.loading('Changing Chapter!');
+    handleContextClose();
+
+    if (!manga || !anchorPosition) {
+      return toast.update(notif, {
+        render: 'No Chapter Selected!',
+        type: 'error',
+        isLoading: false,
+        autoClose: 5000,
+      });
+    }
+
+    try {
+      const reply = await fetch(`${fetchPath}/api/data/update/updateCurrentIndex`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ mangaId: manga.mangaId, newIndex: anchorPosition.chapterIndex, currentChap: manga.chapterTextList[anchorPosition.chapterIndex] }),
+      });
+
+      if (reply.ok) {
+        queryClient.invalidateQueries({queryKey: ['userManga']})
+
+        toast.update(notif, {
+          render: 'Chapter Successfully Changed!',
+          type: 'success',
+          isLoading: false,
+          autoClose: 5000,
+        });
+      } else {
+        const data: { message: string; url?: string } = await reply.json();
+        toast.update(notif, {
+          render: data.message || 'Failed to update chapter.',
+          type: 'error',
+          isLoading: false,
+          autoClose: 5000,
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      toast.update(notif, {
+        render: 'An Unknown Error has Occurred',
+        type: 'error',
+        isLoading: false,
+        autoClose: 5000,
+      });
+    }
   }
 
   return (
@@ -145,11 +235,24 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
               Jump to Latest Chapter
             </Button>
 
+            <Menu
+              open={anchorPosition !== null}
+              onClose={handleContextClose}
+              anchorReference="anchorPosition"
+              anchorPosition={
+                anchorPosition ? { top: anchorPosition.top, left: anchorPosition.left } : undefined
+              }
+            >
+              <MenuItem onClick={handleContextOpen}>Open</MenuItem>
+              <MenuItem onClick={handleContextMarkRead}>Mark as Read</MenuItem>
+            </Menu>
+
             <List ref={listRef} sx={{ maxHeight: 400, overflowY: 'auto', mt: 3 }}>
               {chapters.reverse().map((chapter) => (
                 <ListItem
                   key={chapter.key}
                   onClick={() => handleChapterClick(chapter.url)}
+                  onContextMenu={(e) => handleChapterContextMenu(e, chapter.key)}
                   data-url={chapter.url}
                   sx={{
                     borderRadius: 2,

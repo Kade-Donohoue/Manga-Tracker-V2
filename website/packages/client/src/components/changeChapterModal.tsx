@@ -135,8 +135,7 @@ export default function ChangeChapterModal({
       aria-describedby="chap-modal-description"
     >
       <Box sx={{ width: '80vw', height: '25vh', ...modalStyle }}>
-        <h2 id="chap-modal-title" style={{ color: 'white' }}>Choose a new Chapter</h2>
-
+        <h2 id="chap-modal-title" style={{ color: 'white' }}>Select Latest Read Chapter</h2>
         <Select
           name="chap"
           id="chap"
