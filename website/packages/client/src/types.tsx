@@ -33,3 +33,12 @@ export interface dropdownOption {
   "label": string,
   "color"?: string
 }
+
+export type friend = {
+  id: string; 
+  userID: string; 
+  userName: string; 
+  imageURl: string; 
+  createdAt: string; 
+  respondedAt: string; 
+};

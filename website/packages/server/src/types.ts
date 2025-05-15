@@ -187,14 +187,11 @@ export interface mangaReturn {
   }
 }
 
-// export interface updateData {
-//   "mangaName": string,
-//   "chapterUrlList": string,
-//   "chapterTextList": string,
-//   "currentIndex": string,
-//   "iconBuffer": {
-//     "type": string,
-//     "data": number[]
-//   }|null,
-//   "mangaId": string
-// }
+export const clerkUserSchema = z.object({
+  data: z.object({
+    id: z.string(),
+    username: z.string(),
+    image_url: z.string().url(),
+    created_at: z.number()
+  }).passthrough(),
+}).passthrough();

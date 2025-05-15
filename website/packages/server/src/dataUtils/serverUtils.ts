@@ -1,4 +1,5 @@
-import { Env, updateDataType } from "../types";
+import { z } from "zod";
+import { clerkUserSchema, Env, updateDataType } from "../types";
 
 /**
  * pulls all manga from DB includeds mangas name, urlList, and id
@@ -76,4 +77,17 @@ export async function fixCurrentChaps(env: Env) {
     await env.DB.batch(batchedJobs)
 
     return new Response("Fixed currentChap for all users.");
+}
+
+export async function newUser(user:z.infer<typeof clerkUserSchema>, env:Env) {
+    const results = await env.DB.prepare('INSERT OR REPLACE INTO users (userID, userName, imageUrl, createdAt) VALUES (?, ?, ?, ?)')
+        .bind(
+            user.data.id,
+            user.data.username,
+            user.data.image_url,
+            user.data.created_at
+        ).run()
+
+    if (!results.success) return new Response(JSON.stringify({message: 'Unable To save Data!', results: results}), {status:500});
+    return new Response(JSON.stringify({message: 'User Saved!', results: results}), {status: 200})
 }
