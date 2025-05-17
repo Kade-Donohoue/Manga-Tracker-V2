@@ -10,7 +10,7 @@ import AddCircleOutlinedIcon from '@mui/icons-material/AddCircleOutlined';
 import AddFriendModal from '../../../components/friends/AddFriendModal';
 import React from 'react';
 
-async function fetchRequests(): Promise<{message: string, results: friend[]}> {
+async function fetchRequests(): Promise<{message: string, data: friend[]}> {
   const resp = await fetch(`${fetchPath}/api/friends/getSent`, {
     method: 'POST',
     headers: {
@@ -38,11 +38,13 @@ export default function OutgoingFriendsPanel() {
   return (
     <Box sx={{width:"maxWidth", height:"maxHeight", display: 'flex', justifyContent: 'center', justifyItems: 'center', gap: 1}}>
 
-      {data?.results.map((friend) => (
+      {data?.data.map((friend) => (
         <FriendOutgoingCard 
           userId={friend.userID} 
           userName={friend.userName} 
           imgUrl={friend.imageURl} 
+          sentAt={new Date(friend.sentAt.replace(" ", "T")+'Z')}
+          requestId={friend.id}
         />
       ))}
 

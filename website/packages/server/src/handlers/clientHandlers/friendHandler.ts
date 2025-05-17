@@ -1,7 +1,7 @@
 import {Env, addMangaSchema} from '../../types';
 import {saveManga} from '../../dataUtils/addUtils'
 import { zodParse } from '../../utils';
-import { cancelRequest, getFriends, getRecievedRequests, getSentRequests, getUserId, sendRequest, updateRequestStatus } from '../../dataUtils/friendUtils';
+import { cancelRequest, getFriends, getRecievedRequests, getRequestCount, getSentRequests, getUserId, removeFriend, sendRequest, updateRequestStatus } from '../../dataUtils/friendUtils';
 import { z } from 'zod';
 
 const sendFriendRequestSchema = z.object({
@@ -55,6 +55,15 @@ export default async function friendHandler(path: string[], request: Request, en
         if (body instanceof Response) return body // returns zod errors
         
         return await getUserId(body.userName, env)
+      }
+      case 'getCount': {
+        return await getRequestCount(userId, env)
+      }
+      case 'remove': {
+        const body = await zodParse(request, cancelRequestStatusSchema)
+        if (body instanceof Response) return body // returns zod errors
+        
+        return await removeFriend(userId, body.requestId, env)
       }
       default:
         return new Response('Not found', {status: 404}); 

@@ -83,7 +83,7 @@ export async function newUser(user:z.infer<typeof clerkUserSchema>, env:Env) {
     const results = await env.DB.prepare('INSERT OR REPLACE INTO users (userID, userName, imageUrl, createdAt) VALUES (?, ?, ?, ?)')
         .bind(
             user.data.id,
-            user.data.username,
+            user.data.username.toLowerCase(),
             user.data.image_url,
             user.data.created_at
         ).run()

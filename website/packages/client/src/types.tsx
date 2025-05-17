@@ -35,10 +35,13 @@ export interface dropdownOption {
 }
 
 export type friend = {
-  id: string; 
+  id: number; 
   userID: string; 
   userName: string; 
   imageURl: string; 
   createdAt: string; 
   respondedAt: string; 
+  sentAt: string;
+  mangaCount: string;
+  chaptersRead: string;
 };
