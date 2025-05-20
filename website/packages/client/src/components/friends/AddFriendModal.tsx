@@ -1,47 +1,41 @@
-import React, { useState } from 'react'
-import { Modal, Box, Button, SvgIcon } from '@mui/material'
-import CancelIcon from '@mui/icons-material/Cancel'
-import { toast } from 'react-toastify'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import React, { useState } from 'react';
+import { Modal, Box, Button, SvgIcon } from '@mui/material';
+import CancelIcon from '@mui/icons-material/Cancel';
+import { toast } from 'react-toastify';
+import { useQueryClient } from '@tanstack/react-query';
 import { fetchPath } from '../../vars';
 import { modalStyle } from '../../AppStyles';
 
 interface addFriendModalProps {
-  open: boolean
-  onClose: () => void
+  open: boolean;
+  onClose: () => void;
 }
 
-const AddFriendModal: React.FC<addFriendModalProps> = ({
-  open,
-  onClose,
-}) => {
-
+const AddFriendModal: React.FC<addFriendModalProps> = ({ open, onClose }) => {
   const queryClient = useQueryClient();
 
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
 
   async function submitRequest() {
-    setIsLoading(true)
-    const notif = toast.loading('Sending Request!', { closeOnClick: true, draggable: true })
+    setIsLoading(true);
+    const notif = toast.loading('Sending Request!', { closeOnClick: true, draggable: true });
 
-    const userName = (document.getElementById('userNameInput') as HTMLInputElement)?.value
+    const userName = (document.getElementById('userNameInput') as HTMLInputElement)?.value;
 
-    const results = await fetch(`${fetchPath}/api/friends/sendRequest`, 
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userName: userName.trim()
-        })
-      }
-    )
+    const results = await fetch(`${fetchPath}/api/friends/sendRequest`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userName: userName.trim(),
+      }),
+    });
 
-    setIsLoading(false)
-    if (!results.ok)  {
+    setIsLoading(false);
+    if (!results.ok) {
       return toast.update(notif, {
-        render: (await results.json() as any).message,
+        render: ((await results.json()) as any).message,
         type: 'error',
         isLoading: false,
         autoClose: 5000,
@@ -49,7 +43,7 @@ const AddFriendModal: React.FC<addFriendModalProps> = ({
         closeOnClick: true,
         draggable: true,
         progress: 0,
-      })
+      });
     }
 
     toast.update(notif, {
@@ -61,7 +55,7 @@ const AddFriendModal: React.FC<addFriendModalProps> = ({
       closeOnClick: true,
       draggable: true,
       progress: 0,
-    })
+    });
 
     queryClient.invalidateQueries({ queryKey: ['friends'] });
   }
@@ -75,17 +69,12 @@ const AddFriendModal: React.FC<addFriendModalProps> = ({
     >
       <Box sx={{ width: '80vw', height: '28vh', ...modalStyle }}>
         <label htmlFor="userNameInput">Enter Username:</label>
-        <input
-          type="text"
-          id="userNameInput"
-          name="userNameInput"
-          placeholder="Person1234"
-        />
+        <input type="text" id="userNameInput" name="userNameInput" placeholder="Person1234" />
         <br />
         <Button
           onClick={() => {
-            submitRequest()
-            onClose()
+            submitRequest();
+            onClose();
           }}
           variant="contained"
           color="primary"
@@ -99,7 +88,7 @@ const AddFriendModal: React.FC<addFriendModalProps> = ({
         </SvgIcon>
       </Box>
     </Modal>
-  )
-}
+  );
+};
 
-export default AddFriendModal
+export default AddFriendModal;

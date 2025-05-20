@@ -1,4 +1,13 @@
-import { Avatar, Card, CardActionArea, CardActions, CardHeader, IconButton, MenuItem, Menu } from '@mui/material';
+import {
+  Avatar,
+  Card,
+  CardActionArea,
+  CardActions,
+  CardHeader,
+  IconButton,
+  MenuItem,
+  Menu,
+} from '@mui/material';
 import Box from '@mui/material/Box';
 import React from 'react';
 
@@ -6,9 +15,11 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { friend } from '../../types';
 import { fetchPath } from '../../vars';
 import { toast } from 'react-toastify';
-import { QueryClient, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
+import ConfirmRemoveDialog from '../ConfirmRemoveDialog';
 
-export default function FriendCard({friend}: {friend:friend}) {
+export default function FriendCard({ friend }: { friend: friend }) {
+  const [confirmOpen, setConfirmOpen] = React.useState(false);
 
   const queryClient = useQueryClient();
 
@@ -21,100 +32,118 @@ export default function FriendCard({friend}: {friend:friend}) {
     setAnchorEl(null);
   };
 
-  async function removeFriend() {
-    handleMenuClose()
-    const notif = toast.loading('Sending Request!', { closeOnClick: true, draggable: true })
+  async function removeFriend(requestId: number) {
+    const notif = toast.loading('Sending Request!', { closeOnClick: true, draggable: true });
     const resp = await fetch(`${fetchPath}/api/friends/remove`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          requestId: friend.id
-        })
-      })
-      if (!resp.ok) {
-        return toast.update(notif, {
-          render: (await resp.json() as any).message,
-          type: 'error',
-          isLoading: false,
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          draggable: true,
-          progress: 0,
-        })
-      }
-      queryClient.invalidateQueries({ queryKey: ['friends'] });
-      toast.update(notif, {
-        render: `Friendship Removed!`,
-        type: 'success',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        requestId: requestId,
+      }),
+    });
+    if (!resp.ok) {
+      return toast.update(notif, {
+        render: ((await resp.json()) as any).message,
+        type: 'error',
         isLoading: false,
         autoClose: 5000,
         hideProgressBar: false,
         closeOnClick: true,
         draggable: true,
         progress: 0,
-      })
-
-      
+      });
+    }
+    queryClient.invalidateQueries({ queryKey: ['friends'] });
+    toast.update(notif, {
+      render: `Friendship Removed!`,
+      type: 'success',
+      isLoading: false,
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      draggable: true,
+      progress: 0,
+    });
   }
 
   return (
-  <Card sx={{width: 320, height: 150}}>
-    <CardActionArea>
-      <CardHeader
-        avatar={
-          <Avatar sx={{ bgcolor: "blue" }} aria-label="User Icon" src={friend.imageURl}>
-            {friend.userName.charAt(0)||"?"}
-          </Avatar>
-        }
-        action={
-          <div>
-            <IconButton 
-            aria-label="settings" 
-            onClick={(e) => {
-              e.stopPropagation();
-              handleMenuClick(e);
-            }}
-            >
-              <MoreVertIcon />
-            </IconButton>
-            <Menu
-              id="basic-menu"
-              anchorEl={anchorEl}
-              open={menuOpen}
-              onClose={handleMenuClose}
-              MenuListProps={{
-                'aria-labelledby': 'basic-button',
-              }}
-            >
-              <MenuItem onClick={handleMenuClose}>Open</MenuItem>
-              <MenuItem onClick={removeFriend} sx={{color:"red"}}>Remove Friend</MenuItem>
-            </Menu>
+    <Card sx={{ width: 320, height: 150 }}>
+      <CardActionArea>
+        <CardHeader
+          avatar={
+            <Avatar sx={{ bgcolor: 'blue' }} aria-label="User Icon" src={friend.imageURl}>
+              {friend.userName.charAt(0) || '?'}
+            </Avatar>
+          }
+          action={
+            <div>
+              <IconButton
+                aria-label="settings"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleMenuClick(e);
+                }}
+              >
+                <MoreVertIcon />
+              </IconButton>
+              <Menu
+                id="basic-menu"
+                anchorEl={anchorEl}
+                open={menuOpen}
+                onClose={handleMenuClose}
+                MenuListProps={{
+                  'aria-labelledby': 'basic-button',
+                }}
+              >
+                <MenuItem onClick={handleMenuClose}>Open</MenuItem>
+                <MenuItem
+                  onClick={() => {
+                    handleMenuClose();
+                    setConfirmOpen(true);
+                  }}
+                  sx={{ color: 'red' }}
+                >
+                  Remove Friend
+                </MenuItem>
+              </Menu>
+            </div>
+          }
+          title={friend.userName || 'Unknown'}
+          subheader={`Since ${new Date(
+            friend.respondedAt.replace(' ', 'T') + 'Z'
+          ).toLocaleDateString(undefined, {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          })}`}
+        />
 
-          </div>
-        }
-        title={friend.userName||"Unknown"}
-        subheader={`Since ${new Date(friend.respondedAt.replace(" ", "Z")).toLocaleDateString(undefined, {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        })}`}
+        <CardActions sx={{ display: 'flex', justifyContent: 'center' }}>
+          <Box sx={{ textAlign: 'center', px: 2 }}>
+            Manga Tracked
+            <br />
+            {friend.mangaCount}
+          </Box>
+          <Box sx={{ borderLeft: '1px solid #ffffff', height: '60px', mx: 2 }} />
+          <Box sx={{ textAlign: 'center', px: 2 }}>
+            Chapters Read
+            <br />
+            {friend.chaptersRead}
+          </Box>
+        </CardActions>
+      </CardActionArea>
+
+      <ConfirmRemoveDialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={() => {
+          setConfirmOpen(false);
+          removeFriend(friend.id);
+        }}
+        itemName={`Friendship with ${friend.userName}`}
       />
-
-      <CardActions sx={{display:"flex", justifyContent:"center"}}>
-        <Box sx={{ textAlign: "center", px: 2 }}>
-          Manga Tracked<br/>
-          {friend.mangaCount}
-        </Box>
-        <Box sx={{ borderLeft: "1px solid #ffffff", height: "60px", mx: 2 }} />
-        <Box sx={{ textAlign: "center", px: 2 }}>
-          Chapters Read<br/>
-          {friend.chaptersRead}
-        </Box>
-      </CardActions>
-    </CardActionArea>
-  </Card>
-  )
+    </Card>
+  );
 }

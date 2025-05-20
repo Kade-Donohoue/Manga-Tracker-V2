@@ -34,10 +34,16 @@ CREATE TABLE IF NOT EXISTS mangaData (
     updateTime TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS userSettings (
-    userID TEXT NOT NULL PRIMARY KEY,
-    categories TEXT NOT NULL,
+CREATE TABLE IF NOT EXISTS userCategories (
+    userID TEXT NOT NULL,
+    label TEXT NOT NULL,
+    value TEXT NOT NULL,
+    color TEXT NOT NULL,
+    stats BOOLEAN NOT NULL DEFAULT TRUE,
+    public BOOLEAN NOT NULL DEFAULT FALSE,
+    position INTEGER NOT NULL,
 
+    PRIMARY KEY (userID, value),
     FOREIGN KEY (userID) REFERENCES users(userID) ON DELETE CASCADE
 );
 

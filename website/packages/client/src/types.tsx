@@ -31,7 +31,19 @@ export interface mangaDetails {
 export interface dropdownOption {
   "value":string, 
   "label": string,
-  "color"?: string
+  "color"?: string,
+  "stats"?: boolean,
+  "public"?: boolean,
+  "position"?: number
+}
+
+export interface categoryOption {
+  "value":string, 
+  "label": string,
+  "color": string,
+  "stats": boolean,
+  "public": boolean,
+  "position": number
 }
 
 export type friend = {
