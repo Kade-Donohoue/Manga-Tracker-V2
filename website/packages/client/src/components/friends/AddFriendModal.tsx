@@ -20,7 +20,7 @@ const AddFriendModal: React.FC<addFriendModalProps> = ({ open, onClose }) => {
     setIsLoading(true);
     const notif = toast.loading('Sending Request!', { closeOnClick: true, draggable: true });
 
-    const userName = (document.getElementById('userNameInput') as HTMLInputElement)?.value;
+    const userName = (document.getElementById('UIn') as HTMLInputElement)?.value;
 
     const results = await fetch(`${fetchPath}/api/friends/sendRequest`, {
       method: 'POST',
@@ -68,8 +68,8 @@ const AddFriendModal: React.FC<addFriendModalProps> = ({ open, onClose }) => {
       aria-describedby="cat-modal-description"
     >
       <Box sx={{ width: '80vw', height: '28vh', ...modalStyle }}>
-        <label htmlFor="userNameInput">Enter Username:</label>
-        <input type="text" id="userNameInput" name="userNameInput" placeholder="Person1234" />
+        <label htmlFor="UIn">Enter Friends Name:</label>
+        <input type="text" id="UIn" name="iIn" placeholder="Person1234" autoComplete="off" />
         <br />
         <Button
           onClick={() => {
@@ -81,7 +81,7 @@ const AddFriendModal: React.FC<addFriendModalProps> = ({ open, onClose }) => {
           fullWidth
           sx={{ mb: 2 }}
         >
-          {isLoading ? 'Loading...' : 'Add Manga!'}
+          {isLoading ? 'Loading...' : 'Send Request!'}
         </Button>
         <SvgIcon onClick={onClose} sx={{ position: 'absolute', top: 10, right: 10 }}>
           <CancelIcon sx={{ color: 'white' }} />

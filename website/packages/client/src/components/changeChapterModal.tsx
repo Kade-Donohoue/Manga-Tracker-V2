@@ -1,10 +1,10 @@
 import React from 'react';
-import { dropdownOption, mangaDetails } from '../types'
+import { dropdownOption, mangaDetails } from '../types';
 import { Modal, Box, Button, SvgIcon } from '@mui/material';
 import CancelIcon from '@mui/icons-material/Cancel';
 import Select from 'react-select';
 import { toast } from 'react-toastify';
-import { fetchPath } from '../vars'
+import { fetchPath } from '../vars';
 import { useQueryClient } from '@tanstack/react-query';
 
 interface ChangeChapterModalProps {
@@ -49,7 +49,6 @@ export default function ChangeChapterModal({
   mangaInfo,
   mangaId,
 }: ChangeChapterModalProps) {
-
   const queryClient = useQueryClient();
 
   const [newChapter, setChapter] = React.useState<dropdownOption | null>(null);
@@ -78,7 +77,7 @@ export default function ChangeChapterModal({
     if (!mangaInfo || !mangaId) return;
 
     const newIndex = mangaInfo.get(mangaId)?.chapterTextList.indexOf(newChapter.label);
-    if (newIndex === undefined ||newIndex === -1) {
+    if (newIndex === undefined || newIndex === -1) {
       return toast.update(notif, {
         render: 'Internal Error Updating Chapter!',
         type: 'error',
@@ -93,11 +92,15 @@ export default function ChangeChapterModal({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ mangaId: mangaId, newIndex: newIndex, currentChap: mangaInfo.get(mangaId)?.chapterTextList[newIndex] }),
+        body: JSON.stringify({
+          mangaId: mangaId,
+          newIndex: newIndex,
+          currentChap: mangaInfo.get(mangaId)?.chapterTextList[newIndex],
+        }),
       });
 
       if (reply.ok) {
-        queryClient.invalidateQueries({queryKey: ['userManga']})
+        queryClient.invalidateQueries({ queryKey: ['userManga'] });
 
         toast.update(notif, {
           render: 'Chapter Successfully Changed!',
@@ -135,17 +138,20 @@ export default function ChangeChapterModal({
       aria-describedby="chap-modal-description"
     >
       <Box sx={{ width: '80vw', height: '25vh', ...modalStyle }}>
-        <h2 id="chap-modal-title" style={{ color: 'white' }}>Select Latest Read Chapter</h2>
+        <h2 id="chap-modal-title" style={{ color: 'white' }}>
+          Select the Last Chapter You’ve Read
+        </h2>
         <Select
           name="chap"
           id="chap"
           className="chapSelect"
           value={newChapter}
           onChange={setChapter}
-          options={mangaInfo.get(mangaId)?.chapterTextList
-            .slice()
+          options={mangaInfo
+            .get(mangaId)
+            ?.chapterTextList.slice()
             .reverse()
-            .map(text => ({ value: text, label: text }))}
+            .map((text) => ({ value: text, label: text }))}
           styles={customStyles}
         />
 
@@ -162,7 +168,10 @@ export default function ChangeChapterModal({
           Submit
         </Button>
 
-        <SvgIcon onClick={onClose} sx={{ position: 'absolute', top: 10, right: 10, cursor: 'pointer' }}>
+        <SvgIcon
+          onClick={onClose}
+          sx={{ position: 'absolute', top: 10, right: 10, cursor: 'pointer' }}
+        >
           <CancelIcon sx={{ color: 'white' }} />
         </SvgIcon>
       </Box>

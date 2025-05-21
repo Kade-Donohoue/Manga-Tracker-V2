@@ -39,24 +39,26 @@ const sortOptions: { label: string; value: keyof mangaDetails | 'search' }[] = [
 
 export default function tracked() {
   const { data: mangaInfo, isLoading: isLoadingMangaInfo, error: errorMangaInfo } = useUserManga();
-  const [currentMangaId, setCurrentMangaId] = React.useState<string|null>(null);
+  const [currentMangaId, setCurrentMangaId] = React.useState<string | null>(null);
 
   const { data: catOptions, isError } = useQuery<dropdownOption[], Error>({
-      queryKey: ['userCategories'],
-      queryFn: () => fetchUserCategories(),
-      staleTime: 1000 * 60 * 60, 
-      gcTime: Infinity,
-    })
+    queryKey: ['userCategories'],
+    queryFn: () => fetchUserCategories(),
+    staleTime: 1000 * 60 * 60,
+    gcTime: Infinity,
+  });
 
-  const [filterOption, setFilterOption] = React.useState<dropdownOption | null>(getStoredValue('filterOption')||catOptions?.[8]||null);
+  const [filterOption, setFilterOption] = React.useState<dropdownOption | null>(
+    getStoredValue('filterOption') || catOptions?.[8] || null
+  );
   const [methodOption, setMethodOption] = React.useState<{
     label: string;
     value: string;
-  } | null>(getStoredValue('methodOption')||sortOptions[0]);
+  } | null>(getStoredValue('methodOption') || sortOptions[0]);
   const [orderOption, setOrderOption] = React.useState<{
     value: string;
     label: string;
-  } | null>(getStoredValue('orderOption')||{ value: '1', label: 'Ascending' });
+  } | null>(getStoredValue('orderOption') || { value: '1', label: 'Ascending' });
 
   React.useEffect(() => {
     localStorage.setItem('filterOption', JSON.stringify(filterOption));
@@ -71,7 +73,9 @@ export default function tracked() {
   }, [orderOption]);
 
   const [currentSearch, setSearch] = React.useState<string>('');
-  const [unreadChecked, setUnreadChecked] = React.useState<boolean>(getStoredValue('unreadChecked')||false);
+  const [unreadChecked, setUnreadChecked] = React.useState<boolean>(
+    getStoredValue('unreadChecked') || false
+  );
 
   React.useEffect(() => {
     localStorage.setItem('unreadChecked', JSON.stringify(unreadChecked));
@@ -112,7 +116,7 @@ export default function tracked() {
     setCurrentMangaId(mangaId);
     setModalOpen(true);
   }
-  
+
   function useUserManga() {
     return useQuery({
       queryKey: ['userManga', 'viewTracked'],
@@ -121,24 +125,26 @@ export default function tracked() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
         });
-  
+
         if (!response.ok) {
           const errorData: { message?: string } = await response.json();
           throw new Error(errorData.message || 'Failed to fetch manga');
         }
-  
-        const results = await response.json()  as { mangaDetails: mangaDetails[] };
-        const mangaMap:Map<string, mangaDetails> = new Map(results.mangaDetails.map(manga => [manga.mangaId, manga]))
+
+        const results = (await response.json()) as { mangaDetails: mangaDetails[] };
+        const mangaMap: Map<string, mangaDetails> = new Map(
+          results.mangaDetails.map((manga) => [manga.mangaId, manga])
+        );
         if (results.mangaDetails.length <= 0) {
-          toast.info("No Manga!");
+          toast.info('No Manga!');
         }
-  
+
         return mangaMap;
       },
       staleTime: 1000 * 60 * 5, // 5 minutes
       refetchOnWindowFocus: false,
     });
-  }  
+  }
 
   function fuzzyMatch(pattern: string, str: string): number {
     pattern = pattern.toLowerCase();
@@ -167,23 +173,22 @@ export default function tracked() {
   function fuzzyWordMatch(pattern: string, str: string): number {
     const patternWords = pattern.toLowerCase().split(/\s+/);
     const strWords = str.toLowerCase().split(/\s+/);
-  
-    console.log(strWords)
+
+    console.log(strWords);
 
     let totalScore = 0;
     for (const pWord of patternWords) {
       let bestScore = Infinity;
       for (const sWord of strWords) {
-        const score = fuzzyMatch(pWord, sWord); 
+        const score = fuzzyMatch(pWord, sWord);
         if (score < bestScore) bestScore = score;
       }
       totalScore += bestScore;
     }
-    if (totalScore === Infinity) return -1
+    if (totalScore === Infinity) return -1;
     console.log(`Matching "${pattern}" to "${str}" =>`, totalScore);
     return totalScore;
   }
-  
 
   const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
     setSearch(event.target.value);
@@ -203,12 +208,12 @@ export default function tracked() {
   }
 
   //modal control
-  const [modalOpen, setModalOpen] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false);
   const handleModalClose = async () => {
-    if (!currentMangaId) return
-    let mangaId = currentMangaId
-    setModalOpen(false)
-    setCurrentMangaId(null)
+    if (!currentMangaId) return;
+    let mangaId = currentMangaId;
+    setModalOpen(false);
+    setCurrentMangaId(null);
 
     await fetch(`${fetchPath}/api/data/update/updateInteractTime`, {
       method: 'POST',
@@ -220,7 +225,6 @@ export default function tracked() {
         interactionTime: Date.now(),
       }),
     });
-
   };
   const [catOpen, setCatOpen] = React.useState(false);
   const handleCatOpen = () => setCatOpen(true);
@@ -305,37 +309,33 @@ export default function tracked() {
       }}
     >
       <div className="mangaOverviewModal" id="overviewModal">
-      <SeriesModal
-        open={modalOpen}
-        manga={mangaInfo.get(currentMangaId||'') ?? null}
-        onUnsetManga={() => handleModalClose()}
-        onRemove={() => handleRemoveOpen()}
-        onChangeCategory={() => handleCatOpen()}
-        onChangeChap={() => handleChapterOpen()}
-      />
-
+        <SeriesModal
+          open={modalOpen}
+          manga={mangaInfo.get(currentMangaId || '') ?? null}
+          onUnsetManga={() => handleModalClose()}
+          onRemove={() => handleRemoveOpen()}
+          onChangeCategory={() => handleCatOpen()}
+          onChangeChap={() => handleChapterOpen()}
+        />
 
         <ChangeCategoryModal
           open={catOpen}
           onClose={handleCatClose}
-          mangaId={currentMangaId||''}
+          mangaId={currentMangaId || ''}
         />
         <ChangeChapterModal
           open={chapterOpen}
           onClose={handleChapterClose}
           mangaInfo={mangaInfo}
-          mangaId={currentMangaId||''}
+          mangaId={currentMangaId || ''}
         />
         <ConfirmRemovalModal
           open={removeOpen}
           onClose={handleRemoveClose}
-          mangaId={currentMangaId||''}
+          mangaId={currentMangaId || ''}
         />
 
-        <AddMangaModal
-          open={addOpen}
-          onClose={handleAddClose}
-        />
+        <AddMangaModal open={addOpen} onClose={handleAddClose} />
       </div>
 
       <div className="cardControls">
@@ -484,7 +484,7 @@ export default function tracked() {
           }
         >
           <MenuItem onClick={handleContextOpen}>Open</MenuItem>
-          <MenuItem onClick={handleContextChapter}>Change Chapter</MenuItem>
+          <MenuItem onClick={handleContextChapter}>Mark Chapters as Read…</MenuItem>
           <MenuItem onClick={handleContextCategory}>Change Category</MenuItem>
           <MenuItem onClick={handleContextRemove} sx={{ color: 'error.main' }}>
             Remove
