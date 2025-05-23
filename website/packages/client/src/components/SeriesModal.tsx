@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react'
+import React, { useRef, useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -14,21 +14,21 @@ import {
   Tooltip,
   Menu,
   MenuItem,
-} from '@mui/material'
-import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+} from '@mui/material';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
-import { mangaDetails } from '../types' // Update path if needed
-import { fetchPath } from '../vars'
-import { toast } from 'react-toastify'
-import { useQueryClient } from '@tanstack/react-query'
+import { mangaDetails } from '../types'; // Update path if needed
+import { fetchPath } from '../vars';
+import { toast } from 'react-toastify';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface SeriesModalProps {
-  open: boolean
-  manga: mangaDetails | null
-  onUnsetManga: () => void
-  onRemove: () => void
-  onChangeCategory: () => void
-  onChangeChap: () => void
+  open: boolean;
+  manga: mangaDetails | null;
+  onUnsetManga: () => void;
+  onRemove: () => void;
+  onChangeCategory: () => void;
+  onChangeChap: () => void;
 }
 
 const SeriesModal: React.FC<SeriesModalProps> = ({
@@ -37,10 +37,10 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
   onUnsetManga,
   onRemove,
   onChangeCategory,
-  onChangeChap
+  onChangeChap,
 }) => {
-  const listRef = useRef<HTMLUListElement | null>(null)
-  const [tooltipOpen, setTooltipOpen] = useState(false)
+  const listRef = useRef<HTMLUListElement | null>(null);
+  const [tooltipOpen, setTooltipOpen] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -48,10 +48,9 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
     top: number;
     left: number;
     chapterIndex: number;
-} | null>(null);
+  } | null>(null);
 
-
-  const currentChapterUrl = manga ? manga.urlBase + manga.slugList[manga.currentIndex] : ''
+  const currentChapterUrl = manga ? manga.urlBase + manga.slugList[manga.currentIndex] : '';
 
   useEffect(() => {
     if (open && manga) {
@@ -59,42 +58,42 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
         if (listRef.current) {
           const currentChapterElement = listRef.current.querySelector(
             `[data-url="${currentChapterUrl}"]`
-          )
+          );
           if (currentChapterElement) {
-            currentChapterElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            currentChapterElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }
         }
-      }, 100)
+      }, 100);
 
-      return () => clearTimeout(timer)
+      return () => clearTimeout(timer);
     }
-  }, [currentChapterUrl, open, manga])
+  }, [currentChapterUrl, open, manga]);
 
-  if (!manga) return null
+  if (!manga) return null;
 
   const chapters = manga.slugList.map((slug, index) => ({
     title: manga.chapterTextList[index],
     url: manga.urlBase + slug,
-    key: index
-  }))
+    key: index,
+  }));
 
   const handleChapterClick = (url: string) => {
-    window.open(url, '_blank')
-  }
+    window.open(url, '_blank');
+  };
 
   const handleJumpToLatestChapter = () => {
-    const latestChapter = chapters[0]
-    const targetElement = listRef.current?.querySelector(`[data-url="${latestChapter.url}"]`)
+    const latestChapter = chapters[0];
+    const targetElement = listRef.current?.querySelector(`[data-url="${latestChapter.url}"]`);
     if (targetElement) {
-      targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-  }
+  };
 
   const isChapterRead = (chapterUrl: string) => {
     const currentIndex = chapters.findIndex((chapter) => chapter.url === currentChapterUrl);
     const chapterIndex = chapters.findIndex((chapter) => chapter.url === chapterUrl);
     return chapterIndex >= currentIndex;
-  }
+  };
 
   const handleChapterContextMenu = (event: React.MouseEvent, chapterIndex: number) => {
     if (anchorPosition) {
@@ -105,7 +104,7 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
     event.preventDefault();
     if (!manga) return;
     setAnchorPosition({ top: event.clientY, left: event.clientX, chapterIndex });
-  }
+  };
 
   const handleContextClose = () => {
     setAnchorPosition(null);
@@ -119,7 +118,7 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
 
     window.open(currentUrl);
     handleContextClose();
-  }
+  };
 
   const handleContextMarkRead = async () => {
     const notif = toast.loading('Changing Chapter!');
@@ -140,11 +139,15 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ mangaId: manga.mangaId, newIndex: anchorPosition.chapterIndex, currentChap: manga.chapterTextList[anchorPosition.chapterIndex] }),
+        body: JSON.stringify({
+          mangaId: manga.mangaId,
+          newIndex: anchorPosition.chapterIndex,
+          currentChap: manga.chapterTextList[anchorPosition.chapterIndex],
+        }),
       });
 
       if (reply.ok) {
-        queryClient.invalidateQueries({queryKey: ['userManga']})
+        queryClient.invalidateQueries({ queryKey: ['userManga'] });
 
         toast.update(notif, {
           render: 'Chapter Successfully Changed!',
@@ -170,7 +173,7 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
         autoClose: 5000,
       });
     }
-  }
+  };
 
   return (
     <Dialog open={open} onClose={onUnsetManga} maxWidth="md" fullWidth>
@@ -244,7 +247,7 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
               }
             >
               <MenuItem onClick={handleContextOpen}>Open</MenuItem>
-              <MenuItem onClick={handleContextMarkRead}>Mark as Read</MenuItem>
+              <MenuItem onClick={handleContextMarkRead}>Read Up To</MenuItem>
             </Menu>
 
             <List ref={listRef} sx={{ maxHeight: 400, overflowY: 'auto', mt: 3 }}>
@@ -291,7 +294,7 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
           Remove
         </Button>
         <Button onClick={onChangeChap} color="primary" variant="contained">
-          Change Chapter
+          Mark Chapters as Read
         </Button>
         <Button onClick={onChangeCategory} color="primary" variant="contained">
           Change Category
@@ -301,7 +304,7 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
         </Button>
       </DialogActions>
     </Dialog>
-  )
-}
+  );
+};
 
-export default SeriesModal
+export default SeriesModal;
