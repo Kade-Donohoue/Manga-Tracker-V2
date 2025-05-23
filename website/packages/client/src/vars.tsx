@@ -1,37 +1,89 @@
-import { dropdownOption } from "./types"
+import { categoryOption, dropdownOption } from './types';
 
-export let defaultCategoryOptions:dropdownOption[] = [
-    {value: "reading", label: "Reading"},
-    {value: "notreading", label: "Not Reading"},
-    {value: "dropped", label: "Dropped"},
-    {value: "hold", label: "Hold"},
-    {value: "finished", label: "Finished"},
-    {value: "inqueue", label: "In Queue"},
-    {value: "other", label: "Other"},
-    {value: "unsorted", label: "Uncategorized"},
-    {value: "%", label: "Any"}
-]
+export let defaultCategoryOptions: categoryOption[] = [
+  { value: 'reading', label: 'Reading', color: '#FFFFFF', public: false, stats: true, position: 0 },
+  {
+    value: 'notreading',
+    label: 'Not Reading',
+    color: '#FFFFFF',
+    public: false,
+    stats: true,
+    position: 1,
+  },
+  {
+    value: 'dropped',
+    label: 'Dropped',
+    color: '#FFFFFF',
+    public: false,
+    stats: true,
+    position: 2,
+  },
+  {
+    value: 'hold',
+    label: 'Hold',
+    color: '#FFFFFF',
+    public: false,
+    stats: true,
+    position: 3,
+  },
+  {
+    value: 'finished',
+    label: 'Finished',
+    color: '#FFFFFF',
+    public: false,
+    stats: true,
+    position: 4,
+  },
+  {
+    value: 'inqueue',
+    label: 'In Queue',
+    color: '#FFFFFF',
+    public: false,
+    stats: true,
+    position: 5,
+  },
+  {
+    value: 'other',
+    label: 'Other',
+    color: '#FFFFFF',
+    public: false,
+    stats: true,
+    position: 6,
+  },
+  {
+    value: 'unsorted',
+    label: 'Uncategorized',
+    color: '#FFFFFF',
+    public: false,
+    stats: true,
+    position: 7,
+  },
+  {
+    value: '%',
+    label: 'Any',
+    color: '#FFFFFF',
+    public: false,
+    stats: true,
+    position: 8,
+  },
+];
 
-export function setCatOptions(newOptions:dropdownOption[]) {
-    // catOptions = newOptions
-}
-  
-export const ordOptions:dropdownOption[] = [
-    {value: "ASC", label: "Ascending"},
-    {value: "DESC", label: "Descending"}
-]
-  
-export const methodOptions:dropdownOption[] = [
-    {value: "interactTime", label: "Time"},
-    {value: "mangaName", label: "Alphabetical"},
-    {value: "currentIndex", label: "Chapters Read"}, 
-    {value: "userCat", label: "Category"}
-]
+export const ordOptions: dropdownOption[] = [
+  { value: 'ASC', label: 'Ascending' },
+  { value: 'DESC', label: 'Descending' },
+];
 
-export let fetchPath:string = ""
+export const methodOptions: dropdownOption[] = [
+  { value: 'interactTime', label: 'Time' },
+  { value: 'mangaName', label: 'Alphabetical' },
+  { value: 'currentIndex', label: 'Chapters Read' },
+  { value: 'userCat', label: 'Category' },
+];
 
-export function setFetchPath(path:string){
-    // console.log(`Changing Path To: ${path}`)
-    fetchPath = path
-    // console.log(path)
+export let fetchPath: string = '';
+
+export function setFetchPath(path: string) {
+  // console.log(`Changing Path To: ${path}`)
+  fetchPath = path;
+  // console.log(path)
 }

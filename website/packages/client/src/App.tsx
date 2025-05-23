@@ -16,6 +16,7 @@ import stats from './pages/command/stats'
 import tracked from './pages/command/viewTracked'
 import addBookmarks from './pages/command/addBookmarks'
 import settings from './pages/settings';
+import friends from './pages/command/friends/friendsContainer'
 
 import HomeIcon from '@mui/icons-material/Home';
 import DynamicFeedIcon from '@mui/icons-material/DynamicFeed';
@@ -25,6 +26,7 @@ import UploadFileIcon from '@mui/icons-material/UploadFile';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import AnalyticsIcon from '@mui/icons-material/Analytics';
 import BugReportIcon from '@mui/icons-material/BugReport';
+import GroupIcon from '@mui/icons-material/Group';
 import SettingsIcon from '@mui/icons-material/Settings';
 import MenuIcon from '@mui/icons-material/Menu';
 
@@ -179,6 +181,12 @@ const routes: Record<string, AppRoute> = {
     name: 'Statistics',
     icon: AnalyticsIcon,
     component: stats
+  },
+  friends: {
+    path: '/friends',
+    name: 'Friends',
+    icon: GroupIcon,
+    component: friends
   },
   // debug: {
   //   path: '/debug',
