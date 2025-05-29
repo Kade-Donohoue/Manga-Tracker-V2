@@ -3,8 +3,8 @@ import { Modal, Box, Button, SvgIcon } from '@mui/material';
 import CancelIcon from '@mui/icons-material/Cancel';
 import Select from 'react-select';
 import { toast } from 'react-toastify';
-import { fetchPath } from '../vars'
-import { dropdownOption, mangaDetails } from '../types'
+import { fetchPath } from '../vars';
+import { dropdownOption, mangaDetails } from '../types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchUserCategories } from '../utils';
 
@@ -34,7 +34,7 @@ const customStyles = {
   }),
   singleValue: (base: any, { data }: any) => ({
     ...base,
-    color: data.color||'white',
+    color: data.color || 'white',
   }),
   menu: (base: any) => ({
     ...base,
@@ -47,28 +47,25 @@ const customStyles = {
   }),
 };
 
-export default function ChangeCategoryModal({
-  open,
-  onClose,
-  mangaId,
-}: ChangeCategoryModalProps) {
-
+export default function ChangeCategoryModal({ open, onClose, mangaId }: ChangeCategoryModalProps) {
   const queryClient = useQueryClient();
 
   const { data: catOptions, isError } = useQuery<dropdownOption[], Error>({
-      queryKey: ['userCategories'],
-      queryFn: () => fetchUserCategories(),
-      staleTime: 1000 * 60 * 60, 
-      gcTime: Infinity,
-    })
+    queryKey: ['userCategories'],
+    queryFn: () => fetchUserCategories(),
+    staleTime: 1000 * 60 * 60,
+    gcTime: Infinity,
+  });
 
-  const [newCat, setNewCat] = React.useState<dropdownOption | null>(catOptions?catOptions[0]:null);
+  const [newCat, setNewCat] = React.useState<dropdownOption | null>(
+    catOptions ? catOptions[0] : null
+  );
 
   const changeUserCatMutation = useMutation({
     mutationFn: async () => {
-      if (!newCat) throw new Error("No Category Selected!");
-      if (!mangaId) throw new Error("No manga selected.");
-  
+      if (!newCat) throw new Error('No Category Selected!');
+      if (!mangaId) throw new Error('No manga selected.');
+
       const response = await fetch(`${fetchPath}/api/data/update/changeMangaCat`, {
         method: 'POST',
         headers: {
@@ -79,17 +76,17 @@ export default function ChangeCategoryModal({
           newCat: newCat.value,
         }),
       });
-  
+
       if (!response.ok) {
         const data: { message?: string } = await response.json();
         throw new Error(data.message ?? 'Failed to update category.');
       }
-  
+
       return newCat.value; // Return new category value for use in onSuccess
     },
     onMutate: () => {
-      const toastId = toast.loading("Changing Category!");
-      return toastId
+      const toastId = toast.loading('Changing Category!');
+      return toastId;
     },
     onSuccess: (newCatValue, _variables, toastId) => {
       toast.update(toastId, {
@@ -98,21 +95,21 @@ export default function ChangeCategoryModal({
         isLoading: false,
         autoClose: 5000,
       });
-  
+
       // Option 1: Optimistically update local UI (if using useState still)
       // Option 2: Invalidate the query to refetch
       queryClient.invalidateQueries({ queryKey: ['userManga'] });
     },
     onError: (error: Error, _variables, toastId) => {
-      if (toastId) toast.update(toastId, {
-        render: error.message,
-        type: 'error',
-        isLoading: false,
-        autoClose: 5000,
-      });
+      if (toastId)
+        toast.update(toastId, {
+          render: error.message,
+          type: 'error',
+          isLoading: false,
+          autoClose: 5000,
+        });
     },
   });
-  
 
   if (!mangaId) return null;
 
@@ -124,7 +121,9 @@ export default function ChangeCategoryModal({
       aria-describedby="cat-modal-description"
     >
       <Box sx={{ width: '80vw', height: '25vh', ...modalStyle }}>
-        <h2 id="cat-modal-title" style={{ color: 'white' }}>Choose a new Category</h2>
+        <h2 id="cat-modal-title" style={{ color: 'white' }}>
+          Choose a new Category
+        </h2>
 
         <Select
           name="cat"
@@ -134,11 +133,12 @@ export default function ChangeCategoryModal({
           onChange={setNewCat}
           options={catOptions}
           styles={customStyles}
+          isSearchable={false}
         />
 
         <Button
           onClick={() => {
-            changeUserCatMutation.mutate();;
+            changeUserCatMutation.mutate();
             onClose();
           }}
           variant="contained"
@@ -149,7 +149,10 @@ export default function ChangeCategoryModal({
           Submit
         </Button>
 
-        <SvgIcon onClick={onClose} sx={{ position: 'absolute', top: 10, right: 10, cursor: 'pointer' }}>
+        <SvgIcon
+          onClick={onClose}
+          sx={{ position: 'absolute', top: 10, right: 10, cursor: 'pointer' }}
+        >
           <CancelIcon sx={{ color: 'white' }} />
         </SvgIcon>
       </Box>
