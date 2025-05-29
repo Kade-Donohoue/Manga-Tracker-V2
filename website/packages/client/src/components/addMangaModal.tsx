@@ -146,7 +146,7 @@ const AddMangaModal: React.FC<AddMangaModalProps> = ({ open, onClose }) => {
       aria-labelledby="cat-modal-title"
       aria-describedby="cat-modal-description"
     >
-      <Box sx={{ width: '80vw', height: '28vh', ...modalStyle }}>
+      <Box sx={{ width: '80vw', ...modalStyle }}>
         <label htmlFor="chapURL">Enter Chapter URL(s):</label>
         <input
           type="text"
