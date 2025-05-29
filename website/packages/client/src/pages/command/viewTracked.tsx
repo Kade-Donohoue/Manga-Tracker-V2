@@ -371,6 +371,7 @@ export default function tracked() {
           options={catOptions}
           styles={customStyles}
           className="selectField"
+          isSearchable={false}
         />
 
         <Select
@@ -379,6 +380,7 @@ export default function tracked() {
           options={sortOptions}
           styles={customStyles}
           className="selectField"
+          isSearchable={false}
         />
 
         <Select
@@ -390,6 +392,7 @@ export default function tracked() {
           ]}
           styles={customStyles}
           className="selectField"
+          isSearchable={false}
         />
 
         <FormControlLabel

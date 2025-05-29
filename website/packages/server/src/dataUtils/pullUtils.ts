@@ -303,7 +303,7 @@ export async function pullUserCategories(authId: string, env: Env) {
       status: 200,
     });
   } catch (err) {
-    console.warn('Error with updateInteractTime: ' + err);
+    console.warn('Error with pullUserCategories: ' + err);
     return new Response(JSON.stringify({ message: 'An error occured' + err }), { status: 500 });
   }
 }
