@@ -15,6 +15,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import { modalStyle } from '../../AppStyles';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchUserCategories } from '../../utils';
+import ChangeChapterModal from '../../components/changeChapterModal';
 
 export default function feed(): JSX.Element {
   const { data: catOptions, isError } = useQuery<dropdownOption[], Error>({
@@ -204,6 +205,7 @@ export default function feed(): JSX.Element {
           onChange={setSelectedCat}
           options={catOptions}
           styles={customStyles}
+          isSearchable={false}
         />
         <br></br>
 
@@ -216,6 +218,7 @@ export default function feed(): JSX.Element {
           onChange={setSelectedOrd}
           options={ordOptions}
           styles={customStyles}
+          isSearchable={false}
         />
         <br></br>
 
@@ -228,6 +231,7 @@ export default function feed(): JSX.Element {
           onChange={setSelectedMethod}
           options={methodOptions}
           styles={customStyles}
+          isSearchable={false}
         />
 
         <button className="addButton" type="submit" onClick={updateCard}>
@@ -249,7 +253,7 @@ export default function feed(): JSX.Element {
       <div className="mangaContainer">
         {mangaDetails ? (
           <img
-            src={`${fetchPath === '/.proxy' ? '/.proxy/image' : import.meta.env.VITE_IMG_URL}/${mangaDetails[currentCard].mangaId}/${mangaDetails[currentCard].imageIndexes.at(-1) || 0}}`}
+            src={`${fetchPath === '/.proxy' ? '/.proxy/image' : import.meta.env.VITE_IMG_URL}/${mangaDetails[currentCard].mangaId}/${mangaDetails[currentCard].imageIndexes.at(-1) || 0}`}
             alt="Manga Icon"
             className="cover-image"
           />
@@ -322,40 +326,12 @@ export default function feed(): JSX.Element {
         </div>
       </div>
 
-      <Modal
+      <ChangeChapterModal
         open={chapterOpen}
         onClose={handleChapterClose}
-        aria-labelledby="chap-modal-title"
-        aria-describedby="chap-modal-description"
-      >
-        <Box sx={{ width: '80vw', height: '25vh', ...modalStyle }}>
-          <h2 id="chap-modal-title">Choose a new Chapter</h2>
-          <Select
-            name="chap"
-            id="chap"
-            className="chapSelect"
-            value={newChapter}
-            onChange={setChapter}
-            options={mangaDetails[currentCard].chapterTextList.toReversed().map((text, i) => {
-              return { value: text, label: text };
-            })}
-            styles={style(
-              mangaDetails[currentCard].chapterTextList[mangaDetails[currentCard].currentIndex]
-            )}
-          />
-          <Button
-            onClick={(e) => {
-              submitManga(mangaDetails[currentCard].mangaId);
-              handleChapterClose();
-            }}
-          >
-            Submit
-          </Button>
-          <SvgIcon onClick={handleChapterClose} sx={{ position: 'absolute', top: 10, right: 10 }}>
-            <CancelIcon sx={{ color: 'white' }} />
-          </SvgIcon>
-        </Box>
-      </Modal>
+        mangaInfo={new Map().set(mangaDetails[currentCard].mangaId, mangaDetails[currentCard])}
+        mangaId={mangaDetails[currentCard].mangaId}
+      />
 
       <div className="controlButtonContainer">
         <button
@@ -402,10 +378,6 @@ export default function feed(): JSX.Element {
       >
         Change Options
       </Button>
-      {/* <button className='feedChangeOptionButton' onClick={(e) => {
-        //remove response data 
-        setMangaDetails([])
-      }}>Change Options</button> */}
     </div>
   );
 }
