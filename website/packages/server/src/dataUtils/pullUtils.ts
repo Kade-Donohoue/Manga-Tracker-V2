@@ -105,7 +105,7 @@ export async function getUserManga(authId: string, env: Env) {
   try {
     let queryTimeDebug = 0;
     const userRes = await env.DB.prepare(
-      'SELECT mangaData.mangaName, userData.mangaId, mangaData.urlBase, mangaData.slugList, mangaData.chapterTextList, mangaData.updateTime, userData.currentChap, userData.currentIndex, userData.userCat, userData.interactTime FROM userData JOIN mangaData ON (userData.mangaId = mangaData.mangaId) WHERE userData.userId = ?'
+      'SELECT mangaData.mangaName, userData.mangaId, mangaData.urlBase, mangaData.slugList, mangaData.chapterTextList, mangaData.updateTime, userData.currentChap, userData.currentIndex, userData.userCat, userData.interactTime, (SELECT GROUP_CONCAT(coverImages.coverIndex) FROM coverImages WHERE coverImages.mangaId = userData.mangaId) AS imageIndexes FROM userData JOIN mangaData ON (userData.mangaId = mangaData.mangaId) WHERE userData.userId = ?'
     )
       .bind(authId)
       .all();

@@ -20,6 +20,8 @@ export async function getManga(
   url: string,
   icon: boolean = true,
   ignoreIndex = false,
+  currentImageIndex: number,
+  maxSavedAt: string,
   job: Job
 ): Promise<fetchData> {
   if (config.logging.verboseLogging) console.log('comick');
@@ -99,8 +101,13 @@ export async function getManga(
       throw new Error('Manga: unable to find current chapter. Please retry or contact Admin!');
     }
 
+    const inputDate = new Date(maxSavedAt.replace(' ', 'T') + 'Z');
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
     let resizedImage: Buffer | null = null;
-    if (icon) {
+    if (icon || inputDate < oneMonthAgo) {
+      // find some way to get full list of covers to pull auto when new one
       job.log(logWithTimestamp('Fetching image!'));
       const iconBuffer = await (
         await fetch(`https://meo.comick.pictures/${comicData.comic.md_covers[0].b2key}`)
@@ -121,6 +128,7 @@ export async function getManga(
       chapterTextList: chapters.join(','),
       currentIndex: currIndex,
       iconBuffer: resizedImage,
+      newCoverImageIndex: 0,
     };
   } catch (err) {
     job.log(logWithTimestamp(`Error: ${err}`));

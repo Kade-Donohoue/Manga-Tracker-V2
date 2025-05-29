@@ -51,6 +51,8 @@ app.get('/getManga', getOpts, async function (req, res) {
         url: url.trim(),
         getIcon: true,
         update: false,
+        maxCoverIndex: -1,
+        maxSavedAt: 0,
       },
       opts: {
         priority: 1,
@@ -127,6 +129,8 @@ app.get('/checkStatus/get', checkOpts, async function (req, res) {
   res.status(200).send({ currentStatus: data });
 });
 
+const dataCollector = new Map<number, updateCollector>();
+
 async function updateAllManga() {
   let date = new Date();
   console.log(`Updating all manga at ${date.toLocaleString()}`);
@@ -141,11 +145,28 @@ async function updateAllManga() {
     if (config.logging.verboseLogging) console.log(resp);
     if (resp.status != 200) return console.log('issue fetching data to update all manga:');
 
-    const returnData: { mangaId: string; urlBase: string; slugList: string; mangaName: string }[] =
-      (await resp.json()).data;
+    const returnData: {
+      mangaId: string;
+      urlBase: string;
+      slugList: string;
+      mangaName: string;
+      maxCoverIndex: number;
+      maxSavedAt: string;
+    }[] = (await resp.json()).data;
     if (config.logging.verboseLogging) console.log(returnData.length);
     // console.log(returnData)
     let batchId = Date.now();
+
+    dataCollector.set(batchId, {
+      batchId: batchId,
+      batchData: {
+        completedCount: 0,
+        newChapterCount: 0,
+        batchLength: returnData.length,
+        newData: [],
+      },
+    });
+
     // let batchedJobs:{data:any,name:string,opts:any}[] = []
     const universalJobs: { data: any; name: string; opts: any }[] = [];
     const comickJobs: { data: any; name: string; opts: any }[] = [];
@@ -156,7 +177,9 @@ async function updateAllManga() {
         if (returnData[i].slugList.length <= 0) {
           console.log('Unable to find first chap skipping: ' + returnData[i].mangaId);
           if (config.logging.verboseLogging) console.log(returnData[i].slugList);
-          invalidCount++;
+          // invalidCount++;
+          const batch = dataCollector.get(batchId);
+          batch.batchData.batchLength -= 1;
           continue;
         } else {
           firstChapUrl =
@@ -175,7 +198,9 @@ async function updateAllManga() {
         console.log(
           `Disabled or Invalid URL in database, ${webSite.value}! Check your config and the database Skipping for now. mangaId:${returnData[i].mangaId}`
         );
-        invalidCount++;
+        const batch = dataCollector.get(batchId);
+        batch.batchData.batchLength -= 1;
+        // console.log(batch.batchData.completedCount)
         continue;
       }
       if (config.logging.verboseLogging) console.log(returnData[i]);
@@ -190,6 +215,8 @@ async function updateAllManga() {
           update: true,
           length: returnData.length - invalidCount,
           oldSlugList: returnData[i].slugList,
+          maxCoverIndex: returnData[i].maxCoverIndex,
+          maxSavedAt: returnData[i].maxSavedAt,
           batchId: batchId,
         },
         opts: {
@@ -216,7 +243,6 @@ async function updateAllManga() {
   }
 }
 
-const dataCollector = new Map<number, updateCollector>();
 const getUniversalEvents = new QueueEvents('Get Manga Queue');
 const getComickEvents = new QueueEvents('Comick Manga Queue');
 getUniversalEvents.on('completed', mangaCompleteFuction);
@@ -234,14 +260,6 @@ async function mangaCompleteFuction({ jobId }: { jobId: string }) {
     try {
       let batch = dataCollector.get(job.data.batchId);
 
-      if (!batch) {
-        batch = {
-          batchId: job.data.batchId,
-          batchData: { completedCount: 0, newChapterCount: 0, newData: [] },
-        };
-        dataCollector.set(job.data.batchId, batch);
-      }
-
       // console.log(job)
       batch.batchData.completedCount++;
       if (
@@ -249,6 +267,8 @@ async function mangaCompleteFuction({ jobId }: { jobId: string }) {
         job.returnvalue.iconBuffer ||
         (job.returnvalue.slugList && job.returnvalue.slugList != job.data.oldSlugList)
       ) {
+        if (job.data.mangaId === '7f15dfc4-8c6b-4920-bd17-7307017098d9')
+          console.log(job.returnvalue.iconBuffer);
         const oldSlugs = job.data.oldSlugList?.split(',') || [];
         const newSlugs = job.returnvalue.slugList?.split(',') || [];
         const newChapterCount = newSlugs.length - oldSlugs.length;
@@ -261,7 +281,8 @@ async function mangaCompleteFuction({ jobId }: { jobId: string }) {
       }
       if (config.queue.instantClearJob) await job.remove();
 
-      if (job.data.length <= batch.batchData.completedCount) sendUpdate(batch);
+      console.log(batch.batchData.batchLength, batch.batchData.completedCount);
+      if (batch.batchData.batchLength <= batch.batchData.completedCount) sendUpdate(batch);
     } catch (err) {
       console.log(err);
       console.log(job);
@@ -295,78 +316,91 @@ function logArrayDifferences(oldArr, newArr) {
   console.log('Value differences:', diffs.valueDifferences);
 }
 
-getUniversalEvents.on('failed', mangaFailedEvent);
+const getOtherEvents = new QueueEvents('Get Manga Queue');
+getOtherEvents.on('failed', mangaFailedEvent);
 getComickEvents.on('failed', mangaFailedEvent);
 
 async function mangaFailedEvent({ jobId }: { jobId: string }) {
   let job = await Job.fromId(getQueue, jobId);
+  if (!job) job = await Job.fromId(comickQueue, jobId);
 
-  if (!job) job = await Job.fromId<dataType, fetchData>(comickQueue, jobId);
+  if (!job) {
+    console.warn(`Job ${jobId} not found in either queue.`);
+    return;
+  }
 
-  if (!(await job.isFailed())) return;
+  const retrying = job.attemptsMade + 1 < (job.opts.attempts ?? 1);
+  if (retrying) {
+    console.log(
+      `Job ${jobId} failed but has retries left (${job.attemptsMade}/${job.opts.attempts})`
+    );
+    return;
+  }
 
-  if (job.data.update) {
-    let batch = dataCollector.get(job.data.batchId);
+  const batch = dataCollector.get(job.data.batchId);
+  if (!batch) {
+    console.warn(`Batch ${job.data.batchId} not found for failed job ${jobId}`);
+    return;
+  }
 
-    if (!batch) {
-      batch = {
-        batchId: job.data.batchId,
-        batchData: { completedCount: 0, newChapterCount: 0, newData: [] },
-      };
-      dataCollector.set(job.data.batchId, batch);
-    }
+  console.log(`Adding Failed to complete Count`, batch.batchData.completedCount);
+  batch.batchData.completedCount += 1;
 
-    batch.batchData.completedCount++;
+  if (config.queue.instantClearJob) await job.remove();
 
-    if (job.data.length <= batch.batchData.completedCount) sendUpdate(batch);
-
-    if (config.queue.instantClearJob) await job.remove();
+  if (batch.batchData.batchLength <= batch.batchData.completedCount) {
+    sendUpdate(batch);
   }
 }
 
 async function sendUpdate(batch: updateCollector) {
   console.log('Sending Manga Update!');
   if (batch.batchData.newData.length > 0) {
-    if (!config.updateSettings.refetchImgs) {
-      // returns all manga together if images not fetched
-      const resp = await fetch(`${config.serverCom.serverUrl}/serverReq/data/updateManga`, {
+    // returns all manga together if images not fetched
+    const resp = await fetch(`${config.serverCom.serverUrl}/serverReq/data/updateManga`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        pass: config.serverCom.serverPassWord,
+      },
+      body: JSON.stringify({
+        newData: batch.batchData.newData,
+        amountNewChapters: batch.batchData.newChapterCount,
+        expiresAt: Date.now() + config.updateSettings.updateDelay + 50000, //50 extra seconds compared to what this pull took
+      }),
+    });
+
+    if (!resp.ok) console.warn(resp);
+    else
+      console.log(
+        `${batch.batchData.newData.length} / ${batch.batchData.completedCount} Manga Update Saved With ${batch.batchData.newChapterCount} New Chapters!`
+      );
+    // if (config.updateSettings.refetchImgs) {
+    //send each manga sepratly due to images
+    for (let i = 0; i < batch.batchData.newData.length; i++) {
+      console.log(batch.batchData.newData[i].mangaId);
+      console.log(batch.batchData.newData[i].iconBuffer);
+      if (!batch.batchData.newData[i].iconBuffer) continue;
+      if (config.logging.verboseLogging)
+        console.log(`Saving Image for mangaId: ${batch.batchData.newData[i].mangaId}`);
+      const resp = await fetch(`${config.serverCom.serverUrl}/serverReq/data/saveCoverImage`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           pass: config.serverCom.serverPassWord,
         },
         body: JSON.stringify({
-          newData: batch.batchData.newData,
-          amountNewChapters: batch.batchData.newChapterCount,
-          expiresAt: Date.now() + config.updateSettings.updateDelay + 5000, //5 extra seconds compared to what this pull took
+          img: batch.batchData.newData[i].iconBuffer,
+          index: batch.batchData.newData[i].newCoverImageIndex,
+          mangaId: batch.batchData.newData[i].mangaId,
         }),
       });
 
-      if (!resp.ok) console.warn(resp);
-      else if (config.updateSettings.autoUpdateInfo)
-        console.log(
-          `${batch.batchData.newData.length} / ${batch.batchData.completedCount} Manga Update Saved With ${batch.batchData.newChapterCount} New Chapters!`
-        );
-    } else {
-      //send each manga sepratly due to images
-      for (let i = 0; i < batch.batchData.newData.length; i++) {
-        const resp = await fetch(`${config.serverCom.serverUrl}/serverReq/data/updateManga`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            pass: config.serverCom.serverPassWord,
-          },
-          body: JSON.stringify({
-            newData: [batch.batchData.newData[i]],
-            amountNewChapters: batch.batchData.newChapterCount,
-            expiresAt: Date.now() + config.updateSettings.updateDelay + 5000,
-          }),
-        });
-
-        if (!resp.ok) console.warn(`Failed to save!; ${batch.batchData.newData[i].mangaId}`);
-      }
-      console.log('done, Its recomended to turn of auto update images now!');
+      if (config.logging.verboseLogging) console.log(resp);
+      if (!resp.ok) console.warn(`Failed to save!; ${batch.batchData.newData[i].mangaId}`);
     }
+    console.log('done, Its recomended to turn of auto update images now!');
+    // }
   } else if (config.updateSettings.autoUpdateInfo)
     console.log('Update Complete! No New Chapters Found!');
   dataCollector.delete(batch.batchId);

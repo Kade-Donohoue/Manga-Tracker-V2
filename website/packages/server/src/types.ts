@@ -41,12 +41,27 @@ export const userDataRow = z.object({
   interactTime: z.coerce.number().int().min(0),
 });
 
+const imageIndexes = z
+  .union([z.string(), z.array(z.number()), z.null(), z.undefined()])
+  .transform((val) => {
+    if (val == null) return [0];
+    if (typeof val === 'string') {
+      const arr = val
+        .split(',')
+        .map((v) => parseInt(v.trim(), 10))
+        .filter((v) => !isNaN(v));
+      return arr.length > 0 ? arr : [0];
+    }
+    return val.length > 0 ? val : [0];
+  });
+
 export const mangaDetailsSchema = mangaDataRow.merge(
   z.object({
     currentIndex: z.coerce.number().int().min(0),
     currentChap: z.coerce.number(),
     userCat: z.string(),
     interactTime: z.coerce.number().int().min(0),
+    imageIndexes: imageIndexes,
   })
 );
 

@@ -211,7 +211,10 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
         <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={3}>
           <Box>
             <img
-              src={`${import.meta.env.VITE_IMG_URL}/${manga.mangaId || 'mangaNotFoundImage'}`}
+              src={
+                `${import.meta.env.VITE_IMG_URL}/${manga.mangaId}/${manga.imageIndexes?.at(-1) || 0}` ||
+                'mangaNotFoundImage.png'
+              }
               alt={manga.mangaName}
               style={{
                 width: '100%',

@@ -125,16 +125,22 @@ export async function saveManga(
     //check if manga already in DB if so update otherwise insert new magna
     const mangaNames = newMangaInfo.map((m) => m.mangaName);
 
-    const selectQuery = `SELECT mangaId, mangaName FROM mangaData WHERE mangaName IN (${mangaNames
-      .map(() => '?')
-      .join(', ')})`;
+    const selectQuery = `SELECT m.mangaId, m.mangaName max(c.coverIndex) as maxCoverIndex 
+      FROM mangaData m 
+      JOIN coverImages c 
+        ON m.mangaId = c.mangaId 
+      WHERE m.mangaName IN (${mangaNames.map(() => '?').join(', ')})
+      GROUP BY m.mangaId, m.mangaName`;
 
     const existingMangaRows = (await env.DB.prepare(selectQuery)
       .bind(...mangaNames)
-      .all()) as { results: { mangaId: string; mangaName: string }[] };
+      .all()) as { results: { mangaId: string; mangaName: string; maxCoverIndex: number }[] };
 
     const existingMangaMap = new Map(
-      existingMangaRows.results.map((row) => [row.mangaName, row.mangaId])
+      existingMangaRows.results.map((row) => [
+        row.mangaName,
+        { mangaId: row.mangaId, maxCoverIndex: row.maxCoverIndex },
+      ])
     );
 
     const currentTime = new Date().toLocaleDateString('en-US', {
@@ -152,7 +158,7 @@ export async function saveManga(
       newMangaInfo.map(async (manga) => {
         const newBoundStmt: D1PreparedStatement[] = [];
 
-        const mangaId = existingMangaMap.get(manga.mangaName) || crypto.randomUUID();
+        const mangaId = existingMangaMap.get(manga.mangaName)?.mangaId || crypto.randomUUID();
 
         console.log('Binding values:', {
           mangaId,
@@ -190,9 +196,22 @@ export async function saveManga(
           )
         );
 
-        await env.IMG.put(mangaId, new Uint8Array(manga.iconBuffer.data).buffer, {
-          httpMetadata: { contentType: 'image/jpeg' },
-        });
+        const coverIndex = (existingMangaMap.get(manga.mangaName)?.maxCoverIndex ?? -1) + 1;
+
+        newBoundStmt.push(
+          env.DB.prepare('INSERT INTO coverImages (mangaId, coverIndex) VALUES (?,?)').bind(
+            mangaId,
+            coverIndex
+          )
+        );
+
+        await env.IMG.put(
+          `${mangaId}/${coverIndex}`,
+          new Uint8Array(manga.iconBuffer.data).buffer,
+          {
+            httpMetadata: { contentType: 'image/jpeg' },
+          }
+        );
 
         return newBoundStmt;
       })
