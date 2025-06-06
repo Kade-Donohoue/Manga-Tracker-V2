@@ -125,7 +125,7 @@ export async function saveManga(
     //check if manga already in DB if so update otherwise insert new magna
     const mangaNames = newMangaInfo.map((m) => m.mangaName);
 
-    const selectQuery = `SELECT m.mangaId, m.mangaName max(c.coverIndex) as maxCoverIndex 
+    const selectQuery = `SELECT m.mangaId, m.mangaName, max(c.coverIndex) as maxCoverIndex 
       FROM mangaData m 
       JOIN coverImages c 
         ON m.mangaId = c.mangaId 

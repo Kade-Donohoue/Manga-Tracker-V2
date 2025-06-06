@@ -74,6 +74,9 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.74.11
         version: 5.74.11(react@18.3.1)
+      fuzzysort:
+        specifier: ^3.1.0
+        version: 3.1.0
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
@@ -2787,6 +2790,9 @@ packages:
 
   functions-have-names@1.2.3:
     resolution: {integrity: sha512-xckBUXyTIqT97tq2x2AMb+g163b5JFysYk0x4qxNFwbfQkmNZoiRHb6sPzI9/QV33WeuvVYBUIiD4NzNIyqaRQ==}
+
+  fuzzysort@3.1.0:
+    resolution: {integrity: sha512-sR9BNCjBg6LNgwvxlBd0sBABvQitkLzoVY9MYYROQVX/FvfJ4Mai9LsGhDgd8qYdds0bY77VzYd5iuB+v5rwQQ==}
 
   gauge@4.0.4:
     resolution: {integrity: sha512-f9m+BEN5jkg6a0fZjleidjN51VE1X+mPFQ2DJ0uv1V39oCLCbsGe6yjbBnp7eK7z/+GAon99a3nHuqbuuthyPg==}
@@ -7785,6 +7791,8 @@ snapshots:
   function-bind@1.1.2: {}
 
   functions-have-names@1.2.3: {}
+
+  fuzzysort@3.1.0: {}
 
   gauge@4.0.4:
     dependencies:

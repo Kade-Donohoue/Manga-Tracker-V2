@@ -120,7 +120,7 @@ export default function ChangeCategoryModal({ open, onClose, mangaId }: ChangeCa
       aria-labelledby="cat-modal-title"
       aria-describedby="cat-modal-description"
     >
-      <Box sx={{ width: '80vw', height: '25vh', ...modalStyle }}>
+      <Box sx={{ width: '80vw', ...modalStyle }}>
         <h2 id="cat-modal-title" style={{ color: 'white' }}>
           Choose a new Category
         </h2>

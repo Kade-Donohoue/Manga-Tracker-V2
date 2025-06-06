@@ -101,9 +101,12 @@ export async function getManga(
       throw new Error('Manga: unable to find current chapter. Please retry or contact Admin!');
     }
 
-    const inputDate = new Date(maxSavedAt.replace(' ', 'T') + 'Z');
+    let inputDate = new Date();
     const oneMonthAgo = new Date();
-    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    if (maxSavedAt) {
+      inputDate = new Date(maxSavedAt.replace(' ', 'T') + 'Z');
+      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    }
 
     let resizedImage: Buffer | null = null;
     if (icon || inputDate < oneMonthAgo) {

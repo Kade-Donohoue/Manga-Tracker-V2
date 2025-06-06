@@ -292,7 +292,13 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
         </Box>
       </DialogContent>
 
-      <DialogActions>
+      <DialogActions
+        sx={{
+          '& > button': {
+            alignSelf: 'stretch', // ensures all buttons match the tallest one
+          },
+        }}
+      >
         <Button onClick={onRemove} color="error" variant="contained">
           Remove
         </Button>

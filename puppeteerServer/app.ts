@@ -329,6 +329,8 @@ async function mangaFailedEvent({ jobId }: { jobId: string }) {
     return;
   }
 
+  if (!job.data.update) return;
+
   const retrying = job.attemptsMade + 1 < (job.opts.attempts ?? 1);
   if (retrying) {
     console.log(
