@@ -223,7 +223,11 @@ async function updateAllManga() {
           priority: 2,
           removeOnComplete: config.queue.removeCompleted,
           removeOnFail: config.queue.removeFailed,
-          attempts: 2,
+          attempts: 3,
+          backoff: {
+            type: 'exponential',
+            delay: 60_000,
+          },
           name: webSite.value,
         },
       };
@@ -267,8 +271,6 @@ async function mangaCompleteFuction({ jobId }: { jobId: string }) {
         job.returnvalue.iconBuffer ||
         (job.returnvalue.slugList && job.returnvalue.slugList != job.data.oldSlugList)
       ) {
-        if (job.data.mangaId === '7f15dfc4-8c6b-4920-bd17-7307017098d9')
-          console.log(job.returnvalue.iconBuffer);
         const oldSlugs = job.data.oldSlugList?.split(',') || [];
         const newSlugs = job.returnvalue.slugList?.split(',') || [];
         const newChapterCount = newSlugs.length - oldSlugs.length;
@@ -281,7 +283,7 @@ async function mangaCompleteFuction({ jobId }: { jobId: string }) {
       }
       if (config.queue.instantClearJob) await job.remove();
 
-      console.log(batch.batchData.batchLength, batch.batchData.completedCount);
+      // console.log(batch.batchData.batchLength, batch.batchData.completedCount);
       if (batch.batchData.batchLength <= batch.batchData.completedCount) sendUpdate(batch);
     } catch (err) {
       console.log(err);
@@ -331,13 +333,13 @@ async function mangaFailedEvent({ jobId }: { jobId: string }) {
 
   if (!job.data.update) return;
 
-  const retrying = job.attemptsMade + 1 < (job.opts.attempts ?? 1);
-  if (retrying) {
-    console.log(
-      `Job ${jobId} failed but has retries left (${job.attemptsMade}/${job.opts.attempts})`
-    );
-    return;
-  }
+  // const retrying = job.attemptsMade + 1 < (job.opts.attempts ?? 1);
+  // if (retrying) {
+  //   console.log(
+  //     `Job ${jobId} failed but has retries left (${job.attemptsMade}/${job.opts.attempts})`
+  //   );
+  //   return;
+  // }
 
   const batch = dataCollector.get(job.data.batchId);
   if (!batch) {
@@ -380,11 +382,11 @@ async function sendUpdate(batch: updateCollector) {
     // if (config.updateSettings.refetchImgs) {
     //send each manga sepratly due to images
     for (let i = 0; i < batch.batchData.newData.length; i++) {
-      console.log(batch.batchData.newData[i].mangaId);
-      console.log(batch.batchData.newData[i].iconBuffer);
+      // console.log(batch.batchData.newData[i].mangaId);
+      // console.log(batch.batchData.newData[i].iconBuffer);
       if (!batch.batchData.newData[i].iconBuffer) continue;
-      if (config.logging.verboseLogging)
-        console.log(`Saving Image for mangaId: ${batch.batchData.newData[i].mangaId}`);
+      // if (config.logging.verboseLogging)
+      console.log(`Saving Image for mangaId: ${batch.batchData.newData[i].mangaId}`);
       const resp = await fetch(`${config.serverCom.serverUrl}/serverReq/data/saveCoverImage`, {
         method: 'POST',
         headers: {
@@ -401,7 +403,7 @@ async function sendUpdate(batch: updateCollector) {
       if (config.logging.verboseLogging) console.log(resp);
       if (!resp.ok) console.warn(`Failed to save!; ${batch.batchData.newData[i].mangaId}`);
     }
-    console.log('done, Its recomended to turn of auto update images now!');
+    // console.log('done, Its recomended to turn of auto update images now!');
     // }
   } else if (config.updateSettings.autoUpdateInfo)
     console.log('Update Complete! No New Chapters Found!');

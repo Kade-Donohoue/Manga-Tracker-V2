@@ -113,9 +113,12 @@ export async function getManga(
     job.log(logWithTimestamp('Chapter Data Fetched'));
     await job.updateProgress(40);
 
-    const inputDate = new Date(maxSavedAt.replace(' ', 'T') + 'Z');
+    let inputDate = new Date();
     const oneMonthAgo = new Date();
-    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    if (maxSavedAt) {
+      inputDate = new Date(maxSavedAt.replace(' ', 'T') + 'Z');
+      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    }
 
     var resizedImage: Buffer | null = null;
     // var iconBuffer:Buffer|null|undefined = null
