@@ -1,6 +1,6 @@
 {
   "name": "server",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "scripts": {
     "deploy": "./handle-wrangler-secrets.sh production remote && wrangler deploy src/index.ts --env production",
     "dev": "./handle-wrangler-secrets.sh dev local && wrangler dev src/index.ts --env dev --remote",
