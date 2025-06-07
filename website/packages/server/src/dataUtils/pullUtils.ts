@@ -170,35 +170,45 @@ export async function userStats(userId: string, env: Env) {
   try {
     let results = await env.DB.batch([
       env.DB.prepare(
-        `SELECT u.currentChap, u.mangaId, m.latestChapterText, u.userCat FROM userData u JOIN mangaData m ON u.mangaId = m.mangaId WHERE u.userID = ?`
+        // users Manga
+        `SELECT u.currentChap, u.mangaId, m.latestChapterText, u.userCat, m.useAltStatCalc, m.chapterTextList FROM userData u JOIN mangaData m ON u.mangaId = m.mangaId WHERE u.userID = ?`
       ).bind(userId),
-      env.DB.prepare('SELECT COUNT(*) AS total FROM mangaData'),
+      env.DB.prepare('SELECT COUNT(*) AS total FROM mangaData'), // Total Manga Count
       env.DB.prepare(
+        // New Chapters
         'SELECT SUM(stat_value) AS total FROM stats WHERE type = "chapCount" AND timestamp > datetime("now", "-30 days")'
       ),
       env.DB.prepare(
+        // newManga
         'SELECT SUM(stat_value) AS total FROM stats WHERE type = "mangaCount" AND timestamp > datetime("now", "-30 days")'
       ),
       env.DB.prepare(
+        //readChapter
         `SELECT SUM(FLOOR(d.currentChap)) AS total
         FROM (
           SELECT DISTINCT userData.userId, userData.currentChap, userData.mangaId
           FROM userData
           JOIN userCategories
             ON userData.userCat = userCategories.value
-          AND userData.userId = userCategories.userId
+              AND userData.userId = userCategories.userId
+          JOIN mangaData
+            ON userData.mangaId = mangaData.id
           WHERE userData.userId = ?
             AND userCategories.stats = 1
+            AND mangaData.useAltStatCalc = 0
         ) AS d;`
       ).bind(userId),
-      env.DB.prepare('SELECT SUM(FLOOR(latestChapterText)) AS total FROM mangaData'),
       env.DB.prepare(
+        'SELECT SUM(FLOOR(latestChapterText)) AS total FROM mangaData WHERE useAltStatCalc = 0'
+      ), //globalTrackedChapters
+      env.DB.prepare(
+        //userTrackedChapters
         `SELECT SUM(FLOOR(m.latestChapterText)) AS total
           FROM userData u
             JOIN mangaData m ON u.mangaId = m.mangaId
             JOIN userCategories c ON u.userCat = c.value AND u.userId = c.userId
               WHERE u.userId = ?
-                AND c.stats = 1;`
+                AND c.stats = 1 AND WHERE m.useAltStatCalc = 0;`
       ).bind(userId),
     ]);
     console.log(results);
