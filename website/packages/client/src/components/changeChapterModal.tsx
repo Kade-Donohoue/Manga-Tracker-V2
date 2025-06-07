@@ -32,14 +32,19 @@ const customStyles = {
     backgroundColor: '#2e2e2e',
     color: '#fff',
   }),
-  singleValue: (base: any) => ({
+  singleValue: (base: any, state: any) => ({
     ...base,
     color: 'white',
+    backgroundColor: state.isFocused ? '#444' : '#2e2e2e',
   }),
   menu: (base: any) => ({
     ...base,
     backgroundColor: '#2e2e2e',
     color: 'white',
+  }),
+  option: (base: any, state: any) => ({
+    ...base,
+    backgroundColor: state.isSelected ? '#22346e' : state.isFocused ? '#444' : '#2e2e2e',
   }),
 };
 
@@ -137,7 +142,7 @@ export default function ChangeChapterModal({
       aria-labelledby="chap-modal-title"
       aria-describedby="chap-modal-description"
     >
-      <Box sx={{ width: '80vw', height: '25vh', ...modalStyle }}>
+      <Box sx={{ width: '80vw', ...modalStyle }}>
         <h2 id="chap-modal-title" style={{ color: 'white' }}>
           Select the Last Chapter You’ve Read
         </h2>

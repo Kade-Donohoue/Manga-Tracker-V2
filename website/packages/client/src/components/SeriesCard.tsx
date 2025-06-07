@@ -1,19 +1,10 @@
 // SeriesCard.tsx
 import React from 'react';
-import {
-  Card,
-  CardActionArea,
-  CardContent,
-  CardMedia,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import { Card, CardActionArea, CardContent, CardMedia, Tooltip, Typography } from '@mui/material';
 import { dropdownOption, mangaDetails } from '../types';
-import { fetchPath } from '../vars'
+import { fetchPath } from '../vars';
 import { useQuery } from '@tanstack/react-query';
 import { fetchUserCategories } from '../utils';
-
-
 
 interface Props {
   data: mangaDetails;
@@ -21,18 +12,13 @@ interface Props {
   openMangaOverview: (mangaId: string) => void;
 }
 
-export default function SeriesCard({
-  data,
-  handleContextMenu,
-  openMangaOverview,
-}: Props) {
-
+export default function SeriesCard({ data, handleContextMenu, openMangaOverview }: Props) {
   const { data: catOptions, isError } = useQuery<dropdownOption[], Error>({
-      queryKey: ['userCategories'],
-      queryFn: () => fetchUserCategories(),
-      staleTime: 1000 * 60 * 60, 
-      gcTime: Infinity,
-    })
+    queryKey: ['userCategories'],
+    queryFn: () => fetchUserCategories(),
+    staleTime: 1000 * 60 * 60,
+    gcTime: Infinity,
+  });
 
   const findCat = (catVal: string): dropdownOption => {
     return (
@@ -79,7 +65,7 @@ export default function SeriesCard({
           height="200"
           image={`${
             fetchPath === '/.proxy' ? '/.proxy/image' : import.meta.env.VITE_IMG_URL
-          }/${data.mangaId}`}
+          }/${data.mangaId}/${data.imageIndexes?.at(-1) || 0}`}
           alt={`Cover for ${data.mangaName}`}
           style={{ objectPosition: 'top' }}
           loading="lazy"

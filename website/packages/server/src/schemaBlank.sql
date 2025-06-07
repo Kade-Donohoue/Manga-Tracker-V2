@@ -1,15 +1,23 @@
 DROP TABLE IF EXISTS friends;
 DROP TABLE IF EXISTS userData;
 DROP TABLE IF EXISTS mangaData;
-DROP TABLE IF EXISTS userSettings;
+DROP TABLE IF EXISTS userCategories;
 DROP TABLE IF EXISTS stats;
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS coverImages;
 
-CREATE TABLE IF NOT EXISTS users (
-    userID TEXT NOT NULL PRIMARY KEY,
-    userName TEXT NOT NULL,
-    imageURl TEXT,
-    createdAt TIMESTAMP NOT NULL
+CREATE TABLE IF NOT EXISTS friends (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    senderId TEXT NOT NULL,
+    receiverId TEXT NOT NULL,
+    status TEXT CHECK(status IN ('pending', 'accepted', 'declined')) DEFAULT 'pending',
+    sentAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    respondedAt TIMESTAMP NULL,
+
+    FOREIGN KEY (senderId) REFERENCES users(userID) ON DELETE CASCADE,
+    FOREIGN KEY (receiverId) REFERENCES users(userID) ON DELETE CASCADE,
+
+    UNIQUE (senderId, receiverId)
 );
 
 CREATE TABLE IF NOT EXISTS userData (
@@ -53,16 +61,18 @@ CREATE TABLE IF NOT EXISTS stats (
     "stat_value" INTEGER NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS friends (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    senderId TEXT NOT NULL,
-    receiverId TEXT NOT NULL,
-    status TEXT CHECK(status IN ('pending', 'accepted', 'declined')) DEFAULT 'pending',
-    sentAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    respondedAt TIMESTAMP NULL,
+CREATE TABLE IF NOT EXISTS users (
+    userID TEXT NOT NULL PRIMARY KEY,
+    userName TEXT NOT NULL,
+    imageURl TEXT,
+    createdAt TIMESTAMP NOT NULL
+);
 
-    FOREIGN KEY (senderId) REFERENCES users(userID) ON DELETE CASCADE,
-    FOREIGN KEY (receiverId) REFERENCES users(userID) ON DELETE CASCADE,
-
-    UNIQUE (senderId, receiverId)
+CREATE TABLE coverImages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  mangaId TEXT NOT NULL,
+  coverIndex INTEGER NOT NULL,
+  savedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (mangaId) REFERENCES mangaData(mangaId),
+  UNIQUE(mangaId, coverIndex)
 );

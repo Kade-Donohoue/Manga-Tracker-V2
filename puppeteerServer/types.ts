@@ -5,6 +5,7 @@ export type fetchData = {
     "chapterTextList":string, 
     "currentIndex":number, 
     "iconBuffer":Buffer|null
+    "newCoverImageIndex":number
 }
 
 export type dataType = {
@@ -24,6 +25,7 @@ export type updateCollector = {
     batchData: {
         completedCount: number,
         newChapterCount: number, 
+        batchLength: number,
         newData: {
             mangaName:string, 
             urlBase:string, 
@@ -31,7 +33,8 @@ export type updateCollector = {
             chapterTextList:string, 
             currentIndex:number,
             iconBuffer:Buffer,
-            mangaId:string
+            mangaId:string,
+            newCoverImageIndex:number
         }[]
     }
 }
