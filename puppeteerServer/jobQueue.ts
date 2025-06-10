@@ -28,7 +28,7 @@ const mainGetWorker = new Worker('Get Manga Queue', mangaGetProc, {
 const comickGetWorker = new Worker('Comick Manga Queue', mangaGetProc, {
   connection,
   concurrency: 1,
-  limiter: { max: 1, duration: 1200 },
+  limiter: { max: 100, duration: 950 },
   name: 'comick',
 });
 

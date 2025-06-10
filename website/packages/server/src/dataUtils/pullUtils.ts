@@ -184,31 +184,47 @@ export async function userStats(userId: string, env: Env) {
       ),
       env.DB.prepare(
         //readChapter
-        `SELECT SUM(FLOOR(d.currentChap)) AS total
-        FROM (
-          SELECT DISTINCT userData.userId, userData.currentChap, userData.mangaId
-          FROM userData
-          JOIN userCategories
-            ON userData.userCat = userCategories.value
-              AND userData.userId = userCategories.userId
-          JOIN mangaData
-            ON userData.mangaId = mangaData.id
-          WHERE userData.userId = ?
-            AND userCategories.stats = 1
-            AND mangaData.useAltStatCalc = 0
-        ) AS d;`
+        `SELECT SUM(
+          CASE
+            WHEN m.useAltStatCalc = 1 THEN
+              FLOOR(u.currentIndex) + 1
+            ELSE
+              FLOOR(u.currentChap)
+          END
+        ) AS total
+        FROM userData u
+          JOIN mangaData m ON u.mangaId = m.mangaId
+          JOIN userCategories c ON u.userCat = c.value AND u.userId = c.userId
+        WHERE u.userId = ?
+          AND c.stats = 1`
       ).bind(userId),
       env.DB.prepare(
-        'SELECT SUM(FLOOR(latestChapterText)) AS total FROM mangaData WHERE useAltStatCalc = 0'
-      ), //globalTrackedChapters
+        //globalTrackedChapters
+        `SELECT SUM(
+          CASE
+            WHEN useAltStatCalc = 1 THEN
+              LENGTH(latestChapterText) - LENGTH(REPLACE(latestChapterText, ',', '')) + 1
+            ELSE
+              FLOOR(latestChapterText)
+          END
+        ) AS total
+      FROM mangaData`
+      ),
       env.DB.prepare(
         //userTrackedChapters
-        `SELECT SUM(FLOOR(m.latestChapterText)) AS total
-          FROM userData u
-            JOIN mangaData m ON u.mangaId = m.mangaId
-            JOIN userCategories c ON u.userCat = c.value AND u.userId = c.userId
-              WHERE u.userId = ?
-                AND c.stats = 1 AND WHERE m.useAltStatCalc = 0;`
+        `SELECT SUM(
+          CASE
+            WHEN m.useAltStatCalc = 1 THEN
+              LENGTH(m.latestChapterText) - LENGTH(REPLACE(m.latestChapterText, ',', '')) + 1
+            ELSE
+              FLOOR(m.latestChapterText)
+          END
+        ) AS total
+        FROM userData u
+          JOIN mangaData m ON u.mangaId = m.mangaId
+          JOIN userCategories c ON u.userCat = c.value AND u.userId = c.userId
+        WHERE u.userId = ?
+          AND c.stats = 1`
       ).bind(userId),
     ]);
     console.log(results);
