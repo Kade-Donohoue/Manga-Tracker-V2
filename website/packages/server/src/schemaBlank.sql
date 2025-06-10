@@ -39,7 +39,8 @@ CREATE TABLE IF NOT EXISTS mangaData (
     slugList TEXT NOT NULL,
     chapterTextList TEXT NOT NULL,
     latestChapterText REAL NOT NULL,
-    updateTime TEXT NOT NULL
+    updateTime TEXT NOT NULL,
+    useAltStatCalc BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS userCategories (

@@ -31,7 +31,7 @@ export async function getManga(
     const slug = extractSlug(url);
     if (config.logging.verboseLogging) console.log('slug: ', slug);
     job.log(logWithTimestamp('Fetching Comic Data with following slug: ' + slug));
-    const comicReq = await fetch(`https://api.comick.fun/comic/${slug}`);
+    const comicReq = await fetch(`https://api.comick.fun/comic/${slug}?tachiyomi=true`);
 
     if (!comicReq.ok) throw new Error('Manga: Unable to fetch Comick Data!');
     const comicData: comicData = await comicReq.json();
@@ -45,7 +45,7 @@ export async function getManga(
     const chapterReq = await fetch(
       `https://api.comick.fun/comic/${comicData.comic.hid}/chapters?lang=en&limit=${
         comicData.comic.chapter_count > 60 ? comicData.comic.chapter_count : 60
-      }`
+      }&chap-order=1&tachiyomi=true`
     );
     if (!chapterReq.ok) throw new Error('Manga: Unable to fetch chapter Data!');
     const chapterData: chapterData = await chapterReq.json();
@@ -67,7 +67,7 @@ export async function getManga(
 
       if (!chapterMap[chap] || chapterMap[chap].up_count < up_count) {
         chapterMap[chap] = {
-          chapter: parseFloat(chap) ? parseFloat(chap) : i + 1,
+          chapter: Number.isNaN(parseFloat(chap)) ? i + 1 : parseFloat(chap),
           hid: hid,
           up_count,
         };

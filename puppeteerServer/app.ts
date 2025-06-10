@@ -68,8 +68,6 @@ app.get('/getManga', getOpts, async function (req, res) {
       universalJobs.push(job);
     }
   }
-  await getQueue.addBulk(universalJobs);
-  await comickQueue.addBulk(comickJobs);
 
   const [universalAdded, comickAdded] = await Promise.all([
     getQueue.addBulk(universalJobs),

@@ -170,35 +170,61 @@ export async function userStats(userId: string, env: Env) {
   try {
     let results = await env.DB.batch([
       env.DB.prepare(
-        `SELECT u.currentChap, u.mangaId, m.latestChapterText, u.userCat FROM userData u JOIN mangaData m ON u.mangaId = m.mangaId WHERE u.userID = ?`
+        // users Manga
+        `SELECT u.currentChap, u.mangaId, m.latestChapterText, u.userCat, m.useAltStatCalc, m.chapterTextList FROM userData u JOIN mangaData m ON u.mangaId = m.mangaId WHERE u.userID = ?`
       ).bind(userId),
-      env.DB.prepare('SELECT COUNT(*) AS total FROM mangaData'),
+      env.DB.prepare('SELECT COUNT(*) AS total FROM mangaData'), // Total Manga Count
       env.DB.prepare(
+        // New Chapters
         'SELECT SUM(stat_value) AS total FROM stats WHERE type = "chapCount" AND timestamp > datetime("now", "-30 days")'
       ),
       env.DB.prepare(
+        // newManga
         'SELECT SUM(stat_value) AS total FROM stats WHERE type = "mangaCount" AND timestamp > datetime("now", "-30 days")'
       ),
       env.DB.prepare(
-        `SELECT SUM(FLOOR(d.currentChap)) AS total
-        FROM (
-          SELECT DISTINCT userData.userId, userData.currentChap, userData.mangaId
-          FROM userData
-          JOIN userCategories
-            ON userData.userCat = userCategories.value
-          AND userData.userId = userCategories.userId
-          WHERE userData.userId = ?
-            AND userCategories.stats = 1
-        ) AS d;`
+        //readChapter
+        `SELECT SUM(
+          CASE
+            WHEN m.useAltStatCalc = 1 THEN
+              FLOOR(u.currentIndex) + 1
+            ELSE
+              FLOOR(u.currentChap)
+          END
+        ) AS total
+        FROM userData u
+          JOIN mangaData m ON u.mangaId = m.mangaId
+          JOIN userCategories c ON u.userCat = c.value AND u.userId = c.userId
+        WHERE u.userId = ?
+          AND c.stats = 1`
       ).bind(userId),
-      env.DB.prepare('SELECT SUM(FLOOR(latestChapterText)) AS total FROM mangaData'),
       env.DB.prepare(
-        `SELECT SUM(FLOOR(m.latestChapterText)) AS total
-          FROM userData u
-            JOIN mangaData m ON u.mangaId = m.mangaId
-            JOIN userCategories c ON u.userCat = c.value AND u.userId = c.userId
-              WHERE u.userId = ?
-                AND c.stats = 1;`
+        //globalTrackedChapters
+        `SELECT SUM(
+          CASE
+            WHEN useAltStatCalc = 1 THEN
+              LENGTH(latestChapterText) - LENGTH(REPLACE(latestChapterText, ',', '')) + 1
+            ELSE
+              FLOOR(latestChapterText)
+          END
+        ) AS total
+      FROM mangaData`
+      ),
+      env.DB.prepare(
+        //userTrackedChapters
+        `SELECT SUM(
+          CASE
+            WHEN m.useAltStatCalc = 1 THEN
+              LENGTH(m.latestChapterText) - LENGTH(REPLACE(m.latestChapterText, ',', '')) + 1
+            ELSE
+              FLOOR(m.latestChapterText)
+          END
+        ) AS total
+        FROM userData u
+          JOIN mangaData m ON u.mangaId = m.mangaId
+          JOIN userCategories c ON u.userCat = c.value AND u.userId = c.userId
+        WHERE u.userId = ?
+          AND c.stats = 1`
       ).bind(userId),
     ]);
     console.log(results);
