@@ -58,14 +58,14 @@ export let defaultCategoryOptions: categoryOption[] = [
     stats: true,
     position: 7,
   },
-  {
-    value: '%',
-    label: 'Any',
-    color: '#FFFFFF',
-    public: false,
-    stats: true,
-    position: 8,
-  },
+  // {
+  //   value: '%',
+  //   label: 'add filters',
+  //   color: '#FFFFFF',
+  //   public: false,
+  //   stats: true,
+  //   position: 8,
+  // },
 ];
 
 export const ordOptions: dropdownOption[] = [

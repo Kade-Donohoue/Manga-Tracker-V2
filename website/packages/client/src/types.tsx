@@ -27,6 +27,7 @@ export interface mangaDetails {
   userCat: string;
   interactTime: number;
   imageIndexes: number[];
+  currentChap: number;
 }
 
 export interface dropdownOption {

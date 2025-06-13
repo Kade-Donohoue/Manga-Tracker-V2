@@ -29,12 +29,16 @@ import { useQuery } from '@tanstack/react-query';
 import SeriesCard from '../../components/SeriesCard';
 import { fetchUserCategories, getStoredValue } from '../../utils';
 
-const sortOptions: { label: string; value: keyof mangaDetails | 'search' }[] = [
-  { label: 'Title Search', value: 'search' },
-  { label: 'Title', value: 'mangaName' },
-  { label: 'Updated', value: 'updateTime' },
-  { label: 'Interacted', value: 'interactTime' },
-  { label: 'Read Chapters', value: 'currentIndex' },
+const combinedSortOptions = [
+  { value: 'mangaName_asc', label: 'Alphabetical (A → Z)' },
+  { value: 'mangaName_desc', label: 'Alphabetical (Z → A)' },
+  { value: 'interactTime_desc', label: 'Last Interacted (Newest)' },
+  { value: 'interactTime_asc', label: 'Last Interacted (Oldest)' },
+  { value: 'currentChap_desc', label: 'Chapters Read (Most)' },
+  { value: 'currentChap_asc', label: 'Chapters Read (Least)' },
+  { value: 'updateTime_desc', label: 'Last Updated (Recent)' },
+  { value: 'updateTime_asc', label: 'Last Updated (Oldest)' },
+  { value: 'search', label: 'Title Search' },
 ];
 
 export default function tracked() {
@@ -48,29 +52,22 @@ export default function tracked() {
     gcTime: Infinity,
   });
 
-  const [filterOption, setFilterOption] = React.useState<dropdownOption | null>(
-    getStoredValue('filterOption') || catOptions?.[8] || null
+  const [filterOption, setFilterOption] = React.useState<dropdownOption[]>(
+    getStoredValue('filterOption') || []
   );
-  const [methodOption, setMethodOption] = React.useState<{
-    label: string;
-    value: string;
-  } | null>(getStoredValue('methodOption') || sortOptions[0]);
-  const [orderOption, setOrderOption] = React.useState<{
+
+  const [sortSelection, setSortSelection] = React.useState<{
     value: string;
     label: string;
-  } | null>(getStoredValue('orderOption') || { value: '1', label: 'Ascending' });
+  } | null>(getStoredValue('sortSelection') || combinedSortOptions[0]);
+
+  React.useEffect(() => {
+    localStorage.setItem('sortSelection', JSON.stringify(sortSelection));
+  }, [sortSelection]);
 
   React.useEffect(() => {
     localStorage.setItem('filterOption', JSON.stringify(filterOption));
   }, [filterOption]);
-
-  React.useEffect(() => {
-    localStorage.setItem('methodOption', JSON.stringify(methodOption));
-  }, [methodOption]);
-
-  React.useEffect(() => {
-    localStorage.setItem('orderOption', JSON.stringify(orderOption));
-  }, [orderOption]);
 
   const [currentSearch, setSearch] = React.useState<string>('');
   const [unreadChecked, setUnreadChecked] = React.useState<boolean>(
@@ -94,12 +91,7 @@ export default function tracked() {
     }
 
     event.preventDefault();
-    // console.log(mangaInfo);
-    // console.log(mangaId);
-    // let index = mangaInfo?.findIndex((manga) => manga.mangaId === mangaId);
-    // console.log(index);
 
-    // if (index !== 0 && (!index || index === -1)) return;
     if (!mangaId) return;
     setCurrentMangaId(mangaId);
     setAnchorPosition({ top: event.clientY, left: event.clientX });
@@ -111,8 +103,7 @@ export default function tracked() {
 
   async function openMangaOverview(mangaId: string) {
     console.log('opening Series Modal!');
-    // if (!mangaInfo) return;
-    // let mangaIndex = mangaInfo.get(currentMangaId);
+
     setCurrentMangaId(mangaId);
     setModalOpen(true);
   }
@@ -164,9 +155,6 @@ export default function tracked() {
       lastIndex = index;
     }
 
-    // const lengthDifference = str.length-pattern.length
-    // score += lengthDifference*0.5
-
     return score;
   }
 
@@ -198,13 +186,22 @@ export default function tracked() {
     if (unreadChecked) {
       if (manga.chapterTextList.length - 1 <= manga.currentIndex) return false;
     }
-    if (!filterOption || filterOption.value === '%' || manga.userCat === filterOption.value) {
-      if (currentSearch) {
-        return fuzzyWordMatch(currentSearch, manga.mangaName) >= 0;
-      } else return true;
-    }
+    try {
+      if (
+        !filterOption ||
+        filterOption.length <= 0 ||
+        filterOption.find((cat) => cat.value && cat.value === manga.userCat) != undefined
+      ) {
+        if (currentSearch) {
+          // console.log(currentSearch, fuzzyWordMatch(currentSearch, manga.mangaName));
+          return fuzzyWordMatch(currentSearch, manga.mangaName) <= 80;
+        } else return true;
+      }
 
-    return false;
+      return false;
+    } catch {
+      return false;
+    }
   }
 
   //modal control
@@ -338,7 +335,16 @@ export default function tracked() {
         <AddMangaModal open={addOpen} onClose={handleAddClose} />
       </div>
 
-      <div className="cardControls">
+      <div
+        className="cardControls"
+        style={{
+          width: '100%',
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '12px',
+          alignItems: 'center',
+        }}
+      >
         <TextField
           id="search"
           label="Search"
@@ -365,35 +371,31 @@ export default function tracked() {
           }}
         />
 
-        <Select
-          value={filterOption}
-          onChange={setFilterOption}
-          options={catOptions}
-          styles={customStyles}
-          className="selectField"
-          isSearchable={false}
-        />
+        <Box sx={{ flex: '1 1 200px', minWidth: '200px', maxWidth: '15%' }}>
+          <Select<dropdownOption, true>
+            placeholder={'Add Filters'}
+            isMulti={true}
+            value={filterOption}
+            onChange={(options) => setFilterOption(options as dropdownOption[])} // handleCategoryFilterChange
+            options={catOptions}
+            // name="by"
+            closeMenuOnSelect={false}
+            styles={customStyles}
+            className="selectField"
+            isSearchable={false}
+          />
+        </Box>
 
-        <Select
-          value={methodOption}
-          onChange={setMethodOption}
-          options={sortOptions}
-          styles={customStyles}
-          className="selectField"
-          isSearchable={false}
-        />
-
-        <Select
-          value={orderOption}
-          onChange={setOrderOption}
-          options={[
-            { value: '1', label: 'Ascending' },
-            { value: '-1', label: 'Descending' },
-          ]}
-          styles={customStyles}
-          className="selectField"
-          isSearchable={false}
-        />
+        <Box sx={{ flex: '1 1 200px', minWidth: '200px', maxWidth: '15%' }}>
+          <Select
+            value={sortSelection}
+            onChange={(selection) => setSortSelection(selection as dropdownOption)}
+            options={combinedSortOptions}
+            styles={customStyles}
+            className="selectField"
+            isSearchable={false}
+          />
+        </Box>
 
         <FormControlLabel
           control={
@@ -422,29 +424,38 @@ export default function tracked() {
         {Array.from(mangaInfo.values())
           .filter((manga) => checkFilter(manga))
           .sort((a, b) => {
-            let key: keyof mangaDetails | 'search' = methodOption?.value as
-              | keyof mangaDetails
-              | 'search';
-            let orderVal = parseInt(orderOption ? orderOption.value : '0');
+            if (!sortSelection || !sortSelection.value) return 0;
 
-            if (!key || !orderVal) return 0;
+            const value = sortSelection.value;
 
-            if (methodOption?.value === 'search') {
+            if (value === 'search') {
               if (currentSearch) {
                 const scoreA = fuzzyMatch(currentSearch, a.mangaName);
                 const scoreB = fuzzyMatch(currentSearch, b.mangaName);
 
-                if (scoreA > scoreB) return 1 * orderVal;
-                if (scoreA < scoreB) return -1 * orderVal;
+                return scoreB - scoreA;
               } else {
-                if (a.mangaName > b.mangaName) return 1 * orderVal;
-                if (a.mangaName < b.mangaName) return -1 * orderVal;
+                return a.mangaName.localeCompare(b.mangaName);
               }
-              return 0;
             }
-            key = key as keyof mangaDetails;
-            if (a[key] > b[key]) return 1 * orderVal;
-            if (a[key] < b[key]) return -1 * orderVal;
+
+            const [key, direction] = value.split('_');
+            const orderVal = direction === 'desc' ? -1 : 1;
+
+            const typedKey = key as keyof mangaDetails;
+
+            const valA = a[typedKey];
+            const valB = b[typedKey];
+
+            // Compare numbers or strings
+            if (typeof valA === 'number' && typeof valB === 'number') {
+              return (valA - valB) * orderVal;
+            }
+
+            if (typeof valA === 'string' && typeof valB === 'string') {
+              return valA.localeCompare(valB) * orderVal;
+            }
+
             return 0;
           })
           .map((data, i) => (
