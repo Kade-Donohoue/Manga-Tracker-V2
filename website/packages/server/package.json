@@ -2,9 +2,9 @@
   "name": "server",
   "version": "3.0.1",
   "scripts": {
-    "deploy": "./handle-wrangler-secrets.sh production remote && wrangler deploy src/index.ts --env production",
-    "dev": "./handle-wrangler-secrets.sh dev local && wrangler dev src/index.ts --env dev --remote",
-    "staging": "./handle-wrangler-secrets.sh staging remote && wrangler deploy src/index.ts --env staging",
+    "deploy": "wrangler secret bulk ../../.env.production -e production && wrangler deploy src/index.ts --env production",
+    "dev": "cp ../../.env.dev .dev.vars && wrangler dev src/index.ts --env dev --remote",
+    "staging": "wrangler secret bulk --env staging ../../.env.staging && wrangler deploy src/index.ts --env staging",
     "test": "uvu -r tsm test",
     "resetDbLocal": "npx wrangler d1 execute dev-manga-bot --local --file=./src/schemaBlank.sql",
     "resetDbRemote": "npx wrangler d1 execute dev-manga-bot --remote --file=./src/schemaBlank.sql",
@@ -20,7 +20,7 @@
     "service-worker-mock": "^2.0.5",
     "tsm": "^2.2.1",
     "uvu": "^0.5.3",
-    "wrangler": "^3.110.0"
+    "wrangler": "^4.20.0"
   },
   "dependencies": {
     "@clerk/backend": "^1.23.11",
