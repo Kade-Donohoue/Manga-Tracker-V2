@@ -15,12 +15,14 @@ import {
   Menu,
   MenuItem,
 } from '@mui/material';
+import Avatar from '@mui/material/Avatar';
+import AvatarGroup from '@mui/material/AvatarGroup';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
-import { mangaDetails } from '../types'; // Update path if needed
+import { friend, mangaDetails } from '../types'; // Update path if needed
 import { fetchPath } from '../vars';
 import { toast } from 'react-toastify';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface SeriesModalProps {
   open: boolean;
@@ -30,6 +32,40 @@ interface SeriesModalProps {
   onChangeCategory: () => void;
   onChangeChap: () => void;
 }
+
+const fetchFriendsData = async (
+  manga: mangaDetails | null
+): Promise<{ userID: string; currentIndex: number; avatarUrl: string; userName: string }[]> => {
+  if (!manga) return [];
+  const response = await fetch(`${fetchPath}/api/data/pull/getSharedManga`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      mangaId: manga.mangaId,
+    }),
+  });
+
+  if (!response.ok) {
+    toast.error('Unable to get User Cats');
+    throw new Error('Failed to fetch user categories');
+  }
+
+  const data: { friendData: { userID: string; currentIndex: number }[]; expiresAt: string } =
+    await response.json();
+
+  const joindedData = data.friendData
+    .map((indexData) => {
+      const match = manga.sharedFriends.find(
+        (avatarData) => avatarData.userID === indexData.userID
+      );
+      return match ? { ...indexData, ...match } : null;
+    })
+    .filter((u) => u !== null);
+
+  return joindedData;
+};
 
 const SeriesModal: React.FC<SeriesModalProps> = ({
   open,
@@ -68,6 +104,16 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
       return () => clearTimeout(timer);
     }
   }, [currentChapterUrl, open, manga]);
+
+  const friends = useQuery<
+    { userID: string; currentIndex: number; avatarUrl: string; userName: string }[],
+    Error
+  >({
+    queryKey: [manga ? manga.mangaId : null, 'friends'],
+    queryFn: () => fetchFriendsData(manga),
+    staleTime: 1000 * 60 * 60,
+    gcTime: Infinity,
+  });
 
   if (!manga) return null;
 
@@ -280,6 +326,22 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
                       },
                     }}
                   />
+                  <AvatarGroup max={4}>
+                    {friends.data
+                      ?.filter(
+                        (val: { userID: string; currentIndex: number; avatarUrl: string }) =>
+                          val.currentIndex === chapter.key
+                      )
+                      .map((friend) => (
+                        <Tooltip title={friend.userName}>
+                          <Avatar
+                            alt={friend.userName}
+                            src={friend.avatarUrl}
+                            sx={{ width: 24, height: 24 }}
+                          />
+                        </Tooltip>
+                      ))}
+                  </AvatarGroup>
                   {isChapterRead(chapter.url) && (
                     <IconButton edge="end" aria-label="read" disabled>
                       <CheckCircleIcon style={{ color: '#4caf50' }} />
@@ -287,6 +349,7 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
                   )}
                 </ListItem>
               ))}
+              {/* <ListItem>{friends.data ? JSON.stringify(friends.data) : 'no Data!'}</ListItem> */}
             </List>
           </Box>
         </Box>

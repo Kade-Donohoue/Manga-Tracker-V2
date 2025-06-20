@@ -1,10 +1,21 @@
 // SeriesCard.tsx
 import React from 'react';
-import { Card, CardActionArea, CardContent, CardMedia, Tooltip, Typography } from '@mui/material';
+import {
+  Box,
+  Card,
+  CardActionArea,
+  CardContent,
+  CardMedia,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import { dropdownOption, mangaDetails } from '../types';
 import { fetchPath } from '../vars';
 import { useQuery } from '@tanstack/react-query';
 import { fetchUserCategories } from '../utils';
+
+import Avatar from '@mui/material/Avatar';
+import AvatarGroup from '@mui/material/AvatarGroup';
 
 interface Props {
   data: mangaDetails;
@@ -70,60 +81,85 @@ export default function SeriesCard({ data, handleContextMenu, openMangaOverview 
           style={{ objectPosition: 'top' }}
           loading="lazy"
         />
-        <CardContent sx={{ height: 150 }}>
-          <Tooltip title={data.mangaName} enterDelay={700}>
-            <Typography
-              gutterBottom
-              variant="h5"
-              component="div"
-              style={{
-                display: '-webkit-box',
-                WebkitBoxOrient: 'vertical',
-                WebkitLineClamp: 2,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                maxHeight: '2.6em',
-              }}
-            >
-              {data.mangaName}
-            </Typography>
-          </Tooltip>
-          <Typography
-            variant="body2"
-            component="div"
-            color="text.secondary"
+        <CardContent
+          sx={{
+            height: 150,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            paddingBottom: '8px !important',
+          }}
+        >
+          {/* Title */}
+          <Box sx={{ overflow: 'hidden' }}>
+            <Tooltip title={data.mangaName} enterDelay={700}>
+              <Typography
+                gutterBottom
+                variant="h5"
+                component="div"
+                sx={{
+                  display: '-webkit-box',
+                  WebkitBoxOrient: 'vertical',
+                  WebkitLineClamp: 1,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  maxHeight: '2.6em',
+                }}
+              >
+                {data.mangaName}
+              </Typography>
+            </Tooltip>
+          </Box>
+
+          {/* Bottom content (chapter/category/avatars) */}
+          <Box
             sx={{
+              fontSize: '0.85rem',
               color: 'lightgray',
-              position: 'absolute',
-              bottom: 10,
+              height: '100%',
+              marginTop: '10px',
             }}
             onContextMenu={(e) => handleContextMenu(e, data.mangaId)}
           >
-            <table>
+            <table style={{ borderSpacing: '5px' }}>
               <tbody>
                 <tr>
                   <td>Chapter:</td>
-                  <td>{`${data.chapterTextList[
-                    checkIndexInRange(data.currentIndex, data.chapterTextList.length)
-                  ]
-                    .match(/[0-9.]+/g)
-                    ?.join('.')}/${data.chapterTextList[data.chapterTextList.length - 1]
-                    .match(/[0-9.]+/g)
-                    ?.join('.')}`}</td>
+                  <td>
+                    {`${data.chapterTextList[
+                      checkIndexInRange(data.currentIndex, data.chapterTextList.length)
+                    ]
+                      .match(/[0-9.]+/g)
+                      ?.join('.')}/${data.chapterTextList[data.chapterTextList.length - 1]
+                      .match(/[0-9.]+/g)
+                      ?.join('.')}`}
+                  </td>
                 </tr>
                 <tr>
-                  <td>Category: </td>
-                  <td
-                    style={{
-                      color: findCat(data.userCat)?.color || 'lightgray',
-                    }}
-                  >
+                  <td>Category:</td>
+                  <td style={{ color: findCat(data.userCat)?.color || 'lightgray' }}>
                     {findCat(data.userCat)?.label}
                   </td>
                 </tr>
               </tbody>
             </table>
-          </Typography>
+            <Box sx={{ mt: 1 }}>
+              <AvatarGroup max={4} sx={{ justifyContent: 'flex-start' }}>
+                {data.sharedFriends
+                  .filter((val) => val)
+                  .map((friend) => (
+                    <Tooltip title={friend.userName}>
+                      <Avatar
+                        key={friend.userID}
+                        alt={friend.userName}
+                        src={friend.avatarUrl}
+                        sx={{ width: 24, height: 24 }}
+                      />
+                    </Tooltip>
+                  ))}
+              </AvatarGroup>
+            </Box>
+          </Box>
         </CardContent>
       </CardActionArea>
     </Card>

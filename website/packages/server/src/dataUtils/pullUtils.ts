@@ -1,4 +1,4 @@
-import { Env, mangaDetailsSchema } from '../types';
+import { Env, friendsMangaScema, mangaDetailsSchema } from '../types';
 import { verifyIndexRange } from '../utils';
 
 export async function getUnreadManga(
@@ -105,7 +105,47 @@ export async function getUserManga(authId: string, env: Env) {
   try {
     let queryTimeDebug = 0;
     const userRes = await env.DB.prepare(
-      'SELECT mangaData.mangaName, userData.mangaId, mangaData.urlBase, mangaData.slugList, mangaData.chapterTextList, mangaData.updateTime, userData.currentChap, userData.currentIndex, userData.userCat, userData.interactTime, (SELECT GROUP_CONCAT(coverImages.coverIndex) FROM coverImages WHERE coverImages.mangaId = userData.mangaId) AS imageIndexes FROM userData JOIN mangaData ON (userData.mangaId = mangaData.mangaId) WHERE userData.userId = ?'
+      `
+      SELECT 
+      mangaData.mangaName,
+      userData.mangaId,
+      mangaData.urlBase,
+      mangaData.slugList,
+      mangaData.chapterTextList,
+      mangaData.updateTime,
+      userData.currentChap,
+      userData.currentIndex,
+      userData.userCat,
+      userData.interactTime,
+      (
+        SELECT GROUP_CONCAT(coverImages.coverIndex) 
+        FROM coverImages 
+        WHERE coverImages.mangaId = userData.mangaId
+      ) AS imageIndexes,
+      (
+        SELECT GROUP_CONCAT(DISTINCT CONCAT(f.friendId, '-:-', u.imageURL, '-:-', u.userName))
+        FROM (
+          SELECT 
+            CASE 
+              WHEN senderId = userData.userId THEN receiverId
+              ELSE senderId
+            END AS friendId
+          FROM friends
+          WHERE (senderId = userData.userId OR receiverId = userData.userId) AND friends.status = 'accepted'
+        ) AS f
+        JOIN userData AS ud2 
+          ON ud2.userId = f.friendId AND ud2.mangaId = userData.mangaId 
+        JOIN userCategories AS uc
+          ON uc.userId = ud2.userId 
+          AND uc.value = ud2.userCat 
+          AND uc.public = '1'
+        JOIN users AS u 
+          ON u.userID = f.friendId
+      ) AS sharedFriends
+    FROM userData 
+    JOIN mangaData ON userData.mangaId = mangaData.mangaId 
+    WHERE userData.userId = ?
+    `
     )
       .bind(authId)
       .all();
@@ -163,6 +203,124 @@ export async function getAllManga(env: Env, pass: string | null) {
   } catch (err) {
     console.error('Error:', err);
     return new Response(JSON.stringify({ message: 'an unknown error occured' }), { status: 500 });
+  }
+}
+
+export async function getFriendManga(userId: string, friendId: string, mangaId: string, env: Env) {
+  try {
+    const friendRes = await env.DB.prepare(
+      `
+        SELECT 
+          ud.userId,
+          ud.currentIndex
+        FROM userData AS ud
+        JOIN userCategories AS uc 
+          ON ud.userId = uc.userId AND ud.userCat = uc.catName
+        WHERE ud.mangaId = ?
+          AND uc.public = '1'
+          AND ud.userId IN (
+            SELECT 
+              CASE 
+                WHEN f.senderId = ? THEN f.receiverId
+                ELSE f.senderId
+              END
+            FROM friends f
+            WHERE (f.senderId = ? OR f.receiverId = ?) AND f.status = 'accepted'
+          )
+      `
+    )
+      .bind(mangaId, userId, friendId, friendId)
+      .first();
+
+    let userManga = friendsMangaScema.safeParse(friendRes);
+
+    if (!userManga.success) {
+      return new Response(
+        JSON.stringify({
+          message: `Internal Server Error!`,
+          errors: userManga.error.errors,
+        }),
+        { status: 500 }
+      );
+    }
+
+    const friendData = userManga.data;
+
+    if (!friendData) {
+      console.log({ message: 'Manga not found for friend!', authId: friendId, mangaId: mangaId });
+      return new Response(
+        JSON.stringify({ message: `Manga ${mangaId} not found for friend ${friendId}` }),
+        {
+          status: 404,
+        }
+      );
+    }
+
+    const expiresAt = (await env.KV.get('expiresAt')) || Date.now() + 1 * 60 * 60 * 1000; //1 hr from now if no expiresAt is strored
+
+    return new Response(JSON.stringify({ friendData: friendData, expiresAt: expiresAt }), {
+      status: 200,
+    });
+  } catch (err) {
+    console.error('Error:', err);
+    return new Response(JSON.stringify({ message: 'an unknown error occurred' }), { status: 500 });
+  }
+}
+
+export async function getSharedManga(userId: string, mangaId: string, env: Env) {
+  try {
+    const friendRes = await env.DB.prepare(
+      `
+        SELECT 
+          ud.userID,
+          ud.currentIndex
+        FROM userData AS ud
+        JOIN userCategories AS uc 
+          ON ud.userId = uc.userId AND ud.userCat = uc.value
+          AND uc.public = '1'
+        WHERE ud.mangaId = ?
+          AND ud.userId IN (
+            SELECT 
+              CASE 
+                WHEN f.senderId = ? THEN f.receiverId
+                ELSE f.senderId
+              END
+            FROM friends f
+          )
+      `
+    )
+      .bind(mangaId, userId)
+      .all();
+
+    let userManga = friendsMangaScema.array().safeParse(friendRes.results);
+
+    if (!userManga.success) {
+      return new Response(
+        JSON.stringify({
+          message: `Internal Server Error!`,
+          errors: userManga.error.errors,
+        }),
+        { status: 500 }
+      );
+    }
+
+    const friendData = userManga.data;
+
+    if (!friendData) {
+      console.log({ message: 'No Manga Shared with Friends!', mangaId: mangaId });
+      return new Response(JSON.stringify({ message: `No Friends seam to be sharing ${mangaId}` }), {
+        status: 404,
+      });
+    }
+
+    const expiresAt = (await env.KV.get('expiresAt')) || Date.now() + 1 * 60 * 60 * 1000; //1 hr from now if no expiresAt is strored
+
+    return new Response(JSON.stringify({ friendData: friendData, expiresAt: expiresAt }), {
+      status: 200,
+    });
+  } catch (err) {
+    console.error('Error:', err);
+    return new Response(JSON.stringify({ message: 'an unknown error occurred' }), { status: 500 });
   }
 }
 
