@@ -188,7 +188,7 @@ const routes: Record<string, AppRoute> = {
   //   path: '/feed',
   //   name: 'Feed',
   //   icon: DynamicFeedIcon,
-  //   component: feed
+  //   component: feed,
   // },
   addManga: {
     path: '/addManga',
@@ -206,7 +206,7 @@ const routes: Record<string, AppRoute> = {
   //   path: '/removeManga',
   //   name: 'Remove Manga',
   //   icon: DeleteForeverIcon,
-  //   component: removeManga
+  //   component: removeManga,
   // },
   stats: {
     path: '/stats',
