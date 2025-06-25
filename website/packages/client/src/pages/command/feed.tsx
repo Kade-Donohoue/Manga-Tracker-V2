@@ -1,6 +1,6 @@
 import { customStyles } from '../../styled/index';
 import { LoadingScreen } from '../../components/LoadingScreen';
-import Select from 'react-select';
+import Select, { StylesConfig } from 'react-select';
 import React from 'react';
 import './feed.css';
 import { mangaDetails, dropdownOption } from '../../types';
@@ -204,7 +204,7 @@ export default function feed(): JSX.Element {
           value={selectedCat}
           onChange={setSelectedCat}
           options={catOptions}
-          styles={customStyles}
+          styles={customStyles as StylesConfig<dropdownOption, false>}
           isSearchable={false}
         />
         <br></br>
@@ -217,7 +217,7 @@ export default function feed(): JSX.Element {
           value={selectedOrd}
           onChange={setSelectedOrd}
           options={ordOptions}
-          styles={customStyles}
+          styles={customStyles as StylesConfig<dropdownOption, false>}
           isSearchable={false}
         />
         <br></br>
@@ -230,7 +230,7 @@ export default function feed(): JSX.Element {
           value={selectedMethod}
           onChange={setSelectedMethod}
           options={methodOptions}
-          styles={customStyles}
+          styles={customStyles as StylesConfig<dropdownOption, false>}
           isSearchable={false}
         />
 
