@@ -1,4 +1,4 @@
-import { number, object, z } from 'zod';
+import { boolean, number, object, z } from 'zod';
 
 export interface Env {
   ENVIRONMENT: 'dev' | 'staging' | 'production';
@@ -55,6 +55,11 @@ const imageIndexes = z
     return val.length > 0 ? val : [0];
   });
 
+export const friendsMangaScema = z.object({
+  userID: z.string(),
+  currentIndex: z.number().min(0),
+});
+
 export const mangaDetailsSchema = mangaDataRow.merge(
   z.object({
     currentIndex: z.coerce.number().int().min(0),
@@ -62,6 +67,20 @@ export const mangaDetailsSchema = mangaDataRow.merge(
     userCat: z.string(),
     interactTime: z.coerce.number().int().min(0),
     imageIndexes: imageIndexes,
+    sharedFriends: z
+      .string()
+      .nullable()
+      .transform((val) =>
+        val
+          ? val
+              .split(',')
+              .map((s) => {
+                let [uId, avatar, userName] = s.trim().split('-:-');
+                return { userID: uId, avatarUrl: avatar, userName: userName };
+              })
+              .filter(Boolean)
+          : []
+      ),
   })
 );
 

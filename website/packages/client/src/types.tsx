@@ -27,6 +27,12 @@ export interface mangaDetails {
   userCat: string;
   interactTime: number;
   imageIndexes: number[];
+  currentChap: number;
+  sharedFriends: {
+    userID: string;
+    avatarUrl: string;
+    userName: string;
+  }[];
 }
 
 export interface dropdownOption {

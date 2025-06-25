@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, Box, Button, SvgIcon, SxProps, Theme } from '@mui/material';
-import Select from 'react-select';
+import Select, { StylesConfig } from 'react-select';
 import CancelIcon from '@mui/icons-material/Cancel';
 import { toast } from 'react-toastify';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -163,7 +163,7 @@ const AddMangaModal: React.FC<AddMangaModalProps> = ({ open, onClose }) => {
           value={selectedCat}
           onChange={(e) => setSelectedCat(e)}
           options={catOptions}
-          styles={customStyles}
+          styles={customStyles as StylesConfig<dropdownOption, false>}
           isSearchable={false}
         />
         <br />

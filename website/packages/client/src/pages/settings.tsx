@@ -6,7 +6,7 @@ import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import LogoutIcon from '@mui/icons-material/Logout';
-import { SignOutButton, UserProfile } from '@clerk/clerk-react';
+import { SignOutButton, UserButton, UserProfile } from '@clerk/clerk-react';
 import { CategoryManager } from '../components/CategoryManager';
 
 export default function settings() {
@@ -33,10 +33,21 @@ export default function settings() {
             User
           </AccordionSummary>
           <AccordionDetails>
-            <UserProfile />
-            <SignOutButton>
-              <Button startIcon={<LogoutIcon />}>Logout</Button>
-            </SignOutButton>
+            <div
+              className="clerk-profile-wrapper"
+              style={{ width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}
+            >
+              {window.matchMedia('(max-width: 768px)').matches ? (
+                <UserButton showName={true} />
+              ) : (
+                <div>
+                  <UserProfile />
+                  <SignOutButton>
+                    <Button startIcon={<LogoutIcon />}>Logout</Button>
+                  </SignOutButton>
+                </div>
+              )}
+            </div>
           </AccordionDetails>
         </Accordion>
       </div>

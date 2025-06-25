@@ -67,7 +67,7 @@ const AddFriendModal: React.FC<addFriendModalProps> = ({ open, onClose }) => {
       aria-labelledby="cat-modal-title"
       aria-describedby="cat-modal-description"
     >
-      <Box sx={{ width: '80vw', height: '28vh', ...modalStyle }}>
+      <Box sx={{ width: '80vw', ...modalStyle }}>
         <label htmlFor="UIn">Enter Friends Name:</label>
         <input type="text" id="UIn" name="iIn" placeholder="Person1234" autoComplete="off" />
         <br />
