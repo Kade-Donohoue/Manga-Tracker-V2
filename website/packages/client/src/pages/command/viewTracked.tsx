@@ -1,6 +1,6 @@
 import { dropdownOption, mangaDetails } from '../../types';
 import { customStyles } from '../../styled/index';
-import React, { ChangeEvent, useEffect, useState } from 'react';
+import React, { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
@@ -9,11 +9,14 @@ import Select from 'react-select';
 import {
   CardActionArea,
   Checkbox,
+  Fade,
   FormControlLabel,
+  IconButton,
   Menu,
   MenuItem,
   Skeleton,
   TextField,
+  useTheme,
 } from '@mui/material';
 import AddCircleOutlinedIcon from '@mui/icons-material/AddCircleOutlined';
 import { fetchPath } from '../../vars';
@@ -28,6 +31,7 @@ import ChangeCategoryModal from '../../components/changeCategoryModal';
 import { useQuery } from '@tanstack/react-query';
 import SeriesCard from '../../components/SeriesCard';
 import { fetchUserCategories, getStoredValue } from '../../utils';
+import { Height, KeyboardArrowDown, KeyboardArrowUp } from '@mui/icons-material';
 
 const combinedSortOptions = [
   { value: 'mangaName_asc', label: 'Alphabetical (A → Z)' },
@@ -44,6 +48,33 @@ const combinedSortOptions = [
 export default function tracked() {
   const { data: mangaInfo, isLoading: isLoadingMangaInfo, error: errorMangaInfo } = useUserManga();
   const [currentMangaId, setCurrentMangaId] = React.useState<string | null>(null);
+
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  const [atBottom, setAtBottom] = useState(true);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const theme = useTheme();
+
+  const handleScroll = () => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const isScrollable = el.scrollHeight > el.clientHeight;
+    console.log(isScrollable, el.scrollHeight, el.clientHeight);
+    setShowScrollButton(isScrollable);
+
+    const bottomReached = Math.abs(el.scrollHeight - el.scrollTop - el.clientHeight) < 5;
+    setAtBottom(bottomReached);
+  };
+
+  const scrollTo = (direction: 'top' | 'bottom') => {
+    const el = containerRef.current;
+    if (!el) return;
+    el.scrollTo({
+      top: direction === 'bottom' ? el.scrollHeight : 0,
+      behavior: 'smooth',
+    });
+  };
 
   const { data: catOptions, isError } = useQuery<dropdownOption[], Error>({
     queryKey: ['userCategories'],
@@ -77,6 +108,14 @@ export default function tracked() {
   React.useEffect(() => {
     localStorage.setItem('unreadChecked', JSON.stringify(unreadChecked));
   }, [unreadChecked]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    handleScroll(); // Check on mount
+    el.addEventListener('scroll', handleScroll);
+    return () => el.removeEventListener('scroll', handleScroll);
+  }, [mangaInfo, filterOption, sortSelection]);
 
   //right click menu
   const [anchorPosition, setAnchorPosition] = React.useState<{
@@ -300,8 +339,9 @@ export default function tracked() {
     <div
       className="viewTrackerContainer"
       style={{
+        height: '100vh',
         display: 'flex',
-        justifyContent: 'center',
+        // justifyContent: 'center',
         flexDirection: 'column',
       }}
     >
@@ -413,12 +453,16 @@ export default function tracked() {
         />
       </div>
 
-      <div
+      <Box
+        ref={containerRef}
         className="cardContainer"
-        style={{
+        sx={{
+          // maxHeight: '100%',
           display: 'flex',
           justifyContent: 'center',
           justifyItems: 'center',
+          overflowY: 'scroll',
+          minHeight: 0,
         }}
       >
         {Array.from(mangaInfo.values())
@@ -475,7 +519,11 @@ export default function tracked() {
             color: 'white',
           }}
         >
-          <CardActionArea onClick={(e) => handleAddOpen()} sx={{ height: '100%' }}>
+          <CardActionArea
+            onClick={(e) => handleAddOpen()}
+            sx={{ height: '100%' }}
+            className="addManga viewTracked"
+          >
             <Box
               sx={{
                 display: 'flex',
@@ -488,6 +536,32 @@ export default function tracked() {
             </Box>
           </CardActionArea>
         </Card>
+
+        <Fade in={showScrollButton}>
+          <Box
+            sx={{
+              position: 'absolute',
+              bottom: theme.spacing(2),
+              right: theme.spacing(2),
+              zIndex: 1,
+            }}
+          >
+            <IconButton
+              color="primary"
+              onClick={() => scrollTo(atBottom ? 'top' : 'bottom')}
+              sx={{
+                bgcolor: '#90caf9', // use theme background for contrast
+                color: 'background.paper', // ensure the arrow is visible
+                boxShadow: 3,
+                '&:hover': {
+                  bgcolor: '#0c81e0', // hover slightly different
+                },
+              }}
+            >
+              {atBottom ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
+            </IconButton>
+          </Box>
+        </Fade>
 
         <Menu
           open={anchorPosition !== null}
@@ -504,7 +578,7 @@ export default function tracked() {
             Remove
           </MenuItem>
         </Menu>
-      </div>
+      </Box>
     </div>
   );
 }
