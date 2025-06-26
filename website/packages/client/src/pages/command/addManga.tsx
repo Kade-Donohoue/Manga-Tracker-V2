@@ -340,7 +340,6 @@ export default function addManga() {
       if (child.type == 'url' || child.type == 'text/x-moz-place') {
         let currentUrl = (child.url || child.uri!).toLowerCase();
         if (currentUrl.includes('manga')) return true;
-        if (currentUrl.includes('reaper')) return true;
         if (currentUrl.includes('asura')) return true;
         if (currentUrl.includes('comick')) return true;
         // console.log(currentUrl)
