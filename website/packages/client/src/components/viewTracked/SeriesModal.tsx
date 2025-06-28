@@ -19,8 +19,8 @@ import Avatar from '@mui/material/Avatar';
 import AvatarGroup from '@mui/material/AvatarGroup';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
-import { friend, mangaDetails } from '../types'; // Update path if needed
-import { fetchPath } from '../vars';
+import { friend, mangaDetails } from '../../types'; // Update path if needed
+import { fetchPath } from '../../vars';
 import { toast } from 'react-toastify';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 

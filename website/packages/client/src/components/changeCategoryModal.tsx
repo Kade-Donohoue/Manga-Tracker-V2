@@ -7,6 +7,7 @@ import { fetchPath } from '../vars';
 import { dropdownOption, mangaDetails } from '../types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchUserCategories } from '../utils';
+import { useUserCategories } from '../hooks/useUserCategories';
 
 interface ChangeCategoryModalProps {
   open: boolean;
@@ -50,12 +51,7 @@ const customStyles = {
 export default function ChangeCategoryModal({ open, onClose, mangaId }: ChangeCategoryModalProps) {
   const queryClient = useQueryClient();
 
-  const { data: catOptions, isError } = useQuery<dropdownOption[], Error>({
-    queryKey: ['userCategories'],
-    queryFn: () => fetchUserCategories(),
-    staleTime: 1000 * 60 * 60,
-    gcTime: Infinity,
-  });
+  const { data: catOptions, isLoading, isError } = useUserCategories();
 
   const [newCat, setNewCat] = React.useState<dropdownOption | null>(
     catOptions ? catOptions[0] : null

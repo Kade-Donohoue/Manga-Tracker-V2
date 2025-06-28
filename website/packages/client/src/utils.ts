@@ -1,5 +1,5 @@
 import { toast } from 'react-toastify';
-import { categoryOption } from './types';
+import { categoryOption, dropdownOption, mangaDetails } from './types';
 import { defaultCategoryOptions, fetchPath } from './vars';
 
 /**
@@ -88,4 +88,20 @@ export function debounce<T extends (...args: any[]) => void>(
     clearTimeout(timer);
     timer = setTimeout(() => func(...args), delay);
   };
+}
+
+export function checkFilter(
+  manga: mangaDetails,
+  filterOptions: dropdownOption[] | null,
+  unreadChecked: boolean
+): boolean {
+  if (unreadChecked && manga.chapterTextList.length - 1 <= manga.currentIndex) {
+    return false;
+  }
+
+  if (!filterOptions || filterOptions.length === 0) {
+    return true;
+  }
+
+  return filterOptions.some((cat) => cat.value === manga.userCat);
 }

@@ -10,7 +10,7 @@ import { useQueryClient } from '@tanstack/react-query';
 interface ChangeChapterModalProps {
   open: boolean;
   onClose: () => void;
-  mangaInfo: Map<string, mangaDetails>;
+  mangaInfo: Map<string, mangaDetails> | undefined;
   mangaId: string;
 }
 

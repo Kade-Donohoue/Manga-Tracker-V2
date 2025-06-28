@@ -9,6 +9,7 @@ import { fetchPath } from '../vars';
 import { modalStyle } from '../AppStyles';
 import { customStyles } from '../styled/index';
 import { fetchUserCategories } from '../utils';
+import { useUserCategories } from '../hooks/useUserCategories';
 
 interface AddMangaModalProps {
   open: boolean;
@@ -18,12 +19,7 @@ interface AddMangaModalProps {
 const AddMangaModal: React.FC<AddMangaModalProps> = ({ open, onClose }) => {
   const queryClient = useQueryClient();
 
-  const { data: catOptions, isError } = useQuery<dropdownOption[], Error>({
-    queryKey: ['userCategories'],
-    queryFn: () => fetchUserCategories(),
-    staleTime: 1000 * 60 * 60,
-    gcTime: Infinity,
-  });
+  const { data: catOptions, isLoading: isLoadingCats, isError } = useUserCategories();
 
   const [selectedCat, setSelectedCat] = useState<dropdownOption | null>(null);
   const [isLoading, setIsLoading] = useState(false);

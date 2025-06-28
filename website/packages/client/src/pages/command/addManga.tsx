@@ -10,6 +10,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchUserCategories } from '../../utils';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import Button from '@mui/material/Button';
+import { useUserCategories } from '../../hooks/useUserCategories';
 
 interface dropdownOptionBookmark {
   value: BookmarkNode | string;
@@ -27,12 +28,7 @@ interface BookmarkNode {
 }
 
 export default function addManga() {
-  const { data: catOptions, isError } = useQuery<dropdownOption[], Error>({
-    queryKey: ['userCategories'],
-    queryFn: () => fetchUserCategories(),
-    staleTime: 1000 * 60 * 60,
-    gcTime: Infinity,
-  });
+  const { data: catOptions, isLoading: isLoadingCat, isError } = useUserCategories();
 
   const [showError, setShowError] = React.useState(true);
   const [isLoading, setIsLoading] = React.useState(false);
