@@ -8,7 +8,6 @@ import { dropdownOption } from '../types';
 import { fetchPath } from '../vars';
 import { modalStyle } from '../AppStyles';
 import { customStyles } from '../styled/index';
-import { fetchUserCategories } from '../utils';
 import { useUserCategories } from '../hooks/useUserCategories';
 
 interface AddMangaModalProps {

@@ -10,8 +10,6 @@ import {
 } from '@mui/material';
 import { categoryOption, dropdownOption, mangaDetails } from '../../types';
 import { fetchPath } from '../../vars';
-import { useQuery } from '@tanstack/react-query';
-import { fetchUserCategories } from '../../utils';
 
 import Avatar from '@mui/material/Avatar';
 import AvatarGroup from '@mui/material/AvatarGroup';
@@ -29,12 +27,6 @@ export default function SeriesCard({
   openMangaOverview,
   catOptions,
 }: Props) {
-  // const { data: catOptions, isError } = useQuery<dropdownOption[], Error>({
-  //   queryKey: ['userCategories'],
-  //   queryFn: () => fetchUserCategories(),
-  //   staleTime: 1000 * 60 * 60,
-  //   gcTime: Infinity,
-  // });
 
   const findCat = (catVal: string): dropdownOption => {
     return (

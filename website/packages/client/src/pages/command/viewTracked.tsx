@@ -186,7 +186,7 @@ export default function Tracked() {
         setSortSelection={setSortSelection}
         unreadChecked={unreadChecked}
         setUnreadChecked={setUnreadChecked}
-        catOptions={catOptions} // fetchUserCategories options can be passed here if you move that logic
+        catOptions={catOptions} 
       />
 
       <Box
@@ -194,13 +194,13 @@ export default function Tracked() {
         className="cardContainer"
         sx={{
           display: 'flex',
-          justifyContent: 'center', // aligns items horizontally
-          justifyItems: 'center', // this does nothing for flexbox children
+          justifyContent: 'center', 
+          justifyItems: 'center', 
           overflowY: 'scroll',
           minHeight: 0,
-          flexWrap: 'wrap', // important for wrapping cards to next line!
-          gap: '12px', // spacing between cards
-          padding: '12px', // optional, some padding around container
+          flexWrap: 'wrap', 
+          gap: '12px',
+          padding: '12px',
         }}
       >
         {mangaList.map((data) => (

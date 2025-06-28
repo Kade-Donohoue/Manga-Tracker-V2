@@ -14,7 +14,6 @@ import { toast } from 'react-toastify';
 import CancelIcon from '@mui/icons-material/Cancel';
 import { modalStyle } from '../../AppStyles';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchUserCategories } from '../../utils';
 import ChangeChapterModal from '../../components/changeChapterModal';
 import { useUserCategories } from '../../hooks/useUserCategories';
 

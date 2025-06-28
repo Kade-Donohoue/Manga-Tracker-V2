@@ -7,12 +7,12 @@ import {
   useLocation,
   Navigate,
 } from 'react-router-dom';
-import { toast, ToastContainer } from 'react-toastify';
-import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
+import { ToastContainer } from 'react-toastify';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import * as Scrollable from './components/Scrollable';
 import DesignSystemProvider from './components/DesignSystemProvider';
-import { fetchPath, setFetchPath } from './vars';
+import { setFetchPath } from './vars';
 
 import Home from './pages/Home';
 import feed from './pages/command/feed';
@@ -40,8 +40,6 @@ import * as S from './AppStyles';
 import { IconButton } from '@mui/material';
 import { RedirectToSignIn, SignedIn, SignedOut, SignIn, SignUp } from '@clerk/clerk-react';
 import CookieBanner from './components/cookies';
-import { dropdownOption } from './types';
-import { fetchUserCategories } from './utils';
 
 interface CenteredPageProps {
   children: React.ReactNode;
@@ -243,12 +241,6 @@ function RootedApp(): React.ReactElement {
     }
   }, []);
 
-  useQuery<dropdownOption[], Error>({
-    queryKey: ['userCategories'],
-    queryFn: () => fetchUserCategories(),
-    staleTime: 1000 * 60 * 60,
-    gcTime: Infinity,
-  });
 
   const [sideBarExpanded, setSideBarExpanded] = React.useState<boolean>(true);
 

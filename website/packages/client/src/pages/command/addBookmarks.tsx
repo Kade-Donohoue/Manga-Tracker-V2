@@ -7,8 +7,7 @@ import { fetchPath } from '../../vars';
 
 import Button from '@mui/material/Button'
 import ButtonGroup from '@mui/material/ButtonGroup'
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchUserCategories } from '../../utils';
+import { useQueryClient } from '@tanstack/react-query';
 import { useUserCategories } from '../../hooks/useUserCategories';
 
 const customStyles: StylesConfig<dropdownOption, false> = {
