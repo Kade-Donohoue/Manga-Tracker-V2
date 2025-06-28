@@ -2,7 +2,7 @@
 import React from 'react';
 import AddMangaModal from '../addMangaModal';
 import SeriesModal from './SeriesModal';
-import ConfirmRemovalModal from '../confirmRemovealModal';
+import ConfirmRemovalModal from '../confirmRemoveMangaModal';
 import ChangeChapterModal from '../changeChapterModal';
 import ChangeCategoryModal from '../changeCategoryModal';
 import { mangaDetails } from '../../types';
