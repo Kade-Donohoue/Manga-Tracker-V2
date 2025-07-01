@@ -38,8 +38,6 @@ export default function Tracked() {
   const containerRef = useRef<HTMLDivElement>(null);
   const theme = useTheme();
 
-  const { showScrollButton, atBottom } = useScrollHandler(containerRef);
-
   const [currentMangaId, setCurrentMangaId] = useState<string | null>(null);
   const [filterOptions, setFilterOptions] = useState<dropdownOption[]>(() => {
     const stored = localStorage.getItem('filterOptions');
@@ -118,6 +116,8 @@ export default function Tracked() {
     });
   }, [mangaInfo, sortSelection, currentSearch, filterOptions, unreadChecked]);
 
+  const { showScrollButton, atBottom } = useScrollHandler(containerRef, [mangaList]);
+
   // Scroll handler for context menu
   function handleContextMenu(event: React.MouseEvent, mangaId: string) {
     event.preventDefault();
@@ -129,14 +129,23 @@ export default function Tracked() {
 
   if (isLoading || error || !mangaInfo) {
     return (
-      <div
+      <Box
         className="cardContainer"
-        style={{ display: 'flex', justifyContent: 'center', justifyItems: 'center' }}
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          justifyItems: 'center',
+          overflowY: 'scroll',
+          minHeight: 0,
+          flexWrap: 'wrap',
+          gap: '12px',
+          padding: '12px',
+        }}
       >
         {Array.from({ length: 24 }).map((_, i) => (
           <SkeletonCard key={`skeleton-${i}`} />
         ))}
-      </div>
+      </Box>
     );
   }
 
@@ -186,7 +195,7 @@ export default function Tracked() {
         setSortSelection={setSortSelection}
         unreadChecked={unreadChecked}
         setUnreadChecked={setUnreadChecked}
-        catOptions={catOptions} 
+        catOptions={catOptions}
       />
 
       <Box
@@ -194,11 +203,11 @@ export default function Tracked() {
         className="cardContainer"
         sx={{
           display: 'flex',
-          justifyContent: 'center', 
-          justifyItems: 'center', 
+          justifyContent: 'center',
+          justifyItems: 'center',
           overflowY: 'scroll',
           minHeight: 0,
-          flexWrap: 'wrap', 
+          flexWrap: 'wrap',
           gap: '12px',
           padding: '12px',
         }}
