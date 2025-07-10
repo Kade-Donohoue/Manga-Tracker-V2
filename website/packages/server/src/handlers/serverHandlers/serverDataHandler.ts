@@ -36,7 +36,7 @@ export default async function dataHandler(
       const body = await zodParse(request, updateMangaSchema);
       if (body instanceof Response) return body; // returns zod errors
 
-      return await updateManga(body.newData, body.amountNewChapters, body.expiresAt, env);
+      return await updateManga(body.newData, body.expiresAt, env);
     }
     case 'fixCurrentChaps':
       return await fixCurrentChaps(env);

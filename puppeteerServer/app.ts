@@ -269,15 +269,25 @@ async function mangaCompleteFuction({ jobId }: { jobId: string }) {
         job.returnvalue.iconBuffer ||
         (job.returnvalue.slugList && job.returnvalue.slugList != job.data.oldSlugList)
       ) {
+        const chapterTextList = job.returnvalue.chapterTextList?.split(',') || [];
+
         const oldSlugs = job.data.oldSlugList?.split(',') || [];
         const newSlugs = job.returnvalue.slugList?.split(',') || [];
-        const newChapterCount = newSlugs.length - oldSlugs.length;
+
+        const newChapterCount = Math.floor(
+          parseFloat(chapterTextList.at(-1)) - parseFloat(chapterTextList[oldSlugs.length - 1])
+        );
+        // const newChapterCountFallback = newSlugs.length - oldSlugs.length; idk use case yet but leaving for future
 
         if (config.logging.verboseLogging) console.log(job.returnvalue.urlBase);
         if (config.logging.verboseLogging) logArrayDifferences(oldSlugs, newSlugs);
 
         if (newChapterCount != 0) batch.batchData.newChapterCount += newChapterCount;
-        batch.batchData.newData.push({ ...job.returnvalue, mangaId: job.data.mangaId });
+        batch.batchData.newData.push({
+          ...job.returnvalue,
+          mangaId: job.data.mangaId,
+          newChapterCount: newChapterCount,
+        });
       }
       if (config.queue.instantClearJob) await job.remove();
 
@@ -377,13 +387,9 @@ async function sendUpdate(batch: updateCollector) {
       console.log(
         `${batch.batchData.newData.length} / ${batch.batchData.completedCount} Manga Update Saved With ${batch.batchData.newChapterCount} New Chapters!`
       );
-    // if (config.updateSettings.refetchImgs) {
-    //send each manga sepratly due to images
+
     for (let i = 0; i < batch.batchData.newData.length; i++) {
-      // console.log(batch.batchData.newData[i].mangaId);
-      // console.log(batch.batchData.newData[i].iconBuffer);
       if (!batch.batchData.newData[i].iconBuffer) continue;
-      // if (config.logging.verboseLogging)
       console.log(`Saving Image for mangaId: ${batch.batchData.newData[i].mangaId}`);
       const resp = await fetch(`${config.serverCom.serverUrl}/serverReq/data/saveCoverImage`, {
         method: 'POST',
@@ -402,7 +408,6 @@ async function sendUpdate(batch: updateCollector) {
       if (!resp.ok) console.warn(`Failed to save!; ${batch.batchData.newData[i].mangaId}`);
     }
     // console.log('done, Its recomended to turn of auto update images now!');
-    // }
   } else if (config.updateSettings.autoUpdateInfo)
     console.log('Update Complete! No New Chapters Found!');
   dataCollector.delete(batch.batchId);

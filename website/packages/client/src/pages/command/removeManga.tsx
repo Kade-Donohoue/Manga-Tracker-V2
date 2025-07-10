@@ -1,6 +1,6 @@
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import React, { useEffect } from "react"
+import React from "react"
 import Select, { StylesConfig } from 'react-select'
 import './removeManga.css'
 import { mangaDetails, mangaInfo } from '../../types'

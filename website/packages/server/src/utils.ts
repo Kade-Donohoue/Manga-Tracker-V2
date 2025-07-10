@@ -1,6 +1,6 @@
 import { z, ZodSchema } from 'zod';
-import {Env} from './types';
-import { createClerkClient } from '@clerk/backend'
+import { Env } from './types';
+import { createClerkClient } from '@clerk/backend';
 
 /**
  * Validates user requests
@@ -10,26 +10,37 @@ import { createClerkClient } from '@clerk/backend'
  * @param protectedAction function to call and passes path, req, env, userId(from authentication)
  * @returns protectedAction
  */
-export async function verifyUserAuth(path: string[], req: Request, env: Env, protectedAction: (path: string[], req: Request, env: Env, userId: string) => any) {
-
+export async function verifyUserAuth(
+  path: string[],
+  req: Request,
+  env: Env,
+  protectedAction: (path: string[], req: Request, env: Env, userId: string) => any
+) {
   const clerkClient = createClerkClient({
     secretKey: env.CLERK_SECRET_KEY,
     publishableKey: env.VITE_CLERK_PUBLISHABLE_KEY,
-  })
+  });
 
   const authState = await clerkClient.authenticateRequest(req, {
-    authorizedParties: [env.VITE_CLIENT_URL, env.VITE_SERVER_URL, 'kd://callback', 'http://localhost:3000'],
-  })
-  console.log(authState)
+    authorizedParties: [
+      env.VITE_CLIENT_URL,
+      env.VITE_SERVER_URL,
+      'kd://callback',
+      'http://localhost:3000',
+    ],
+  });
+  console.log(authState);
 
   if (!authState.isSignedIn) {
-    return new Response(JSON.stringify({message: authState.message, reason: authState.reason}), {status: 401})
+    return new Response(JSON.stringify({ message: authState.message, reason: authState.reason }), {
+      status: 401,
+    });
   }
 
-  const { userId } = authState.toAuth(); 
-  console.log(userId)
+  const { userId } = authState.toAuth();
+  console.log(userId);
 
-  return protectedAction(path, req, env, userId)
+  return protectedAction(path, req, env, userId);
 }
 
 /**
@@ -40,11 +51,17 @@ export async function verifyUserAuth(path: string[], req: Request, env: Env, pro
  * @param protectedAction function to call and passes path, req, env, userId(from headers)
  * @returns protectedAction
  */
-export async function validateServerAuth(path: string[], req: Request, env: Env, protectedAction: (path: string[], req: Request, env: Env, userId: string) => any) {
-  const userId = req.headers.get("userId") || ''
-  if (req.headers.get("pass") === env.SERVER_PASSWORD) return protectedAction(path, req, env, userId)
+export async function validateServerAuth(
+  path: string[],
+  req: Request,
+  env: Env,
+  protectedAction: (path: string[], req: Request, env: Env, userId: string) => any
+) {
+  const userId = req.headers.get('userId') || '';
+  if (req.headers.get('pass') === env.SERVER_PASSWORD)
+    return protectedAction(path, req, env, userId);
 
-  return new Response(JSON.stringify({Message: "Unauthorized"}), {status:401})
+  return new Response(JSON.stringify({ Message: 'Unauthorized' }), { status: 401 });
 }
 
 /**
@@ -53,10 +70,10 @@ export async function validateServerAuth(path: string[], req: Request, env: Env,
  * @param listLength Length of list
  * @returns index or last index of array
  */
-export function verifyIndexRange(index:number, listLength:number) {
-  if (index < 0 ) return 0
-  if (index < listLength) return index
-  return listLength-1
+export function verifyIndexRange(index: number, listLength: number) {
+  if (index < 0) return 0;
+  if (index < listLength) return index;
+  return listLength - 1;
 }
 
 /**
@@ -65,25 +82,37 @@ export function verifyIndexRange(index:number, listLength:number) {
  * @param schema Zod Schema to parse request with
  * @returns parsed body based on provided schema
  */
-export async function zodParse<T extends ZodSchema<any>>( request: Request, schema: T): Promise<z.infer<T> | Response> {
+export async function zodParse<T extends ZodSchema<any>>(
+  request: Request,
+  schema: T
+): Promise<z.infer<T> | Response> {
   try {
     const json = await request.json();
     const result = schema.safeParse(json);
-  
+
     if (result.success) {
       return result.data;
     } else {
-      console.error("Zod validation failed:", result.error.format());
+      console.error('Zod validation failed:', result.error.format());
       return new Response(
         JSON.stringify({
-          message: "Validation error",
+          message: 'Validation error',
           issues: result.error.issues,
         }),
         { status: 400 }
       );
     }
   } catch (err) {
-    console.log(err)
-    return new Response(JSON.stringify({message: 'Bad Request, unable to parse', err: err}), { status: 400 });
+    console.log(err);
+    return new Response(JSON.stringify({ message: 'Bad Request, unable to parse', err: err }), {
+      status: 400,
+    });
   }
+}
+
+export function extractValue<T extends string>(res: unknown[], key: T, fallback = 0): number {
+  if (res && res.length && typeof (res[0] as any)[key] === 'number') {
+    return (res[0] as Record<T, number>)[key];
+  }
+  return fallback;
 }

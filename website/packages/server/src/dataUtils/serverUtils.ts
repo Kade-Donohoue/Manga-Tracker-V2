@@ -35,12 +35,7 @@ export async function getAllManga(env: Env) {
   }
 }
 
-export async function updateManga(
-  newData: updateDataType,
-  newChapterCount: number,
-  expiresAt: number,
-  env: Env
-) {
+export async function updateManga(newData: updateDataType, expiresAt: number, env: Env) {
   try {
     console.log(newData);
     await env.KV.put('expiresAt', expiresAt.toString());
@@ -51,6 +46,8 @@ export async function updateManga(
     var boundStmt: D1PreparedStatement[] = [];
     for (var i = 0; i < newData.length; i++) {
       // console.log(newData[i].chapterUrlList, newData[i].chapterTextList, newData[i].mangaId)
+      if (!newData[i]) continue;
+      console.log(i, newData[i]);
       boundStmt.push(
         stmt.bind(
           newData[i].urlBase,
@@ -61,23 +58,18 @@ export async function updateManga(
         )
       );
 
-      if (newData[i].iconBuffer) {
-        await env.IMG.put(newData[i].mangaId, new Uint8Array(newData[i].iconBuffer!.data).buffer, {
-          httpMetadata: { contentType: 'image/jpeg' },
-        }); //Save Cover Image with title as mangaId
-      }
+      boundStmt.push(
+        env.DB.prepare(
+          'INSERT INTO mangaStats (type, value, mangaId) VALUES ("chapCount", ?, ?)'
+        ).bind(newData[i].newChapterCount, newData[i].mangaId)
+      );
     }
-    boundStmt.push(
-      env.DB.prepare(
-        'INSERT INTO stats (timestamp, type, stat_value) VALUES (CURRENT_TIMESTAMP, "chapCount", ?)'
-      ).bind(newChapterCount)
-    );
 
     await env.DB.batch(boundStmt);
 
     return new Response(JSON.stringify({ message: 'Success' }), { status: 200 });
   } catch (err) {
-    console.error('Error:', err);
+    console.error('Error:', err, 'Data: ', newData);
     return new Response(JSON.stringify({ message: 'an unknown error occured' }), { status: 500 });
   }
 }

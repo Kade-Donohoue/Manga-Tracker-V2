@@ -231,7 +231,7 @@ export async function saveManga(
     }
 
     let statMetric = await env.DB.prepare(
-      'INSERT INTO stats (timestamp, type, stat_value) VALUES (CURRENT_TIMESTAMP, "mangaCount", ?)'
+      'INSERT INTO mangaStats (type, value) VALUES ("mangaCount", ?)'
     )
       .bind(newMangaCount)
       .run();

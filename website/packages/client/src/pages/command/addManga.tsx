@@ -1,7 +1,7 @@
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Select, { StylesConfig } from 'react-select';
-import React, { useEffect } from 'react';
+import React from 'react';
 import './addManga.css';
 import { fetchPath } from '../../vars';
 import { dropdownOption } from '../../types';

@@ -241,7 +241,6 @@ function RootedApp(): React.ReactElement {
     }
   }, []);
 
-
   const [sideBarExpanded, setSideBarExpanded] = React.useState<boolean>(true);
 
   const location = useLocation();

@@ -1,5 +1,5 @@
 import { Env, friendsMangaScema, mangaDetailsSchema } from '../types';
-import { verifyIndexRange } from '../utils';
+import { extractValue, verifyIndexRange } from '../utils';
 
 export async function getUnreadManga(
   authId: string,
@@ -326,79 +326,84 @@ export async function getSharedManga(userId: string, mangaId: string, env: Env) 
 
 export async function userStats(userId: string, env: Env) {
   try {
-    let results = await env.DB.batch([
-      env.DB.prepare(
-        // users Manga
-        `SELECT u.currentChap, u.mangaId, m.latestChapterText, u.userCat, m.useAltStatCalc, m.chapterTextList FROM userData u JOIN mangaData m ON u.mangaId = m.mangaId WHERE u.userID = ?`
-      ).bind(userId),
-      env.DB.prepare('SELECT COUNT(*) AS total FROM mangaData'), // Total Manga Count
-      env.DB.prepare(
-        // New Chapters
-        'SELECT SUM(stat_value) AS total FROM stats WHERE type = "chapCount" AND timestamp > datetime("now", "-30 days")'
-      ),
-      env.DB.prepare(
-        // newManga
-        'SELECT SUM(stat_value) AS total FROM stats WHERE type = "mangaCount" AND timestamp > datetime("now", "-30 days")'
-      ),
-      env.DB.prepare(
-        //readChapter
-        `SELECT SUM(
-          CASE
-            WHEN m.useAltStatCalc = 1 THEN
-              FLOOR(u.currentIndex) + 1
-            ELSE
-              FLOOR(u.currentChap)
-          END
-        ) AS total
-        FROM userData u
+    const queries = {
+      global: env.DB.prepare(`
+        SELECT
+        (SELECT COUNT(*) FROM mangaData) AS mangaCount,
+        (SELECT SUM(value) FROM mangaStats WHERE type = 'chapCount' AND timestamp > datetime('now', '-30 days')) AS newChapters,
+        (SELECT SUM(value) FROM mangaStats WHERE type = 'mangaCount' AND timestamp > datetime('now', '-30 days')) AS newManga,
+        (SELECT SUM(CASE WHEN useAltStatCalc = 1 THEN LENGTH(latestChapterText) - LENGTH(REPLACE(latestChapterText, ',', '')) + 1 ELSE FLOOR(latestChapterText) END) FROM mangaData) AS trackedChapters,
+        (SELECT SUM(value) FROM userStats WHERE type = 'chapsRead' AND timestamp > datetime('now', '-30 days')) AS readThisMonth
+      `),
+      user: env.DB.prepare(
+        `
+        WITH dailySums AS (
+          SELECT DATE(timestamp) AS day, SUM(value) AS totalPerDay
+          FROM userStats 
+          WHERE userID = ? AND timestamp > datetime("now", "-30 days")
+          GROUP BY day
+        )
+        SELECT
+          (SELECT SUM(
+            CASE WHEN m.useAltStatCalc = 1 THEN FLOOR(u.currentIndex) + 1 ELSE FLOOR(u.currentChap) END
+          )
+          FROM userData u
           JOIN mangaData m ON u.mangaId = m.mangaId
           JOIN userCategories c ON u.userCat = c.value AND u.userId = c.userId
-        WHERE u.userId = ?
-          AND c.stats = 1`
-      ).bind(userId),
-      env.DB.prepare(
-        //globalTrackedChapters
-        `SELECT SUM(
-          CASE
-            WHEN useAltStatCalc = 1 THEN
-              LENGTH(latestChapterText) - LENGTH(REPLACE(latestChapterText, ',', '')) + 1
-            ELSE
-              FLOOR(latestChapterText)
-          END
-        ) AS total
-      FROM mangaData`
-      ),
-      env.DB.prepare(
-        //userTrackedChapters
-        `SELECT SUM(
-          CASE
-            WHEN m.useAltStatCalc = 1 THEN
-              LENGTH(m.latestChapterText) - LENGTH(REPLACE(m.latestChapterText, ',', '')) + 1
-            ELSE
-              FLOOR(m.latestChapterText)
-          END
-        ) AS total
-        FROM userData u
-          JOIN mangaData m ON u.mangaId = m.mangaId
-          JOIN userCategories c ON u.userCat = c.value AND u.userId = c.userId
-        WHERE u.userId = ?
-          AND c.stats = 1`
-      ).bind(userId),
-    ]);
-    console.log(results);
+          WHERE u.userId = ? AND c.stats = 1) AS readChapters,
 
-    const userManga = results[0].results as {
+          (SELECT SUM(
+            CASE WHEN m.useAltStatCalc = 1 THEN LENGTH(m.latestChapterText) - LENGTH(REPLACE(m.latestChapterText, ',', '')) + 1 ELSE FLOOR(m.latestChapterText) END
+          )
+          FROM userData u
+          JOIN mangaData m ON u.mangaId = m.mangaId
+          JOIN userCategories c ON u.userCat = c.value AND u.userId = c.userId
+          WHERE u.userId = ?) AS trackedChapters,
+
+          (SELECT SUM(value)
+          FROM userStats
+          WHERE type = 'chapsRead' AND timestamp > datetime('now', '-30 days') AND userID = ?) AS readThisMonth,
+
+          (SELECT AVG(totalPerDay) FROM dailySums) AS averagePerDay
+      `
+      ).bind(userId, userId, userId, userId),
+      userManga: env.DB.prepare(
+        `
+        SELECT u.currentChap, u.mangaId, m.latestChapterText, u.userCat, m.useAltStatCalc, m.chapterTextList
+        FROM userData u
+        JOIN mangaData m ON u.mangaId = m.mangaId
+        WHERE u.userID = ?
+      `
+      ).bind(userId),
+    };
+
+    // Run all queries
+    const results = await env.DB.batch(Object.values(queries));
+
+    // Destructure and name clearly
+    const [globalRes, userRes, userMangaRes] = results.map((r) => r.results);
+
+    // Now you can clearly use:
+    const userManga = userMangaRes as {
       currentChap: string;
       mangaId: string;
       latestChapterText: string;
       userCat: string;
     }[];
-    const mangaCount = results[1].results[0] as { total: number };
-    const updateCount = results[2].results[0] as { total: number };
-    const newCount = results[3].results[0] as { total: number };
-    const readChapter = results[4].results[0] as { total: number };
-    const globalTrackedChapter = results[5].results[0] as { total: number };
-    const userTrackedChapters = results[6].results[0] as { total: number };
+
+    const globalStats = globalRes[0] as {
+      mangaCount: number;
+      newChapters: number;
+      newManga: number;
+      trackedChapters: number;
+      readThisMonth: number;
+    };
+    const rawUserStats = userRes[0] as {
+      readChapters: number;
+      trackedChapters: number;
+      readThisMonth: number;
+      averagePerDay: number;
+    };
 
     let unreadManga: number = 0;
 
@@ -411,22 +416,16 @@ export async function userStats(userId: string, env: Env) {
       if (manga.currentChap !== manga.latestChapterText) unreadManga++;
     }
     const userStats = {
-      chaptersRead: readChapter.total || 0,
-      chaptersUnread: userTrackedChapters.total - readChapter.total,
+      chaptersUnread: rawUserStats.trackedChapters - rawUserStats.readChapters,
       unreadManga: unreadManga,
       readManga: userManga.length,
-    };
-    const mangaStats = {
-      trackedManga: mangaCount?.total || 0,
-      totalTrackedChapters: globalTrackedChapter.total || 0,
-      newMangaCount: newCount?.total || 0,
-      newChapterCount: updateCount?.total || 0,
+      ...rawUserStats,
     };
 
     const expiresAt = (await env.KV.get('expiresAt')) || Date.now() + 1 * 60 * 1000; //1 hr from now if no expiresAt is strored
 
     return new Response(
-      JSON.stringify({ userStats: userStats, globalStats: mangaStats, expiresAt: expiresAt }),
+      JSON.stringify({ userStats: userStats, globalStats: globalStats, expiresAt: expiresAt }),
       { status: 200 }
     );
   } catch (err) {

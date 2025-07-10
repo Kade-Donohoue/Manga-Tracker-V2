@@ -120,6 +120,7 @@ export const updateData = z.array(
     urlBase: z.string(),
     slugList: z.string(),
     chapterTextList: z.string(),
+    newChapterCount: z.coerce.number(),
     currentIndex: z.coerce.string(),
     iconBuffer: z
       .object({
@@ -189,7 +190,6 @@ export const addMangaSchema = z.object({
 export const updateCurrentIndexSchema = z.object({
   newIndex: z.coerce.number().min(0),
   mangaId: z.coerce.string().uuid(),
-  currentChap: z.coerce.number(),
 });
 
 export const updateInteractTimeSchema = z.object({
