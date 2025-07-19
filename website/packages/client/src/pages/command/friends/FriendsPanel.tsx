@@ -4,27 +4,15 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchPath } from '../../../vars';
 import { toast } from 'react-toastify';
 import { friend } from '../../../types';
-
-async function fetchFriends(): Promise<{ message: string; data: friend[] }> {
-  const resp = await fetch(`${fetchPath}/api/friends/getFriends`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-  if (!resp.ok) {
-    toast.error('Unable To fetch friends!');
-    throw new Error('Unable to fetch User Stats!');
-  }
-  return resp.json();
-}
+import { useFriends } from '../../../hooks/useFriends';
+import { useScrollHandler } from '../../../hooks/useScrollHandler';
+import { useState } from 'react';
+import FriendModal from '../../../components/friends/FriendModal';
 
 export default function FriendsPanel() {
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ['friends', 'accepted'],
-    queryFn: fetchFriends,
-    staleTime: 30 * 1000,
-  });
+  const { data, isLoading, isError } = useFriends();
+
+  const [friendOpen, setFriendOpen] = useState<string | undefined>(undefined);
 
   if (isLoading || isError) return <div />;
   return (
@@ -39,7 +27,12 @@ export default function FriendsPanel() {
         flexWrap: 'wrap',
       }}
     >
-      {data?.data.map((friend) => <FriendCard friend={friend} />)}
+      <FriendModal
+        open={Boolean(friendOpen)}
+        onCloseFriend={() => setFriendOpen(undefined)}
+        friend={data?.data.find((f) => f.userID === friendOpen)}
+      />
+      {data?.data.map((friend) => <FriendCard friend={friend} openFriend={setFriendOpen} />)}
     </Box>
   );
 }

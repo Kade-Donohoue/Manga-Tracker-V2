@@ -9,6 +9,7 @@ interface MangaContextMenuProps {
   onChangeCategory: () => void;
   onRemove: () => void;
   onMarkRead: () => void;
+  onRecommend: () => void;
 }
 
 const MangaContextMenu: React.FC<MangaContextMenuProps> = ({
@@ -18,17 +19,21 @@ const MangaContextMenu: React.FC<MangaContextMenuProps> = ({
   onChangeCategory,
   onRemove,
   onMarkRead,
+  onRecommend,
 }) => {
   return (
     <Menu
       open={anchorPosition !== null}
       onClose={onClose}
       anchorReference="anchorPosition"
-      anchorPosition={anchorPosition ? { top: anchorPosition.top, left: anchorPosition.left } : undefined}
+      anchorPosition={
+        anchorPosition ? { top: anchorPosition.top, left: anchorPosition.left } : undefined
+      }
     >
       <MenuItem onClick={onOpen}>Open</MenuItem>
       <MenuItem onClick={onMarkRead}>Mark Chapters as Read…</MenuItem>
       <MenuItem onClick={onChangeCategory}>Change Category</MenuItem>
+      <MenuItem onClick={onRecommend}>Recommend</MenuItem>
       <MenuItem onClick={onRemove} sx={{ color: 'error.main' }}>
         Remove
       </MenuItem>

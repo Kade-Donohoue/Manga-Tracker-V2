@@ -18,7 +18,13 @@ import { toast } from 'react-toastify';
 import { useQueryClient } from '@tanstack/react-query';
 import ConfirmRemoveDialog from '../ConfirmRemoveDialog';
 
-export default function FriendCard({ friend }: { friend: friend }) {
+export default function FriendCard({
+  friend,
+  openFriend,
+}: {
+  friend: friend;
+  openFriend: (friendId: string) => void;
+}) {
   const [confirmOpen, setConfirmOpen] = React.useState(false);
 
   const queryClient = useQueryClient();
@@ -70,7 +76,7 @@ export default function FriendCard({ friend }: { friend: friend }) {
 
   return (
     <Card sx={{ width: 320, height: 150 }}>
-      <CardActionArea>
+      <CardActionArea onClick={() => openFriend(friend.userID)}>
         <CardHeader
           avatar={
             <Avatar sx={{ bgcolor: 'blue' }} aria-label="User Icon" src={friend.imageURl}>

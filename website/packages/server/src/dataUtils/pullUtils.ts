@@ -377,13 +377,10 @@ export async function userStats(userId: string, env: Env) {
       ).bind(userId),
     };
 
-    // Run all queries
     const results = await env.DB.batch(Object.values(queries));
 
-    // Destructure and name clearly
     const [globalRes, userRes, userMangaRes] = results.map((r) => r.results);
 
-    // Now you can clearly use:
     const userManga = userMangaRes as {
       currentChap: string;
       mangaId: string;

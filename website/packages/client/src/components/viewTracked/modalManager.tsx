@@ -6,6 +6,7 @@ import ConfirmRemovalModal from '../confirmRemoveMangaModal';
 import ChangeChapterModal from '../changeChapterModal';
 import ChangeCategoryModal from '../changeCategoryModal';
 import { mangaDetails } from '../../types';
+import RecommendModal from '../recommendModal';
 
 interface ModalManagerProps {
   modalOpen: boolean;
@@ -18,6 +19,8 @@ interface ModalManagerProps {
   setChapterOpen: (open: boolean) => void;
   removeOpen: boolean;
   setRemoveOpen: (open: boolean) => void;
+  recommendOpen: boolean;
+  setRecommendOpen: (open: boolean) => void;
   currentMangaId: string | null;
   mangaInfo: Map<string, mangaDetails> | undefined;
   handleRemoveOpen: () => void;
@@ -35,6 +38,8 @@ const ModalManager: React.FC<ModalManagerProps> = ({
   setAddOpen,
   chapterOpen,
   setChapterOpen,
+  recommendOpen,
+  setRecommendOpen,
   removeOpen,
   setRemoveOpen,
   currentMangaId,
@@ -58,6 +63,11 @@ const ModalManager: React.FC<ModalManagerProps> = ({
         open={catOpen}
         onClose={() => setCatOpen(false)}
         mangaId={currentMangaId || ''}
+      />
+      <RecommendModal
+        open={recommendOpen}
+        onClose={() => setRecommendOpen(false)}
+        manga={mangaInfo?.get(currentMangaId || '') ?? null}
       />
       <ChangeChapterModal
         open={chapterOpen}

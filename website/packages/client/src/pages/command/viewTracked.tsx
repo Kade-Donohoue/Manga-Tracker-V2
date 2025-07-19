@@ -70,6 +70,7 @@ export default function Tracked() {
   const [addOpen, setAddOpen] = useState(false);
   const [chapterOpen, setChapterOpen] = useState(false);
   const [removeOpen, setRemoveOpen] = useState(false);
+  const [recommendOpen, setRecommendOpen] = useState(false);
 
   // Context menu state
   const [anchorPosition, setAnchorPosition] = useState<{ top: number; left: number } | null>(null);
@@ -165,6 +166,8 @@ export default function Tracked() {
         setChapterOpen={setChapterOpen}
         removeOpen={removeOpen}
         setRemoveOpen={setRemoveOpen}
+        recommendOpen={recommendOpen}
+        setRecommendOpen={setRecommendOpen}
         currentMangaId={currentMangaId}
         mangaInfo={mangaInfo}
         handleRemoveOpen={() => setRemoveOpen(true)}
@@ -295,6 +298,10 @@ export default function Tracked() {
           }}
           onRemove={() => {
             setRemoveOpen(true);
+            setAnchorPosition(null);
+          }}
+          onRecommend={() => {
+            setRecommendOpen(true);
             setAnchorPosition(null);
           }}
         />

@@ -1,4 +1,4 @@
-import { Env } from '../types';
+import { Env, friendDetailsSchema } from '../types';
 
 export async function sendRequest(senderId: string, userName: string, env: Env) {
   const receiverId = await getUserIdByName(userName, env);
@@ -205,4 +205,53 @@ export async function removeFriend(userId: string, requestId: number, env: Env) 
       { status: 500 }
     );
   return new Response(JSON.stringify({ message: 'Friendship Ended!' }), { status: 200 });
+}
+
+export async function recomendManga(userId: string, receiverId: string, mangaId: string, env: Env) {
+  const results = await env.DB.prepare(
+    'INSERT OR IGNORE INTO recommendations (recommenderId, receiverId, mangaId) VALUES (?, ?, ?)'
+  )
+    .bind(userId, receiverId, mangaId)
+    .run();
+
+  if (results.meta.changes === 0) {
+    console.log({ message: 'recommendation already exists' });
+    return new Response(JSON.stringify({ message: 'Recommendation already Sent!' }), {
+      status: 409,
+    });
+  }
+
+  return new Response(JSON.stringify({ message: 'Recommendation Sent!' }), { status: 200 });
+}
+
+export async function getFriendDetails(userId: string, friendId: string, env: Env) {
+  const recommendationRes = await env.DB.prepare(
+    `
+      SELECT r.mangaId, m.mangaName, m.urlBase, m.slugList from recommendations r JOIN mangaData m ON m.mangaId = r.mangaId WHERE receiverId = ? AND r.recommenderId = ? 
+    `
+  )
+    .bind(userId, friendId)
+    .all();
+
+  if (!recommendationRes.success)
+    return new Response(
+      JSON.stringify({ message: 'DataBase Error, Try Again Later or contact admin!.' }),
+      { status: 500 }
+    );
+
+  let friendDetails = friendDetailsSchema.array().safeParse(recommendationRes.results);
+
+  if (!friendDetails.success) {
+    return new Response(
+      JSON.stringify({
+        message: `Internal Server Error!`,
+        errors: friendDetails.error.errors,
+      }),
+      { status: 500 }
+    );
+  }
+
+  return new Response(JSON.stringify({ message: 'Success!', data: friendDetails.data }), {
+    status: 200,
+  });
 }

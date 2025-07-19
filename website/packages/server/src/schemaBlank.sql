@@ -94,3 +94,14 @@ CREATE TABLE IF NOT EXISTS mangaStats (
     mangaId TEXT,
     value REAL NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS recommendations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    recommenderId TEXT NOT NULL,
+    mangaId TEXT NOT NULL,
+    receiverId TEXT NOT NULL,
+    message TEXT,
+    createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE (recommenderId, receiverId, mangaId)
+);
