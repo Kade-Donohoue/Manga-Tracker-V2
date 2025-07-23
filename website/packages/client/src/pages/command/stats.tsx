@@ -1,7 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
-import './stats.css';
+// import './stats.css';
 import { fetchPath } from '../../vars';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';

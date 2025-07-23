@@ -177,9 +177,9 @@ const FriendModal: React.FC<friendModalProps> = ({ open, onCloseFriend, friend }
         <Typography variant="subtitle1" gutterBottom>Stats</Typography>
         <Grid container spacing={2}>
           {friendData.stats? Object.entries(friendData?.stats).map(([key, value], index) => (
-            <Grid item xs={6} sm={4} md={4} key={index}>
-              <StatCard label={key} value={value} />
-            </Grid>
+            // <Grid item xs={6} sm={4} md={4} key={index}>
+              <StatCard label={key} value={value} key={index} />
+            // </Grid>
           )):<div/>}
         </Grid>
 
