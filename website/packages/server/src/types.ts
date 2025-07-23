@@ -229,11 +229,23 @@ export const clerkUserSchema = z
   .passthrough();
 
 export const friendDetailsSchema = z.object({
-  mangaName: z.string().min(1),
-  mangaId: z.string().uuid(),
-  urlBase: z.string(),
-  slugList: z
-    .union([z.string(), z.array(z.string())])
-    .transform((val) => (typeof val === 'string' ? val.split(',') : val)),
+  recomendations: z.object({
+    mangaName: z.string().min(1),
+    mangaId: z.string().uuid(),
+    urlBase: z.string(),
+    slugList: z
+      .union([z.string(), z.array(z.string())])
+      .transform((val) => (typeof val === 'string' ? val.split(',') : val)),
+    chapterTextList: z
+      .union([z.string(), z.array(z.string())])
+      .transform((val) => (typeof val === 'string' ? val.split(',') : val)),
+  }).array(),
+    stats: 
+  z.object({
+    readChapters: z.number(),
+    trackedChapters: z.number(),
+    readThisMonth: z.number(),
+    averagePerDay: z.number(),
+  })
 });
 // .array();

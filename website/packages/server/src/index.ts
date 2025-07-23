@@ -47,4 +47,23 @@ export default {
       }
     });
   },
+    async scheduled(
+    controller: ScheduledController,
+    env: Env,
+    ctx: ExecutionContext,
+  ) {
+    console.log("cron processed");
+
+    const userIds = await env.DB.prepare(`SELECT userID FROM users`).all<{userID:string}>()
+
+    console.log(userIds.results)
+
+    let stmt = env.DB.prepare(`INSERT into userStats (type, mangaId, userId, value) VALUES ('chapsRead', 'auto', ?, 0)`)
+    let bound:D1PreparedStatement[] = []
+    userIds.results.forEach((res) => {
+      bound.push(stmt.bind(res.userID))
+    })
+
+    await env.DB.batch(bound)
+  },
 };

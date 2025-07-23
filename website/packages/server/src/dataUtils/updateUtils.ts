@@ -1,6 +1,4 @@
-import { startPurchase } from '@discord/embedded-app-sdk/output/commands/startPurchase';
 import { Env } from '../types';
-import { Status } from '@discord/embedded-app-sdk/output/schema/common';
 
 export async function updateCurrentIndex(
   userId: string,

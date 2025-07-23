@@ -1,14 +1,9 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions,
-  Button,
   Typography,
-  List,
-  ListItem,
-  ListItemText,
   Box,
   IconButton,
   Tooltip,
@@ -18,18 +13,20 @@ import {
   Grid,
   CardMedia,
   CardActionArea,
-  ButtonBase,
+  CardContent,
+  SvgIcon,
 } from '@mui/material';
 import Avatar from '@mui/material/Avatar';
-import AvatarGroup from '@mui/material/AvatarGroup';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import CancelIcon from '@mui/icons-material/Cancel'
 
 import { friend, mangaDetails } from '../../types'; // Update path if needed
 import { fetchPath } from '../../vars';
 import { toast } from 'react-toastify';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowBack, ArrowForward } from '@mui/icons-material';
 import { StatCard } from '../statcard';
+import AddTrackedManga from '../AddTrackedManga';
+import { Flag } from '@mui/icons-material';
 
 interface friendModalProps {
   open: boolean;
@@ -37,15 +34,25 @@ interface friendModalProps {
   friend: friend;
 }
 
-type friendData = {
+type friendManga = {
   mangaName: string;
   mangaId: string;
   urlBase: string;
   slugList: string[];
+  chapterTextList: string[]
+}
+type friendData = {
+  recomendations: friendManga[]
+  stats: {
+    readChapters: number;
+    trackedChapters: number;
+    readThisMonth: number;
+    averagePerDay: number;
+  }
 };
 
-const fetchFriendsData = async (friendId: string): Promise<friendData[]> => {
-  if (!friendId) return [];
+const fetchFriendsData = async (friendId: string): Promise<friendData> => {
+  if (!friendId) return {recomendations: [], stats: {readChapters: 0, trackedChapters: 0, readThisMonth: 0, averagePerDay: 0}};
   const response = await fetch(`${fetchPath}/api/friends/getFriendDetails`, {
     method: 'POST',
     headers: {
@@ -60,213 +67,172 @@ const fetchFriendsData = async (friendId: string): Promise<friendData[]> => {
     toast.error('Unable to get Friend');
     throw new Error('Failed to fetch Friend');
   }
-  const results = (await response.json()) as { message: string; data: friendData[] };
+  const results = (await response.json()) as { message: string; data: friendData };
 
   return results.data;
 };
 
 const FriendModal: React.FC<friendModalProps> = ({ open, onCloseFriend, friend }) => {
-  // const queryClient = useQueryClient();
+  const queryClient = useQueryClient();
 
   const {
     data: friendData,
     isLoading,
     isError,
-  } = useQuery<friendData[], Error>({
+  } = useQuery<friendData, Error>({
     queryKey: [friend ? friend?.userID : null, 'friends'],
     queryFn: () => fetchFriendsData(friend?.userID),
     staleTime: 1000 * 60 * 60,
     gcTime: Infinity,
   });
 
-  const [mangaIndex, setMangaIndex] = useState(0);
+  const ignoreManga = async (mangaId: string|undefined, friendId: string) => {
+    handleMenuClose()
+    const notif = toast.loading('Changing Chapter!');
+
+    if (!mangaId) {
+      return toast.update(notif, {
+        render: 'No Manga Selected!',
+        type: 'error',
+        isLoading: false,
+        autoClose: 5000,
+      });
+    }
+
+    try {
+      const reply = await fetch(`${fetchPath}/api/friends/ignoreRecomended`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          mangaId: mangaId,
+        }),
+      });
+
+      if (reply.ok) {
+        // queryClient.invalidateQueries({ queryKey: ['userManga'] });
+        queryClient.invalidateQueries({ queryKey: [friendId] });
+
+        const replyBody: {message: string} = await reply.json()
+
+        toast.update(notif, {
+          render: replyBody.message,
+          type: 'success',
+          isLoading: false,
+          autoClose: 5000,
+        });
+      } else {
+        const data: { message: string; url?: string } = await reply.json();
+        toast.update(notif, {
+          render: data.message || 'Failed to Ignore Manga.',
+          type: 'error',
+          isLoading: false,
+          autoClose: 5000,
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      toast.update(notif, {
+        render: 'An Unknown Error has Occurred',
+        type: 'error',
+        isLoading: false,
+        autoClose: 5000,
+      });
+    }
+  }; 
+
+  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+  const [selectedManga, setSelectedManga] = useState<null | friendManga>(null);
+
+  const [addModalOpen, setAddModalOpen] = useState<boolean>(false);
+
 
   if (isError || isLoading || !friendData) return <div />;
 
-  const handlePrev = () => {
-    setMangaIndex((i) => (i === 0 ? friendData.length - 1 : i - 1));
+  const handleMenuOpen = (event: React.MouseEvent<any>, manga: friendManga) => {
+    event.preventDefault();
+    setMenuAnchor(event.currentTarget);
+    setSelectedManga(manga);
   };
 
-  const handleNext = () => {
-    setMangaIndex((i) => (i + 1) % friendData.length);
+  const handleMenuClose = () => {
+    setMenuAnchor(null);
+    // setSelectedManga(null);
   };
 
-  const currentManga = friendData[mangaIndex];
+  if (isLoading || isError) return <div/>
 
   return (
-    <Dialog open={open} onClose={onCloseFriend} maxWidth="md" fullWidth>
+    <Dialog open={open} onClose={onCloseFriend} fullWidth maxWidth="md">
       <DialogTitle>
-        <Tooltip
-          title={friend?.userName}
-          enterDelay={500}
-          leaveDelay={200}
-          // open={tooltipOpen}
-          // onClose={() => setTooltipOpen(false)}
-          // onOpen={() => setTooltipOpen(true)}
-        >
-          <Box sx={{ justifyContent: 'center', display: 'flex' }}>
-            <Avatar alt={friend?.userName} src={friend?.imageURl} sx={{ mx: 2 }} />
-
-            <Typography
-              variant="h4"
-              component="span"
-              sx={{
-                // fontSize: { xs: '1.2rem', sm: '1.5rem' },
-                fontWeight: 'bold',
-                display: '-webkit-box',
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden',
-                WebkitLineClamp: 2,
-                textOverflow: 'ellipsis',
-                textAlign: 'center',
-                overflowWrap: 'break-word',
-              }}
-              // onClick={() => setTooltipOpen(true)}
-            >
-              {friend?.userName}
-            </Typography>
-          </Box>
-        </Tooltip>
+        <Box display="flex" alignItems="center" gap={2}>
+          <Avatar alt={friend?.userName} src={friend?.imageURl}></Avatar>
+          <Typography variant="h6">{friend?.userName}</Typography>
+        </Box>
       </DialogTitle>
+
       <DialogContent dividers>
-        {/* Stat Cards */}
-        {/* <Typography variant="h6" gutterBottom> */}
-        {/* Stats */}
-        {/* </Typography> */}
-        {/* <Grid container spacing={2}> */}
-        {/* {stats.map((stat, index) => ( */}
-        {/* <Grid item xs={6} sm={4} md={3} key={index}>
-            <StatCard label={'Test Stat'} value={123456} />
-          </Grid> */}
-        {/* ))} */}
-        {/* </Grid> */}
+        {/* Stats Section */}
+        <Typography variant="subtitle1" gutterBottom>Stats</Typography>
+        <Grid container spacing={2}>
+          {friendData.stats? Object.entries(friendData?.stats).map(([key, value], index) => (
+            <Grid item xs={6} sm={4} md={4} key={index}>
+              <StatCard label={key} value={value} />
+            </Grid>
+          )):<div/>}
+        </Grid>
 
-        {/* Manga Recommendation */}
+        {/* Recommended Manga Section */}
         <Box mt={4}>
-          <Typography variant="h6" gutterBottom>
-            Recommended Manga {`${mangaIndex + 1}/${friendData.length}`}
-          </Typography>
-          {friendData.length > 0 ? (
-            <Card variant="outlined" sx={{ p: 2 }}>
-              <Grid container alignItems="stretch">
-                {/* Left Arrow */}
-                <Grid item>
-                  <ButtonBase
-                    onClick={handlePrev}
-                    sx={{
-                      height: '100%',
-                      // px: 1,
-                      bgcolor: 'background.paper',
-                      borderRadius: 1,
-                      // boxShadow: 2,
-                      display: 'flex',
-                      '&:hover': {
-                        bgcolor: '#252525', // or any other MUI palette color
-                        boxShadow: 4,
-                      },
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                    focusRipple
-                  >
-                    <ArrowBack />
-                  </ButtonBase>
-                </Grid>
-
-                {/* Main Content */}
-                <Grid item xs>
-                  <CardActionArea
-                    onClick={() =>
-                      window.open(`${currentManga.urlBase}/${currentManga.slugList[0]}`, '_blank')
-                    }
-                    sx={{ px: 2 }}
-                  >
-                    <Grid container spacing={2} alignItems="center">
-                      {currentManga.mangaId && (
-                        <Grid item xs={12} sm={4}>
-                          <CardMedia
-                            component="img"
-                            image={
-                              `${import.meta.env.VITE_IMG_URL}/${currentManga.mangaId}/${0}` ||
-                              'mangaNotFoundImage.png'
-                            }
-                            alt={currentManga.mangaName}
-                            sx={{
-                              borderRadius: 2,
-                              maxHeight: 720,
-                              objectFit: 'cover',
-                              width: '100%',
-                            }}
-                          />
-                        </Grid>
-                      )}
-                      <Grid item xs={12} sm={currentManga.mangaId ? 8 : 12}>
-                        <Typography variant="h6">{currentManga.mangaName}</Typography>
-                      </Grid>
-                    </Grid>
+          <Typography variant="subtitle1" gutterBottom>Recommended Manga</Typography>
+          {friendData.recomendations && friendData?.recomendations.length >0?
+          <Grid container spacing={2}>
+            {friendData.recomendations.map(manga => (
+              <Grid item xs={12} sm={6} md={3} key={manga.mangaId}>
+                <Card onContextMenu={(e) => handleMenuOpen(e, manga)}>
+                  <CardActionArea onClick={() => window.open(`${manga.urlBase}/${manga.slugList[0]}`, '_blank')}>
+                    <CardMedia
+                      component="img"
+                      height="180"
+                      image={`${import.meta.env.VITE_IMG_URL}/${manga.mangaId}/${0}` ||
+                            'mangaNotFoundImage.png'}
+                      alt={manga.mangaName}
+                    />
                   </CardActionArea>
-                </Grid>
-
-                {/* Right Arrow */}
-                <Grid item>
-                  <ButtonBase
-                    onClick={handleNext}
-                    sx={{
-                      height: '100%',
-                      // px: 1,
-                      bgcolor: 'background.paper',
-                      borderRadius: 1,
-                      // boxShadow: 2,
-                      display: 'flex',
-                      '&:hover': {
-                        bgcolor: '#252525', // or any other MUI palette color
-                        boxShadow: 4,
-                      },
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                    focusRipple
-                  >
-                    <ArrowForward />
-                  </ButtonBase>
-                </Grid>
+                  <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Typography variant="body2" noWrap>{manga.mangaName}</Typography>
+                    <IconButton size="small" onClick={(e) => handleMenuOpen(e, manga)}>
+                      <MoreVertIcon fontSize="small" />
+                    </IconButton>
+                  </CardContent>
+                </Card>
               </Grid>
-            </Card>
-          ) : (
-            <Typography color="text.secondary">No recommendations yet.</Typography>
-          )}
+            ))}
+            </Grid>
+            :<Typography variant="subtitle1" gutterBottom>No Recomendations</Typography>
+          }
         </Box>
+
+        {/* Action Menu */}
+        <Menu
+          anchorEl={menuAnchor}
+          open={Boolean(menuAnchor)}
+          onClose={handleMenuClose}
+        >
+          <MenuItem onClick={() => { setAddModalOpen(true); handleMenuClose(); }}>
+            Start Tracking
+          </MenuItem>
+          <MenuItem onClick={() => {ignoreManga(selectedManga?.mangaId, friend.userID)} }>
+            Ignore
+          </MenuItem>
+          <MenuItem onClick={handleMenuClose}>Cancel</MenuItem>
+        </Menu>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onCloseFriend} color="primary">
-          Close
-        </Button>
-      </DialogActions>
-
-      {/* <DialogContent dividers>
-        <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={3}>
-          <Box>
-            <img
-              src={
-                `${import.meta.env.VITE_IMG_URL}/${manga.mangaId}/${manga.imageIndexes?.at(-1) || 0}` ||
-                'mangaNotFoundImage.png'
-              }
-              alt={manga.mangaName}
-              style={{
-                width: '100%',
-                maxWidth: '360px',
-                height: 'auto',
-                borderRadius: 16,
-                objectFit: 'cover',
-              }}
-            /> 
-          </Box>
-
-          <Box flex={1} sx={{ overflowY: 'auto', maxHeight: '60vh' }}>
-            {JSON.stringify(friends?.data)}
-          </Box>
-        </Box>
-      </DialogContent> */}
+      <SvgIcon onClick={onCloseFriend} sx={{ position: 'absolute', top: 10, right: 10 }}>
+        <CancelIcon sx={{ color: 'white' }} />
+      </SvgIcon>
+      <AddTrackedManga open={addModalOpen} onClose={() => setAddModalOpen(false)}  manga={selectedManga} friendId={friend?.userID}></AddTrackedManga>
     </Dialog>
   );
 };

@@ -93,7 +93,7 @@ export async function getRecievedRequests(userId: string, env: Env) {
       JSON.stringify({ message: 'DataBase Error, Try Again Later or contact admin!.' }),
       { status: 500 }
     );
-  return new Response(JSON.stringify({ message: 'Success!', data: results.results }), {
+  return new Response(JSON.stringify({ message: 'Success!', data: results.results[0] }), {
     status: 200,
   });
 }
@@ -227,19 +227,51 @@ export async function recomendManga(userId: string, receiverId: string, mangaId:
 export async function getFriendDetails(userId: string, friendId: string, env: Env) {
   const recommendationRes = await env.DB.prepare(
     `
-      SELECT r.mangaId, m.mangaName, m.urlBase, m.slugList from recommendations r JOIN mangaData m ON m.mangaId = r.mangaId WHERE receiverId = ? AND r.recommenderId = ? 
+      SELECT r.mangaId, m.mangaName, m.urlBase, m.slugList, m.chapterTextList from recommendations r JOIN mangaData m ON m.mangaId = r.mangaId WHERE receiverId = ? AND r.recommenderId = ? AND r.status = 'pending'
     `
-  )
-    .bind(userId, friendId)
+  ).bind(userId, friendId)
     .all();
 
-  if (!recommendationRes.success)
+  const friendStats = await env.DB.prepare(
+        `
+        WITH dailySums AS (
+          SELECT DATE(timestamp) AS day, SUM(value) AS totalPerDay
+          FROM userStats 
+          WHERE userID = ? AND timestamp > datetime("now", "-30 days")
+          GROUP BY day
+        )
+        SELECT
+          (SELECT SUM(
+            CASE WHEN m.useAltStatCalc = 1 THEN FLOOR(u.currentIndex) + 1 ELSE FLOOR(u.currentChap) END
+          )
+          FROM userData u
+          JOIN mangaData m ON u.mangaId = m.mangaId
+          JOIN userCategories c ON u.userCat = c.value AND u.userId = c.userId
+          WHERE u.userId = ? AND c.stats = 1) AS readChapters,
+
+          (SELECT SUM(
+            CASE WHEN m.useAltStatCalc = 1 THEN LENGTH(m.latestChapterText) - LENGTH(REPLACE(m.latestChapterText, ',', '')) + 1 ELSE FLOOR(m.latestChapterText) END
+          )
+          FROM userData u
+          JOIN mangaData m ON u.mangaId = m.mangaId
+          JOIN userCategories c ON u.userCat = c.value AND u.userId = c.userId
+          WHERE u.userId = ?) AS trackedChapters,
+
+          (SELECT SUM(value)
+          FROM userStats
+          WHERE type = 'chapsRead' AND timestamp > datetime('now', '-30 days') AND userID = ?) AS readThisMonth,
+
+          (SELECT AVG(totalPerDay) FROM dailySums) AS averagePerDay
+      `
+      ).bind(friendId, friendId, friendId, friendId).first()
+
+  if (!recommendationRes.success || !friendStats)
     return new Response(
       JSON.stringify({ message: 'DataBase Error, Try Again Later or contact admin!.' }),
       { status: 500 }
     );
 
-  let friendDetails = friendDetailsSchema.array().safeParse(recommendationRes.results);
+  let friendDetails = friendDetailsSchema.safeParse({recomendations: recommendationRes.results, stats: friendStats});
 
   if (!friendDetails.success) {
     return new Response(
@@ -252,6 +284,15 @@ export async function getFriendDetails(userId: string, friendId: string, env: En
   }
 
   return new Response(JSON.stringify({ message: 'Success!', data: friendDetails.data }), {
+    status: 200,
+  });
+}
+
+export async function ignoreRecomended(userId:string, mangaId: string, env: Env) {
+
+  await env.DB.prepare(`UPDATE recommendations SET status = 'ignored' WHERE receiverId = ? AND mangaId = ?`).bind(userId, mangaId).run()
+
+  return new Response(JSON.stringify({ message: 'Success!' }), {
     status: 200,
   });
 }

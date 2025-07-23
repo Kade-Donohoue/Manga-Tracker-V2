@@ -101,6 +101,7 @@ CREATE TABLE IF NOT EXISTS recommendations (
     mangaId TEXT NOT NULL,
     receiverId TEXT NOT NULL,
     message TEXT,
+    status TEXT NOT NULL DEFAULT 'pending', 
     createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     UNIQUE (recommenderId, receiverId, mangaId)
