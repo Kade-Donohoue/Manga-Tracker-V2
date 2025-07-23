@@ -228,9 +228,10 @@ export const clerkUserSchema = z
   })
   .passthrough();
 
-export const friendDetailsSchema = z.object({
-  recomendations: z.object({
+const friendRecomendationsSchema = z.object({
+    id: z.number(),
     mangaName: z.string().min(1),
+    status: z.string(),
     mangaId: z.string().uuid(),
     urlBase: z.string(),
     slugList: z
@@ -239,9 +240,14 @@ export const friendDetailsSchema = z.object({
     chapterTextList: z
       .union([z.string(), z.array(z.string())])
       .transform((val) => (typeof val === 'string' ? val.split(',') : val)),
-  }).array(),
-    stats: 
-  z.object({
+  }).array()
+
+export const friendDetailsSchema = z.object({
+  recomendations: z.object({
+    received: friendRecomendationsSchema,
+    sent: friendRecomendationsSchema
+  }),
+  stats: z.object({
     readChapters: z.number(),
     trackedChapters: z.number(),
     readThisMonth: z.number(),

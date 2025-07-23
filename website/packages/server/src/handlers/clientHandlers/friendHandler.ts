@@ -9,7 +9,7 @@ import {
   getRequestCount,
   getSentRequests,
   getUserId,
-  ignoreRecomended,
+  updateRecomendedStatus,
   recomendManga,
   removeFriend,
   sendRequest,
@@ -42,8 +42,9 @@ const getUserIdSchema = z.object({
   userName: z.string().min(1),
 });
 
-const ignoreRecomendedSchema = z.object({
-  mangaId: z.string(),
+const updateRecomendedStatusSchema = z.object({
+  recId: z.number(),
+  newStatus: z.enum(['pending', 'ignored', 'canceled'])
 })
 
 export default async function friendHandler(
@@ -107,11 +108,11 @@ export default async function friendHandler(
 
       return await getFriendDetails(userId, body.friendId, env);
     }
-    case 'ignoreRecomended': {
-      const body = await zodParse(request, ignoreRecomendedSchema);
+    case 'updateRecomendedStatus': {
+      const body = await zodParse(request, updateRecomendedStatusSchema);
       if (body instanceof Response) return body; // returns zod errors
 
-      return await ignoreRecomended(userId, body.mangaId, env);
+      return await updateRecomendedStatus(userId, body.recId, body.newStatus, env);
     }
     default:
       return new Response('Not found', { status: 404 });

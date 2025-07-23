@@ -93,7 +93,7 @@ export async function getRecievedRequests(userId: string, env: Env) {
       JSON.stringify({ message: 'DataBase Error, Try Again Later or contact admin!.' }),
       { status: 500 }
     );
-  return new Response(JSON.stringify({ message: 'Success!', data: results.results[0] }), {
+  return new Response(JSON.stringify({ message: 'Success!', data: results.results }), {
     status: 200,
   });
 }
@@ -225,14 +225,19 @@ export async function recomendManga(userId: string, receiverId: string, mangaId:
 }
 
 export async function getFriendDetails(userId: string, friendId: string, env: Env) {
-  const recommendationRes = await env.DB.prepare(
+  const receivedStmt = env.DB.prepare(
     `
-      SELECT r.mangaId, m.mangaName, m.urlBase, m.slugList, m.chapterTextList from recommendations r JOIN mangaData m ON m.mangaId = r.mangaId WHERE receiverId = ? AND r.recommenderId = ? AND r.status = 'pending'
+      SELECT r.id, r.mangaId, r.status, m.mangaName, m.urlBase, m.slugList, m.chapterTextList from recommendations r JOIN mangaData m ON m.mangaId = r.mangaId WHERE receiverId = ? AND r.recommenderId = ? AND r.status = 'pending'
     `
   ).bind(userId, friendId)
-    .all();
 
-  const friendStats = await env.DB.prepare(
+  const sentStmt = env.DB.prepare(
+    `
+      SELECT r.id, r.mangaId, r.status, m.mangaName, m.urlBase, m.slugList, m.chapterTextList from recommendations r JOIN mangaData m ON m.mangaId = r.mangaId WHERE receiverId = ? AND r.recommenderId = ? AND NOT status = 'canceled' 
+    `
+  ).bind(friendId, userId)
+
+  const friendStmt = env.DB.prepare(
         `
         WITH dailySums AS (
           SELECT DATE(timestamp) AS day, SUM(value) AS totalPerDay
@@ -263,15 +268,17 @@ export async function getFriendDetails(userId: string, friendId: string, env: En
 
           (SELECT AVG(totalPerDay) FROM dailySums) AS averagePerDay
       `
-      ).bind(friendId, friendId, friendId, friendId).first()
+      ).bind(friendId, friendId, friendId, friendId)
 
-  if (!recommendationRes.success || !friendStats)
+    const [receivedRes, sentRes, friendRes] = await env.DB.batch([receivedStmt, sentStmt, friendStmt])
+
+  if (!receivedRes.success || !friendRes.success || !sentRes.success)
     return new Response(
       JSON.stringify({ message: 'DataBase Error, Try Again Later or contact admin!.' }),
       { status: 500 }
     );
-
-  let friendDetails = friendDetailsSchema.safeParse({recomendations: recommendationRes.results, stats: friendStats});
+console.log({recomendations: {received: receivedRes.results, sent: sentRes.results}, stats: friendRes.results[0]})
+  let friendDetails = friendDetailsSchema.safeParse({recomendations: {received: receivedRes.results, sent: sentRes.results}, stats: friendRes.results[0]});
 
   if (!friendDetails.success) {
     return new Response(
@@ -288,9 +295,9 @@ export async function getFriendDetails(userId: string, friendId: string, env: En
   });
 }
 
-export async function ignoreRecomended(userId:string, mangaId: string, env: Env) {
+export async function updateRecomendedStatus(userId:string, recId: number, newStatus: string, env: Env) {
 
-  await env.DB.prepare(`UPDATE recommendations SET status = 'ignored' WHERE receiverId = ? AND mangaId = ?`).bind(userId, mangaId).run()
+  await env.DB.prepare(`UPDATE recommendations SET status = ? WHERE (receiverId = ? OR recommenderId = ?) AND id = ?`).bind(newStatus, userId, userId, recId).run()
 
   return new Response(JSON.stringify({ message: 'Success!' }), {
     status: 200,

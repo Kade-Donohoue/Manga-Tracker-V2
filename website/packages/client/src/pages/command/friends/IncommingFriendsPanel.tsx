@@ -26,7 +26,7 @@ export default function IncommingFriendsPanel() {
     staleTime: 20 * 1000,
   });
 
-  if (isLoading || isError) return <div />;
+  if (isLoading || isError || !data) return <div />;
   return (
     <Box
       sx={{
