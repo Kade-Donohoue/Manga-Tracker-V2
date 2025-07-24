@@ -1,17 +1,24 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { dropdownOption, mangaDetails } from '../types';
 import { Modal, Box, Button, SvgIcon } from '@mui/material';
 import CancelIcon from '@mui/icons-material/Cancel';
-import Select from 'react-select';
+import Select, { StylesConfig } from 'react-select';
 import { toast } from 'react-toastify';
 import { fetchPath } from '../vars';
 import { useQueryClient } from '@tanstack/react-query';
+import { useUserCategories } from '../hooks/useUserCategories';
 
 interface ChangeChapterModalProps {
   open: boolean;
   onClose: () => void;
-  mangaInfo: Map<string, mangaDetails> | undefined;
-  mangaId: string;
+  manga: {
+    mangaName: string;
+    mangaId: string;
+    urlBase: string;
+    slugList: string[];
+    chapterTextList: string[]
+  } | null,
+  friendId: string
 }
 
 const modalStyle = {
@@ -32,42 +39,44 @@ const customStyles = {
     backgroundColor: '#2e2e2e',
     color: '#fff',
   }),
-  singleValue: (base: any, state: any) => ({
+  singleValue: (base: any, { data }: any) => ({
     ...base,
-    color: 'white',
-    backgroundColor: state.isFocused ? '#444' : '#2e2e2e',
+    color: data.color || 'white',
   }),
   menu: (base: any) => ({
     ...base,
     backgroundColor: '#2e2e2e',
     color: 'white',
   }),
-  option: (base: any, state: any) => ({
+  option: (base: any, { data }: any) => ({
     ...base,
-    backgroundColor: state.isSelected ? '#22346e' : state.isFocused ? '#444' : '#2e2e2e',
+    color: data.color || 'white', // Apply color to options
   }),
 };
 
-export default function ChangeChapterModal({
+export default function AddTrackedManga({
   open,
   onClose,
-  mangaInfo,
-  mangaId,
+  manga,
+  friendId
 }: ChangeChapterModalProps) {
   const queryClient = useQueryClient();
 
   const [newChapter, setChapter] = React.useState<dropdownOption | null>(null);
 
+  const { data: catOptions, isLoading: isLoadingCats, isError } = useUserCategories();
+  const [selectedCat, setSelectedCat] = useState<dropdownOption | null>(catOptions ? catOptions[0] : null);
+
   React.useEffect(() => {
-    if (mangaInfo && mangaId) {
-      const latest = mangaInfo.get(mangaId)?.chapterTextList.at(-1); // last item before reversal = latest chapter
+    if (manga) {
+      const latest = manga.chapterTextList.at(-1); // last item before reversal = latest chapter
       if (latest) {
         setChapter({ value: latest, label: latest });
       }
     }
-  }, [mangaInfo, mangaId]);
+  }, [manga]);
 
-  const changeCurrChapter = async () => {
+  const addExistingManga = async () => {
     const notif = toast.loading('Changing Chapter!');
 
     if (!newChapter) {
@@ -79,12 +88,12 @@ export default function ChangeChapterModal({
       });
     }
 
-    if (!mangaInfo || !mangaId) return;
+    if (!manga) return;
 
-    const newIndex = mangaInfo.get(mangaId)?.chapterTextList.indexOf(newChapter.label);
-    if (newIndex === undefined || newIndex === -1) {
+    const index = manga.chapterTextList.indexOf(newChapter.label);
+    if (index === undefined || index === -1) {
       return toast.update(notif, {
-        render: 'Internal Error Updating Chapter!',
+        render: 'Internal Error Adding Manga!',
         type: 'error',
         isLoading: false,
         autoClose: 5000,
@@ -92,23 +101,27 @@ export default function ChangeChapterModal({
     }
 
     try {
-      const reply = await fetch(`${fetchPath}/api/data/update/updateCurrentIndex`, {
+      const reply = await fetch(`${fetchPath}/api/data/add/existingManga`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          mangaId: mangaId,
-          newIndex: newIndex,
-          currentChap: mangaInfo.get(mangaId)?.chapterTextList[newIndex],
+          mangaId: manga.mangaId,
+          index: index,
+          currentChap: manga.chapterTextList[index],
+          userCat: selectedCat?.value
         }),
       });
 
       if (reply.ok) {
         queryClient.invalidateQueries({ queryKey: ['userManga'] });
+        queryClient.invalidateQueries({ queryKey: [friendId] });
+
+        const replyBody: {message: string} = await reply.json()
 
         toast.update(notif, {
-          render: 'Chapter Successfully Changed!',
+          render: replyBody.message,
           type: 'success',
           isLoading: false,
           autoClose: 5000,
@@ -116,7 +129,7 @@ export default function ChangeChapterModal({
       } else {
         const data: { message: string; url?: string } = await reply.json();
         toast.update(notif, {
-          render: data.message || 'Failed to update chapter.',
+          render: data.message || 'Failed to Add Manga.',
           type: 'error',
           isLoading: false,
           autoClose: 5000,
@@ -133,7 +146,7 @@ export default function ChangeChapterModal({
     }
   };
 
-  if (!mangaInfo || !mangaId) return null;
+  if (!manga) return null;
 
   return (
     <Modal
@@ -143,26 +156,40 @@ export default function ChangeChapterModal({
       aria-describedby="chap-modal-description"
     >
       <Box sx={{ width: '80vw', ...modalStyle }}>
+        <h1 style={{ color: 'white' }}>
+          {manga.mangaName}
+        </h1>
         <h2 id="chap-modal-title" style={{ color: 'white' }}>
           Select the Last Chapter You’ve Read
         </h2>
+        Chapter: 
         <Select
           name="chap"
           id="chap"
           className="chapSelect"
           value={newChapter}
           onChange={setChapter}
-          options={mangaInfo
-            .get(mangaId)
+          options={manga
             ?.chapterTextList.slice()
             .reverse()
             .map((text) => ({ value: text, label: text }))}
           styles={customStyles}
         />
+        Category: 
+        <Select
+          name="categories"
+          id="cat-select"
+          className="catSelect"
+          value={selectedCat}
+          onChange={(e) => setSelectedCat(e)}
+          options={catOptions}
+          styles={customStyles as StylesConfig<dropdownOption, false>}
+          isSearchable={false}
+        />
 
         <Button
           onClick={() => {
-            changeCurrChapter();
+            addExistingManga();
             onClose();
           }}
           variant="contained"

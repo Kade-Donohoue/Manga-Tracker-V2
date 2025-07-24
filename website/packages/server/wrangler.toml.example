@@ -9,6 +9,9 @@ route = {pattern = "enter_domain_for_server_worker_here", custom_domain = true}
 enabled = true
 head_sampling_rate = 1
 
+[triggers]
+crons = ["5 1 * * *"]
+
 [vars]
 ENVIRONMENT = "dev"
 

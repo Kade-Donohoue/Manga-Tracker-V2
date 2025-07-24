@@ -14,16 +14,12 @@ import { toast } from 'react-toastify';
 import CancelIcon from '@mui/icons-material/Cancel';
 import { modalStyle } from '../../AppStyles';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchUserCategories } from '../../utils';
 import ChangeChapterModal from '../../components/changeChapterModal';
+import { useUserCategories } from '../../hooks/useUserCategories';
 
 export default function feed(): JSX.Element {
-  const { data: catOptions, isError } = useQuery<dropdownOption[], Error>({
-    queryKey: ['userCategories'],
-    queryFn: () => fetchUserCategories(),
-    staleTime: 1000 * 60 * 60,
-    gcTime: Infinity,
-  });
+  const { data: catOptions, isLoading, isError } = useUserCategories();
+
 
   const [mangaDetails, setMangaDetails] = React.useState<mangaDetails[]>([]);
   const [currentCard, setCurrentCard] = React.useState(0);

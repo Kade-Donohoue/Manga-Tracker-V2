@@ -1,4 +1,4 @@
-import { Env } from '../types';
+import { Env, friendDetailsSchema } from '../types';
 
 export async function sendRequest(senderId: string, userName: string, env: Env) {
   const receiverId = await getUserIdByName(userName, env);
@@ -205,4 +205,101 @@ export async function removeFriend(userId: string, requestId: number, env: Env) 
       { status: 500 }
     );
   return new Response(JSON.stringify({ message: 'Friendship Ended!' }), { status: 200 });
+}
+
+export async function recomendManga(userId: string, receiverId: string, mangaId: string, env: Env) {
+  const results = await env.DB.prepare(
+    'INSERT OR IGNORE INTO recommendations (recommenderId, receiverId, mangaId) VALUES (?, ?, ?)'
+  )
+    .bind(userId, receiverId, mangaId)
+    .run();
+
+  if (results.meta.changes === 0) {
+    console.log({ message: 'recommendation already exists' });
+    return new Response(JSON.stringify({ message: 'Recommendation already Sent!' }), {
+      status: 409,
+    });
+  }
+
+  return new Response(JSON.stringify({ message: 'Recommendation Sent!' }), { status: 200 });
+}
+
+export async function getFriendDetails(userId: string, friendId: string, env: Env) {
+  const receivedStmt = env.DB.prepare(
+    `
+      SELECT r.id, r.mangaId, r.status, m.mangaName, m.urlBase, m.slugList, m.chapterTextList from recommendations r JOIN mangaData m ON m.mangaId = r.mangaId WHERE receiverId = ? AND r.recommenderId = ? AND r.status = 'pending'
+    `
+  ).bind(userId, friendId)
+
+  const sentStmt = env.DB.prepare(
+    `
+      SELECT r.id, r.mangaId, r.status, m.mangaName, m.urlBase, m.slugList, m.chapterTextList from recommendations r JOIN mangaData m ON m.mangaId = r.mangaId WHERE receiverId = ? AND r.recommenderId = ? AND NOT status = 'canceled' 
+    `
+  ).bind(friendId, userId)
+
+  const friendStmt = env.DB.prepare(
+        `
+        WITH dailySums AS (
+          SELECT DATE(timestamp) AS day, SUM(value) AS totalPerDay
+          FROM userStats 
+          WHERE userID = ? AND timestamp > datetime("now", "-30 days")
+          GROUP BY day
+        )
+        SELECT
+          (SELECT SUM(
+            CASE WHEN m.useAltStatCalc = 1 THEN FLOOR(u.currentIndex) + 1 ELSE FLOOR(u.currentChap) END
+          )
+          FROM userData u
+          JOIN mangaData m ON u.mangaId = m.mangaId
+          JOIN userCategories c ON u.userCat = c.value AND u.userId = c.userId
+          WHERE u.userId = ? AND c.stats = 1) AS readChapters,
+
+          (SELECT SUM(
+            CASE WHEN m.useAltStatCalc = 1 THEN LENGTH(m.latestChapterText) - LENGTH(REPLACE(m.latestChapterText, ',', '')) + 1 ELSE FLOOR(m.latestChapterText) END
+          )
+          FROM userData u
+          JOIN mangaData m ON u.mangaId = m.mangaId
+          JOIN userCategories c ON u.userCat = c.value AND u.userId = c.userId
+          WHERE u.userId = ?) AS trackedChapters,
+
+          (SELECT SUM(value)
+          FROM userStats
+          WHERE type = 'chapsRead' AND timestamp > datetime('now', '-30 days') AND userID = ?) AS readThisMonth,
+
+          (SELECT AVG(totalPerDay) FROM dailySums) AS averagePerDay
+      `
+      ).bind(friendId, friendId, friendId, friendId)
+
+    const [receivedRes, sentRes, friendRes] = await env.DB.batch([receivedStmt, sentStmt, friendStmt])
+
+  if (!receivedRes.success || !friendRes.success || !sentRes.success)
+    return new Response(
+      JSON.stringify({ message: 'DataBase Error, Try Again Later or contact admin!.' }),
+      { status: 500 }
+    );
+console.log({recomendations: {received: receivedRes.results, sent: sentRes.results}, stats: friendRes.results[0]})
+  let friendDetails = friendDetailsSchema.safeParse({recomendations: {received: receivedRes.results, sent: sentRes.results}, stats: friendRes.results[0]});
+
+  if (!friendDetails.success) {
+    return new Response(
+      JSON.stringify({
+        message: `Internal Server Error!`,
+        errors: friendDetails.error.errors,
+      }),
+      { status: 500 }
+    );
+  }
+
+  return new Response(JSON.stringify({ message: 'Success!', data: friendDetails.data }), {
+    status: 200,
+  });
+}
+
+export async function updateRecomendedStatus(userId:string, recId: number, newStatus: string, env: Env) {
+
+  await env.DB.prepare(`UPDATE recommendations SET status = ? WHERE (receiverId = ? OR recommenderId = ?) AND id = ?`).bind(newStatus, userId, userId, recId).run()
+
+  return new Response(JSON.stringify({ message: 'Success!' }), {
+    status: 200,
+  });
 }

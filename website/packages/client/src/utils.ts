@@ -1,43 +1,10 @@
-import { toast } from 'react-toastify';
-import { categoryOption } from './types';
-import { defaultCategoryOptions, fetchPath } from './vars';
+import { categoryOption, dropdownOption, mangaDetails } from './types';
 
 /**
- * Fetches the user's category options from the server.
- * Sends a POST request to the `/api/data/pull/pullUserCategories` endpoint.
- *
- * If the request fails, displays a toast error and throws an exception.
- * After fetching, it ensures that all default categories exist in the result.
- * Missing defaults are appended to the category list with updated positions.
- *
- * @returns A sorted array of category options by their position.
+ * Fetches item from cookies
+ * @param key Key for value stored in cookies
+ * @returns Json of item in cookies or null
  */
-export const fetchUserCategories = async (): Promise<categoryOption[]> => {
-  const response = await fetch(`${fetchPath}/api/data/pull/pullUserCategories`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    toast.error('Unable to get User Cats');
-    throw new Error('Failed to fetch user categories');
-  }
-
-  const catData: { message: string; cats: categoryOption[] } = await response.json();
-
-  //Readds defaults if they dont get returned
-  for (const defaultCat of defaultCategoryOptions) {
-    const exists = catData.cats.some((cat) => cat.value === defaultCat.value);
-    if (!exists) {
-      catData.cats.push({ ...defaultCat, position: catData.cats.length });
-    }
-  }
-
-  return catData.cats.sort((a, b) => a.position - b.position);
-};
-
 export const getStoredValue = (key: string) => {
   try {
     const item = localStorage.getItem(key);
@@ -88,4 +55,20 @@ export function debounce<T extends (...args: any[]) => void>(
     clearTimeout(timer);
     timer = setTimeout(() => func(...args), delay);
   };
+}
+
+export function checkFilter(
+  manga: mangaDetails,
+  filterOptions: dropdownOption[] | null,
+  unreadChecked: boolean
+): boolean {
+  if (unreadChecked && manga.chapterTextList.length - 1 <= manga.currentIndex) {
+    return false;
+  }
+
+  if (!filterOptions || filterOptions.length === 0) {
+    return true;
+  }
+
+  return filterOptions.some((cat) => cat.value === manga.userCat);
 }

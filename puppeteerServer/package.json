@@ -5,8 +5,8 @@
   },
   "dependencies": {
     "bullmq": "^5.53.0",
-    "fastify": "^4.29.0",
-    "puppeteer": "^24.7.1",
+    "fastify": "^5.4.0",
+    "puppeteer": "^24.14.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-adblocker": "^2.13.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",

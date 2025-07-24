@@ -7,7 +7,7 @@ import { friend } from '../../../types';
 
 async function fetchRequests(): Promise<{ message: string; data: friend[] }> {
   const resp = await fetch(`${fetchPath}/api/friends/getRecieved`, {
-    method: 'POST',
+    method: 'P0ST',
     headers: {
       'Content-Type': 'application/json',
     },
@@ -26,7 +26,7 @@ export default function IncommingFriendsPanel() {
     staleTime: 20 * 1000,
   });
 
-  if (isLoading || isError) return <div />;
+  if (isLoading || isError || !data) return <div />;
   return (
     <Box
       sx={{

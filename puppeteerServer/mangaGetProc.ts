@@ -4,7 +4,6 @@ import config from './config.json';
 import { getManga as getManganato } from './puppeteerScripts/mangaNato';
 import { getManga as getAsura } from './puppeteerScripts/asuraV3';
 import { getManga as getMangadex } from './puppeteerScripts/mangadex';
-import { getManga as getReaperScans } from './puppeteerScripts/reaperScans';
 import { getManga as getComick } from './puppeteerScripts/comick';
 
 export default async function (job: Job) {
@@ -30,15 +29,6 @@ export default async function (job: Job) {
       );
     case 'asura':
       return await getAsura(
-        job.data.url,
-        job.data.getIcon,
-        job.data.update,
-        job.data.maxCoverIndex,
-        job.data.maxSavedAt,
-        job
-      );
-    case 'reaperScans':
-      return await getReaperScans(
         job.data.url,
         job.data.getIcon,
         job.data.update,

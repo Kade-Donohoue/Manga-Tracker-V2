@@ -1,20 +1,38 @@
 import { Env } from '../types';
 
 export async function updateCurrentIndex(
-  authId: string,
+  userId: string,
   newIndex: number,
   mangaId: string,
-  currentChap: number,
   env: Env
 ) {
   try {
-    const res = await env.DB.prepare(
-      'UPDATE userData SET currentIndex = ?, interactTime = ?, currentChap = ? WHERE userID = ? AND mangaId = ?'
+    const mangaRes = await env.DB.prepare(
+      'SELECT mangaData.chapterTextList, userData.currentChap FROM mangaData JOIN userData ON userData.mangaId = mangaData.mangaId WHERE userData.userID = ? AND mangaData.mangaId = ?'
     )
-      .bind(newIndex, Date.now(), currentChap, authId, mangaId)
-      .run();
+      .bind(userId, mangaId)
+      .first<{ chapterTextList: string; currentChap: string }>();
 
-    if (res.success) return new Response(JSON.stringify({ message: 'Success' }), { status: 200 });
+    if (!mangaRes)
+      return new Response(JSON.stringify({ message: 'Unable to find manga!' }), { status: 400 });
+
+    const chapterList = mangaRes.chapterTextList.split(',');
+
+    let readChapters = Math.floor(
+      parseFloat(chapterList[newIndex]) - parseFloat(mangaRes.currentChap)
+    );
+
+    const res = await env.DB.batch([
+      env.DB.prepare(
+        'UPDATE userData SET currentIndex = ?, interactTime = ?, currentChap = ? WHERE userID = ? AND mangaId = ?'
+      ).bind(newIndex, Date.now(), chapterList[newIndex], userId, mangaId),
+      env.DB.prepare(
+        'INSERT INTO userStats (type, value, mangaId, userID) VALUES ("chapsRead", ?, ?, ?)'
+      ).bind(readChapters, mangaId, userId),
+    ]);
+
+    if (res[0].success)
+      return new Response(JSON.stringify({ message: 'Success' }), { status: 200 });
 
     return new Response(JSON.stringify({ message: 'Unable to save!' }), { status: 500 });
   } catch (err) {

@@ -16,8 +16,8 @@ export default function Home() {
       >
         <h1 style={{ fontSize: '2.5rem', marginBottom: 16 }}>📚 Manga Tracker</h1>
         <p style={{ fontSize: '1.2rem', marginBottom: 32 }}>
-          Your one-stop shop for tracking all your favorite manga across multiple sites, all in
-          one place.
+          Your one-stop shop for tracking all your favorite manga across multiple sites, all in one
+          place.
         </p>
         <SignInButton mode="modal" forceRedirectUrl={'/tracked'}>
           <button

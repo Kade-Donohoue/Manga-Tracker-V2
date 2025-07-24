@@ -1,14 +1,14 @@
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import React, { useEffect } from "react"
+import React from "react"
 import Select, { StylesConfig } from 'react-select'
 import './addBookmarks.css'
 import { fetchPath } from '../../vars';
 
 import Button from '@mui/material/Button'
 import ButtonGroup from '@mui/material/ButtonGroup'
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchUserCategories } from '../../utils';
+import { useQueryClient } from '@tanstack/react-query';
+import { useUserCategories } from '../../hooks/useUserCategories';
 
 const customStyles: StylesConfig<dropdownOption, false> = {
     control: (provided, state) => ({
@@ -66,12 +66,8 @@ interface BookmarkNode {
 
 
 export default function addBookmarks() {
-  const { data: catOptions, isError } = useQuery<dropdownOption[], Error>({
-      queryKey: ['userCategories'],
-      queryFn: () => fetchUserCategories(),
-      staleTime: 1000 * 60 * 60, 
-      gcTime: Infinity,
-    })
+  const { data: catOptions, isLoading:isLoadingCat, isError } = useUserCategories();
+
 
   const [files, setFiles] = React.useState<any>(undefined)
   const [folders, setFolders] = React.useState<dropdownOption[]>([])

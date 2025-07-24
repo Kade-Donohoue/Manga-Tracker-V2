@@ -1,75 +1,77 @@
 export type fetchData = {
-    "mangaName":string, 
-    "urlBase":string, 
-    "slugList":string,
-    "chapterTextList":string, 
-    "currentIndex":number, 
-    "iconBuffer":Buffer|null
-    "newCoverImageIndex":number
-}
+  mangaName: string;
+  urlBase: string;
+  slugList: string;
+  chapterTextList: string;
+  currentIndex: number;
+  iconBuffer: Buffer | null;
+  newCoverImageIndex: number;
+};
 
 export type dataType = {
-    type: string;
-    url: string;
-    mangaId: string;
-    getIcon: boolean;
-    update: boolean;
-    length: number;
-    oldSlugList: string;
-    batchId: number;
-  };
-  
+  type: string;
+  url: string;
+  mangaId: string;
+  getIcon: boolean;
+  update: boolean;
+  length: number;
+  oldSlugList: string;
+  batchId: number;
+};
 
 export type updateCollector = {
-    batchId:number,
-    batchData: {
-        completedCount: number,
-        newChapterCount: number, 
-        batchLength: number,
-        newData: {
-            mangaName:string, 
-            urlBase:string, 
-            slugList:string,
-            chapterTextList:string, 
-            currentIndex:number,
-            iconBuffer:Buffer,
-            mangaId:string,
-            newCoverImageIndex:number
-        }[]
-    }
-}
+  batchId: number;
+  batchData: {
+    completedCount: number;
+    newChapterCount: number;
+    batchLength: number;
+    newData: {
+      mangaName: string;
+      urlBase: string;
+      slugList: string;
+      chapterTextList: string;
+      currentIndex: number;
+      iconBuffer: Buffer;
+      mangaId: string;
+      newCoverImageIndex: number;
+      newChapterCount: number;
+    }[];
+  };
+};
 
-export type mangaUrlCheck = {
-    success: true, 
-    value:string
-} | {
-    success: false, 
-    value:string, 
-    statusCode: number
-}
+export type mangaUrlCheck =
+  | {
+      success: true;
+      value: string;
+    }
+  | {
+      success: false;
+      value: string;
+      statusCode: number;
+    };
 
 export const getOpts = {
-    schema: {
-        querystring: {
-            type: 'object',
-            properties: {
-                urls: {type: 'array'},
-                pass: {type: 'string'}
-            },
-            required: ['urls', 'pass']
-        }
-    }
-}
+  schema: {
+    querystring: {
+      type: 'object',
+      properties: {
+        urls: { type: 'array' },
+        pass: { type: 'string' },
+      },
+      required: ['urls', 'pass'],
+    },
+  },
+};
 
 export const checkOpts = {
-    schema: {
-        querystring: {
-            type: 'object',
-            properties: {
-                fetchIds: {type: 'array'},
-                pass: {type: 'string'}
-            },
-            required: ['fetchIds', 'pass']
-        }
-    }
-}
+  schema: {
+    querystring: {
+      type: 'object',
+      properties: {
+        fetchIds: { type: 'array' },
+        pass: { type: 'string' },
+      },
+      required: ['fetchIds', 'pass'],
+    },
+  },
+};

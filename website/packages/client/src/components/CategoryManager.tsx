@@ -29,8 +29,9 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchPath } from '../vars';
-import { debounce, fetchUserCategories } from '../utils';
+import { debounce } from '../utils';
 import { toast } from 'react-toastify';
+import { useUserCategories } from '../hooks/useUserCategories';
 
 const SortableItem = ({
   item,
@@ -142,10 +143,7 @@ const useSaveCategories = () => {
 };
 
 export function CategoryManager() {
-  const { data: fetchedCategories, isLoading } = useQuery({
-    queryKey: ['userCategories'],
-    queryFn: fetchUserCategories,
-  });
+  const { data: fetchedCategories, isLoading, isError } = useUserCategories();
 
   const saveMutation = useSaveCategories();
   const [categories, setCategories] = useState<categoryOption[]>([]);

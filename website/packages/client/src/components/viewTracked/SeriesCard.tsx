@@ -1,4 +1,3 @@
-// SeriesCard.tsx
 import React from 'react';
 import {
   Box,
@@ -9,10 +8,8 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { dropdownOption, mangaDetails } from '../types';
-import { fetchPath } from '../vars';
-import { useQuery } from '@tanstack/react-query';
-import { fetchUserCategories } from '../utils';
+import { categoryOption, dropdownOption, mangaDetails } from '../../types';
+import { fetchPath } from '../../vars';
 
 import Avatar from '@mui/material/Avatar';
 import AvatarGroup from '@mui/material/AvatarGroup';
@@ -21,15 +18,15 @@ interface Props {
   data: mangaDetails;
   handleContextMenu: (e: React.MouseEvent, mangaId: string) => void;
   openMangaOverview: (mangaId: string) => void;
+  catOptions: categoryOption[] | undefined;
 }
 
-export default function SeriesCard({ data, handleContextMenu, openMangaOverview }: Props) {
-  const { data: catOptions, isError } = useQuery<dropdownOption[], Error>({
-    queryKey: ['userCategories'],
-    queryFn: () => fetchUserCategories(),
-    staleTime: 1000 * 60 * 60,
-    gcTime: Infinity,
-  });
+export default function SeriesCard({
+  data,
+  handleContextMenu,
+  openMangaOverview,
+  catOptions,
+}: Props) {
 
   const findCat = (catVal: string): dropdownOption => {
     return (

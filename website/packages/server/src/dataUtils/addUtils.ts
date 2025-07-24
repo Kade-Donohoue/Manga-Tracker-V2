@@ -231,7 +231,7 @@ export async function saveManga(
     }
 
     let statMetric = await env.DB.prepare(
-      'INSERT INTO stats (timestamp, type, stat_value) VALUES (CURRENT_TIMESTAMP, "mangaCount", ?)'
+      'INSERT INTO mangaStats (type, value) VALUES ("mangaCount", ?)'
     )
       .bind(newMangaCount)
       .run();
@@ -253,4 +253,21 @@ export async function saveManga(
       status: 500,
     });
   }
+}
+
+export async function existingManga(authId: string, mangaId: string, index: number, userCat: string, currentChap: string,  env: Env) {
+  const results = await env.DB.prepare('INSERT INTO userData (userId, mangaId, currentIndex, currentChap, userCat, interactTime) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(userID, mangaId) DO UPDATE SET currentIndex = excluded.currentIndex, currentChap = excluded.currentChap, userCat = excluded.userCat, interactTime = excluded.interactTime').bind(authId, mangaId, index, currentChap, userCat, Date.now()).run()
+
+  if (!results.success) {
+    return new Response(JSON.stringify({ message: 'Unable to save to Database contact support!' }), {
+      status: 500,
+    });
+  }
+
+  await env.DB.prepare(`UPDATE recommendations SET status = 'accepted' WHERE receiverId = ? AND mangaId = ?`).bind(authId, mangaId).run()
+
+  if (results.meta.rows_written <= 0 || !results.meta.changed_db) return new Response(JSON.stringify({ message: 'Already Tracked, Updated chapter!' }), {
+      status: 200,
+    });
+  return new Response(JSON.stringify({message: 'Success!'}), {status: 200})
 }

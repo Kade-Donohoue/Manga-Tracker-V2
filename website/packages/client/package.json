@@ -79,6 +79,7 @@
     "@radix-ui/react-scroll-area": "^1.0.5",
     "@stitches/react": "^1.2.8",
     "@tanstack/react-query": "^5.74.11",
+    "fuse.js": "^7.1.0",
     "fuzzysort": "^3.1.0",
     "lodash": "^4.17.21",
     "oauth-pkce": "^0.0.7",
