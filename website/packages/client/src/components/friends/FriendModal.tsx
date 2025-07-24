@@ -31,7 +31,7 @@ import { Flag } from '@mui/icons-material';
 interface friendModalProps {
   open: boolean;
   onCloseFriend: () => void;
-  friend: friend;
+  friend: friend|undefined;
 }
 
 type friendManga = {
@@ -86,7 +86,7 @@ const FriendModal: React.FC<friendModalProps> = ({ open, onCloseFriend, friend }
     isError,
   } = useQuery<friendData, Error>({
     queryKey: [friend ? friend?.userID : null, 'friends'],
-    queryFn: () => fetchFriendsData(friend?.userID),
+    queryFn: () => fetchFriendsData(friend ? friend?.userID:''),
     staleTime: 1000 * 60 * 60,
     gcTime: Infinity,
   });
@@ -283,7 +283,7 @@ const FriendModal: React.FC<friendModalProps> = ({ open, onCloseFriend, friend }
           <MenuItem onClick={() => { setAddModalOpen(true); handleMenuCloseRec(); }}>
             Start Tracking
           </MenuItem>
-          <MenuItem onClick={() => {updateStatus(selectedManga?.id, friend.userID, 'ignored')} }>
+          <MenuItem onClick={() => {updateStatus(selectedManga?.id, friend? friend.userID:'', 'ignored')} }>
             Ignore
           </MenuItem>
           {/* <MenuItem onClick={handleMenuCloseRec}>Close</MenuItem> */}
@@ -294,7 +294,7 @@ const FriendModal: React.FC<friendModalProps> = ({ open, onCloseFriend, friend }
           open={Boolean(menuAnchorSent)}
           onClose={handleMenuCloseSent}
         >
-          <MenuItem onClick={() => {updateStatus(selectedManga?.id, friend.userID, 'canceled')} }>
+          <MenuItem onClick={() => {updateStatus(selectedManga?.id, friend ? friend.userID:'', 'canceled')} }>
             Cancel
           </MenuItem>
           {/* <MenuItem onClick={handleMenuCloseSent}>Close</MenuItem> */}
@@ -303,7 +303,7 @@ const FriendModal: React.FC<friendModalProps> = ({ open, onCloseFriend, friend }
       <SvgIcon onClick={onCloseFriend} sx={{ position: 'absolute', top: 10, right: 10 }}>
         <CancelIcon sx={{ color: 'white' }} />
       </SvgIcon>
-      <AddTrackedManga open={addModalOpen} onClose={() => setAddModalOpen(false)}  manga={selectedManga} friendId={friend?.userID}></AddTrackedManga>
+      <AddTrackedManga open={addModalOpen} onClose={() => setAddModalOpen(false)}  manga={selectedManga} friendId={friend? friend?.userID:''}></AddTrackedManga>
     </Dialog>
   );
 };

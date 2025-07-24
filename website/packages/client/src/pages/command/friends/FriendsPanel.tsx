@@ -5,7 +5,6 @@ import { fetchPath } from '../../../vars';
 import { toast } from 'react-toastify';
 import { friend } from '../../../types';
 import { useFriends } from '../../../hooks/useFriends';
-import { useScrollHandler } from '../../../hooks/useScrollHandler';
 import { useState } from 'react';
 import FriendModal from '../../../components/friends/FriendModal';
 
