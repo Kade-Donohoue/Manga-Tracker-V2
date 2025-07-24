@@ -28,8 +28,8 @@ export const StatCard = ({ label, value }: { label: string; value: number }) => 
           component="div"
           gutterBottom
         >
-          {value != -1 ? (
-            value.toLocaleString()
+          {(value >= 0) ? (
+            value?.toLocaleString()
           ) : (
             <Skeleton variant="text" height="2.615rem" />
           )}
