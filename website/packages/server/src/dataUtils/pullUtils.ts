@@ -330,7 +330,7 @@ export async function userStats(userId: string, env: Env) {
       global: env.DB.prepare(`
         SELECT
         (SELECT COUNT(*) FROM mangaData) AS mangaCount,
-        ( WHERE type SELECT SUM(value) FROM mangaStats= 'chapCount' AND timestamp > datetime('now', '-30 days')) AS newChapters,
+        (SELECT SUM(value) FROM mangaStats WHERE type = 'chapCount' AND timestamp > datetime('now', '-30 days')) AS newChapters,
         (SELECT SUM(value) FROM mangaStats WHERE type = 'mangaCount' AND timestamp > datetime('now', '-30 days')) AS newManga,
         (SELECT SUM(CASE WHEN useAltStatCalc = 1 THEN LENGTH(latestChapterText) - LENGTH(REPLACE(latestChapterText, ',', '')) + 1 ELSE FLOOR(latestChapterText) END) FROM mangaData) AS trackedChapters,
         (SELECT SUM(value) FROM userStats WHERE type = 'chapsRead' AND timestamp > datetime('now', '-30 days')) AS readThisMonth
