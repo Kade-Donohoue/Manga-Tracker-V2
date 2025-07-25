@@ -87,7 +87,7 @@ const FriendModal: React.FC<friendModalProps> = ({ open, onCloseFriend, friend }
   } = useQuery<friendData, Error>({
     queryKey: [friend ? friend?.userID : null, 'friends'],
     queryFn: () => fetchFriendsData(friend ? friend?.userID:''),
-    staleTime: 1000 * 60 * 60,
+    staleTime: 1000 * 60,
     gcTime: Infinity,
   });
 

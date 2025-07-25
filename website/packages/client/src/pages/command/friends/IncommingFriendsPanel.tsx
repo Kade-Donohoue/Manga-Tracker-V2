@@ -7,7 +7,7 @@ import { friend } from '../../../types';
 
 async function fetchRequests(): Promise<{ message: string; data: friend[] }> {
   const resp = await fetch(`${fetchPath}/api/friends/getRecieved`, {
-    method: 'P0ST',
+    method: 'GET',
     headers: {
       'Content-Type': 'application/json',
     },
