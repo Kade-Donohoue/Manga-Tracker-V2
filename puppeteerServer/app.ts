@@ -377,7 +377,7 @@ async function sendUpdate(batch: updateCollector) {
       },
       body: JSON.stringify({
         newData: batch.batchData.newData,
-        amountNewChapters: batch.batchData.newChapterCount,
+        amountNewChapters: 0, //batch.batchData.newChapterCount - some edge case causes this to become NaN.
         expiresAt: Date.now() + config.updateSettings.updateDelay + 50000, //50 extra seconds compared to what this pull took
       }),
     });

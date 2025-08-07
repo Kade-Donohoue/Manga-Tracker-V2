@@ -20,17 +20,26 @@ export const comickQueue = new Queue('Comick Manga Queue', {
   connection,
 });
 
-const mainGetWorker = new Worker('Get Manga Queue', mangaGetProc, {
-  connection,
-  concurrency: config.queue.instances,
-  name: 'universal',
-});
-const comickGetWorker = new Worker('Comick Manga Queue', mangaGetProc, {
-  connection,
-  concurrency: 1,
-  limiter: { max: 100, duration: 950 },
-  name: 'comick',
-});
+let mainGetWorker: Worker | null = null;
+let comickGetWorker: Worker | null = null;
+
+export function createWorkers() {
+  mainGetWorker = new Worker('Get Manga Queue', mangaGetProc, {
+    connection,
+    concurrency: config.queue.instances,
+    name: 'universal',
+  });
+
+  comickGetWorker = new Worker('Comick Manga Queue', mangaGetProc, {
+    connection,
+    concurrency: 1,
+    limiter: { max: 100, duration: 950 },
+    name: 'comick',
+  });
+
+  return { mainGetWorker, comickGetWorker };
+}
+
 
 let browser: Browser | null = null;
 export async function getBrowser() {
