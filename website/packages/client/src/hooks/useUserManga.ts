@@ -25,6 +25,9 @@ export function useUserManga() {
 
       return new Map(results.mangaDetails.map((m) => [m.mangaId, m]));
     },
+    meta: {
+      errorMessage: 'Failed to get tracked Manga!',
+    },
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
   });

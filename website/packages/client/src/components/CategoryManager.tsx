@@ -24,10 +24,11 @@ import {
   IconButton,
   Button,
   Grid,
+  Skeleton,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchPath } from '../vars';
 import { debounce } from '../utils';
 import { toast } from 'react-toastify';
@@ -119,6 +120,40 @@ const SortableItem = ({
   );
 };
 
+const SortableItemSkeleton = () => {
+  return (
+    <Box>
+      <Grid container alignItems="left" spacing={1} wrap="wrap">
+        <Grid item>
+          <IconButton
+            sx={{ touchAction: 'none', cursor: 'grab', '&:active': { cursor: 'grabbing' } }}
+            disabled
+          >
+            <DragIndicatorIcon />
+          </IconButton>
+        </Grid>
+        <Grid item xs={6} sm={4}>
+          <Skeleton variant="rounded" height={35} />
+        </Grid>
+        <Grid item>
+          <Skeleton variant="rounded" height={35} width={80} />
+        </Grid>
+        <Grid item>
+          <Skeleton variant="rectangular" width={100} height={35} />
+        </Grid>
+        <Grid item>
+          <Skeleton variant="rectangular" width={100} height={35} />
+        </Grid>
+        <Grid item>
+          <IconButton disabled>
+            <DeleteIcon />
+          </IconButton>
+        </Grid>
+      </Grid>
+    </Box>
+  );
+};
+
 const useSaveCategories = () => {
   const queryClient = useQueryClient();
 
@@ -195,6 +230,22 @@ export function CategoryManager() {
       setCategories(reordered.map((cat, idx) => ({ ...cat, position: idx })));
     }
   };
+
+  if (isLoading)
+    return (
+      <Box>
+        {Array.from({ length: 8 }).map((_, index) => (
+          <SortableItemSkeleton key={index} />
+        ))}
+      </Box>
+    );
+
+  if (isError)
+    return (
+      <Box>
+        <h1>Failed To Load Categories</h1>
+      </Box>
+    );
 
   return (
     <Box>

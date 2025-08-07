@@ -35,7 +35,6 @@ async function fetchUserMangaStats(): Promise<StatsResponse> {
     },
   });
   if (!resp.ok) {
-    toast.error('Unable to fetch User Stats!');
     throw new Error('Unable to fetch User Stats!');
   }
   return resp.json();
@@ -63,10 +62,12 @@ export default function Stats() {
         readThisMonth: -1,
       },
     },
+    meta: {
+      errorMessage: 'Failed to get Your Stats!',
+    },
     staleTime: 5 * 60 * 1000,
   });
 
-  // if (isLoading) return <div className="statistics-container">Loading stats...</div>;
   if (isError || !data) return <div className="statistics-container">Failed to load stats.</div>;
 
   const { userStats, globalStats } = data;

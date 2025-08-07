@@ -48,8 +48,8 @@ const fetchFriendsData = async (
   });
 
   if (!response.ok) {
-    toast.error('Unable to get User Cats');
-    throw new Error('Failed to fetch user categories');
+    // toast.error('Unable to get User Cats');
+    throw new Error('Failed to fetch Friend Manga Status!');
   }
 
   const data: { friendData: { userID: string; currentIndex: number }[]; expiresAt: string } =
@@ -111,6 +111,9 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
   >({
     queryKey: [manga ? manga.mangaId : null, 'friends'],
     queryFn: () => fetchFriendsData(manga),
+    meta: {
+      errorMessage: 'Failed to Friends Progress!',
+    },
     staleTime: 1000 * 60 * 60,
     gcTime: Infinity,
   });

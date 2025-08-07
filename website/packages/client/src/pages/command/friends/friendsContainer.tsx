@@ -38,8 +38,8 @@ async function fetchCount(): Promise<{
     },
   });
   if (!resp.ok) {
-    toast.error('Unable To fetch friends!');
-    throw new Error('Unable to fetch User Stats!');
+    // toast.error('Unable To fetch friends!');
+    throw new Error('Unable to fetch friend Counts!');
   }
   return resp.json();
 }
@@ -50,6 +50,10 @@ export default function friends() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['friends', 'count'],
     queryFn: fetchCount,
+    meta: {
+      errorMessage: 'Failed to get Friend Counts!',
+      disableToast: true,
+    },
     staleTime: 10 * 1000,
   });
 

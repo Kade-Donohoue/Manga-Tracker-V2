@@ -40,6 +40,7 @@ import * as S from './AppStyles';
 import { IconButton } from '@mui/material';
 import { RedirectToSignIn, SignedIn, SignedOut, SignIn, SignUp } from '@clerk/clerk-react';
 import CookieBanner from './components/cookies';
+import { queryClient } from './queryClient';
 
 interface CenteredPageProps {
   children: React.ReactNode;
@@ -61,8 +62,6 @@ const CenteredPage: React.FC<CenteredPageProps> = ({ children }) => (
 
 // Add contexts here
 export default function App(): React.ReactElement {
-  const queryClient = new QueryClient();
-
   return (
     <div style={{ width: '100%', height: '100%' }}>
       <Router>
