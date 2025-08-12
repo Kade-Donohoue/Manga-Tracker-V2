@@ -14,10 +14,13 @@ export function useFriends() {
         },
       });
       if (!resp.ok) {
-        toast.error('Unable To fetch friends!');
-        throw new Error('Unable to fetch User Stats!');
+        // toast.error('Unable To fetch friends!');
+        throw new Error('Unable to fetch users friends!');
       }
       return resp.json();
+    },
+    meta: {
+      errorMessage: 'Failed to get Friends!',
     },
     staleTime: 30 * 1000,
   });

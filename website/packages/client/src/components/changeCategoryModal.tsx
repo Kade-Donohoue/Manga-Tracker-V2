@@ -5,7 +5,7 @@ import Select from 'react-select';
 import { toast } from 'react-toastify';
 import { fetchPath } from '../vars';
 import { dropdownOption, mangaDetails } from '../types';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useUserCategories } from '../hooks/useUserCategories';
 
 interface ChangeCategoryModalProps {

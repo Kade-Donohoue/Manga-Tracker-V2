@@ -3,7 +3,7 @@ import { Modal, Box, Button, SvgIcon, SxProps, Theme } from '@mui/material';
 import Select, { StylesConfig } from 'react-select';
 import CancelIcon from '@mui/icons-material/Cancel';
 import { toast } from 'react-toastify';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { dropdownOption } from '../types';
 import { fetchPath } from '../vars';
 import { modalStyle } from '../AppStyles';

@@ -13,8 +13,8 @@ async function fetchRequests(): Promise<{ message: string; data: friend[] }> {
     },
   });
   if (!resp.ok) {
-    toast.error('Unable To fetch friends!');
-    throw new Error('Unable to fetch User Stats!');
+    // toast.error('Unable To fetch friends!');
+    throw new Error('Unable to fetch Incomming user requests!');
   }
   return resp.json();
 }
@@ -23,6 +23,9 @@ export default function IncommingFriendsPanel() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['friends', 'incomming'],
     queryFn: fetchRequests,
+    meta: {
+      errorMessage: 'Failed to get Incomming friend Requests!',
+    },
     staleTime: 20 * 1000,
   });
 

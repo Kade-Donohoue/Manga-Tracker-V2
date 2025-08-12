@@ -274,9 +274,10 @@ async function mangaCompleteFuction({ jobId }: { jobId: string }) {
         const oldSlugs = job.data.oldSlugList?.split(',') || [];
         const newSlugs = job.returnvalue.slugList?.split(',') || [];
 
-        const newChapterCount = Math.floor(
-          parseFloat(chapterTextList.at(-1)) - parseFloat(chapterTextList[oldSlugs.length - 1])
-        );
+        const newChapterCount =
+          Math.floor(
+            parseFloat(chapterTextList.at(-1)) - parseFloat(chapterTextList[oldSlugs.length - 1])
+          ) || 0;
         // const newChapterCountFallback = newSlugs.length - oldSlugs.length; idk use case yet but leaving for future
 
         if (config.logging.verboseLogging) console.log(job.returnvalue.urlBase);
@@ -377,7 +378,7 @@ async function sendUpdate(batch: updateCollector) {
       },
       body: JSON.stringify({
         newData: batch.batchData.newData,
-        amountNewChapters: batch.batchData.newChapterCount,
+        amountNewChapters: 0, //batch.batchData.newChapterCount - some edge case causes this to become NaN.
         expiresAt: Date.now() + config.updateSettings.updateDelay + 50000, //50 extra seconds compared to what this pull took
       }),
     });

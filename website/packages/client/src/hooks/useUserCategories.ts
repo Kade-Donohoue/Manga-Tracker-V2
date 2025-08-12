@@ -15,7 +15,7 @@ export function useUserCategories() {
       });
 
       if (!response.ok) {
-        toast.error('Unable to get User Categories');
+        // toast.error('Unable to get User Categories');
         throw new Error('Failed to fetch user categories');
       }
 
@@ -30,6 +30,9 @@ export function useUserCategories() {
       }
 
       return catData.cats.sort((a, b) => a.position - b.position);
+    },
+    meta: {
+      errorMessage: 'Failed to load your Categories!!',
     },
     staleTime: 1000 * 60 * 60, // 1 hour
     // cacheTime: Infinity,
