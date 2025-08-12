@@ -1,6 +1,6 @@
 import React from 'react';
 import { dropdownOption, mangaDetails } from '../types';
-import { Modal, Box, Button, SvgIcon } from '@mui/material';
+import { Modal, Box, Button, SvgIcon, Stack, TextField } from '@mui/material';
 import CancelIcon from '@mui/icons-material/Cancel';
 import Select from 'react-select';
 import { toast } from 'react-toastify';
@@ -55,14 +55,22 @@ export default function ChangeChapterModal({
   mangaId,
 }: ChangeChapterModalProps) {
   const queryClient = useQueryClient();
-
   const [newChapter, setChapter] = React.useState<dropdownOption | null>(null);
+  const [chapterOptions, setChapterOptions] = React.useState<dropdownOption[]>([]);
+  const [jumpTo, setJumpTo] = React.useState('');
 
   React.useEffect(() => {
     if (mangaInfo && mangaId) {
-      const latest = mangaInfo.get(mangaId)?.chapterTextList.at(-1); // last item before reversal = latest chapter
-      if (latest) {
-        setChapter({ value: latest, label: latest });
+      const list = mangaInfo.get(mangaId)?.chapterTextList ?? [];
+      const opts = list
+        .slice()
+        .reverse()
+        .map((text) => ({ value: text, label: text }));
+      setChapterOptions(opts);
+
+      const latestOpt = opts[0];
+      if (latestOpt) {
+        setChapter(latestOpt);
       }
     }
   }, [mangaInfo, mangaId]);
@@ -136,42 +144,100 @@ export default function ChangeChapterModal({
   if (!mangaInfo || !mangaId) return null;
 
   return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      aria-labelledby="chap-modal-title"
-      aria-describedby="chap-modal-description"
-    >
+    <Modal open={open} onClose={onClose} aria-labelledby="chap-modal-title">
       <Box sx={{ width: '80vw', ...modalStyle }}>
-        <h2 id="chap-modal-title" style={{ color: 'white' }}>
+        <h2 id="chap-modal-title" style={{ color: 'white', marginBottom: 5 }}>
           Select the Last Chapter You’ve Read
         </h2>
-        <Select
-          name="chap"
-          id="chap"
-          className="chapSelect"
-          value={newChapter}
-          onChange={setChapter}
-          options={mangaInfo
-            .get(mangaId)
-            ?.chapterTextList.slice()
-            .reverse()
-            .map((text) => ({ value: text, label: text }))}
-          styles={customStyles}
-        />
 
-        <Button
-          onClick={() => {
-            changeCurrChapter();
-            onClose();
-          }}
-          variant="contained"
-          color="primary"
-          fullWidth
-          sx={{ mt: 2 }}
-        >
-          Submit
-        </Button>
+        <Stack spacing={2}>
+          <Select
+            name="chap"
+            value={newChapter}
+            onChange={setChapter}
+            options={chapterOptions}
+            styles={customStyles}
+            isSearchable
+          />
+
+          <h3 id="chap-modal-title" style={{ color: 'white' }}>
+            Jump To
+          </h3>
+          <Stack direction="row" spacing={1}>
+            <Button variant="outlined" onClick={() => setChapter(chapterOptions.at(-1) ?? null)}>
+              First
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => {
+                if (!newChapter) return setChapter(chapterOptions.at(-1) ?? null);
+                const curIndex = chapterOptions.indexOf(newChapter);
+                const newIndex = curIndex + 1 >= chapterOptions.length ? 0 : curIndex + 1;
+                setChapter(chapterOptions[newIndex]);
+              }}
+            >
+              prev
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() =>
+                setChapter(
+                  chapterOptions[
+                    Math.abs(
+                      (mangaInfo?.get(mangaId)?.currentIndex || 0) - chapterOptions.length + 1
+                    )
+                  ]
+                )
+              }
+            >
+              Current
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => {
+                if (!newChapter) return setChapter(chapterOptions.at(-1) ?? null);
+                const curIndex = chapterOptions.indexOf(newChapter);
+                const newIndex = curIndex - 1 < 0 ? chapterOptions.length - 1 : curIndex - 1;
+                setChapter(chapterOptions[newIndex]);
+              }}
+            >
+              next
+            </Button>
+            <Button variant="outlined" onClick={() => setChapter(chapterOptions[0])}>
+              Latest
+            </Button>
+            {/* Search for chapter */}
+            {/* <TextField
+              label="Jump to..."
+              variant="outlined"
+              size="small"
+              value={jumpTo}
+              onChange={(e) => setJumpTo(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const target = chapterOptions.find((opt) => opt.label === jumpTo);
+                  if (target) setChapter(target);
+                }
+              }}
+              sx={{
+                input: { color: 'white' },
+                label: { color: 'white' },
+              }}
+            /> */}
+          </Stack>
+
+          <Button
+            onClick={() => {
+              changeCurrChapter();
+              onClose();
+            }}
+            variant="contained"
+            color="primary"
+            fullWidth
+          >
+            Submit
+          </Button>
+        </Stack>
 
         <SvgIcon
           onClick={onClose}
