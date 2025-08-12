@@ -274,9 +274,10 @@ async function mangaCompleteFuction({ jobId }: { jobId: string }) {
         const oldSlugs = job.data.oldSlugList?.split(',') || [];
         const newSlugs = job.returnvalue.slugList?.split(',') || [];
 
-        const newChapterCount = Math.floor(
-          parseFloat(chapterTextList.at(-1)) - parseFloat(chapterTextList[oldSlugs.length - 1])
-        );
+        const newChapterCount =
+          Math.floor(
+            parseFloat(chapterTextList.at(-1)) - parseFloat(chapterTextList[oldSlugs.length - 1])
+          ) || 0;
         // const newChapterCountFallback = newSlugs.length - oldSlugs.length; idk use case yet but leaving for future
 
         if (config.logging.verboseLogging) console.log(job.returnvalue.urlBase);

@@ -57,7 +57,6 @@ export default function ChangeChapterModal({
   const queryClient = useQueryClient();
   const [newChapter, setChapter] = React.useState<dropdownOption | null>(null);
   const [chapterOptions, setChapterOptions] = React.useState<dropdownOption[]>([]);
-  const [jumpTo, setJumpTo] = React.useState('');
 
   React.useEffect(() => {
     if (mangaInfo && mangaId) {
