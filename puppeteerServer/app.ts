@@ -1,5 +1,5 @@
 import { Job, Queue, QueueEvents } from 'bullmq';
-import { getQueue, comickQueue, getBrowser } from './jobQueue';
+import { getQueue, comickQueue, getBrowser, createWorkers } from './jobQueue';
 import { checkOpts, fetchData, getOpts, updateCollector, dataType } from './types';
 import { validMangaCheck } from './util';
 import './mangaGetProc';
@@ -21,6 +21,8 @@ app.listen({ port: port, host: host }, async function (err, address) {
     await comickQueue.obliterate({ force: true });
   }
   await getBrowser(); //called to initiate browser otherwise if multiple jobs run at same time multiple browsers can be opened
+
+  await createWorkers()
 
   if (config.updateSettings.updateAtStart) updateAllManga();
   console.log(`Puppeteer server listening at: ${address}`);
