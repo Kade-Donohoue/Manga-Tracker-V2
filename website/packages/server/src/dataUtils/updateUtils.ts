@@ -76,7 +76,12 @@ export async function changeMangaCat(authId: string, mangaId: string, newCat: st
   });
 }
 
-export async function setUserTitle(userId: string, mangaId: string, newTitle: string, env: Env) {
+export async function setUserTitle(
+  userId: string,
+  mangaId: string,
+  newTitle: string | null,
+  env: Env
+) {
   const results = await env.DB.prepare(
     `UPDATE userData SET userTitle = ? WHERE userID = ? AND mangaId = ?`
   )
