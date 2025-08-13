@@ -16,7 +16,7 @@ export async function getUnreadManga(
       .safeParse(
         (
           await env.DB.prepare(
-            `SELECT mangaData.mangaName, userData.mangaId, mangaData.urlBase, mangaData.slugList, mangaData.chapterTextList, mangaData.updateTime, userData.currentIndex, userData.currentChap, userData.userCat, userData.interactTime FROM userData JOIN mangaData ON (userData.mangaId = mangaData.mangaId) WHERE userData.userId = ? AND userCat LIKE ? ORDER BY ${sortMethod} ${sortOrd}`
+            `SELECT mangaData.mangaName, userData.mangaId, mangaData.urlBase, mangaData.slugList, mangaData.chapterTextList, mangaData.updateTime, userData.currentIndex, userData.currentChap, userData.userCat, userData.interactTime, userData.userTitle FROM userData JOIN mangaData ON (userData.mangaId = mangaData.mangaId) WHERE userData.userId = ? AND userCat LIKE ? ORDER BY ${sortMethod} ${sortOrd}`
           )
             .bind(authId, userCat)
             .all()
@@ -67,7 +67,7 @@ export async function getManga(authId: string, mangaId: string, env: Env) {
   try {
     let userManga = mangaDetailsSchema.safeParse(
       (await env.DB.prepare(
-        'SELECT mangaData.mangaName, userData.mangaId, mangaData.urlBase, mangaData.slugList, mangaData.chapterTextList, mangaData.updateTime, userData.currentIndex, userData.userCat, userData.interactTime FROM userData JOIN mangaData ON (userData.mangaId = mangaData.mangaId) WHERE userData.userId = ?  AND userData.mangaId = ? LIMIT 1'
+        'SELECT mangaData.mangaName, userData.mangaId, mangaData.urlBase, mangaData.slugList, mangaData.chapterTextList, mangaData.updateTime, userData.currentIndex, userData.userCat, userData.interactTime, userData.userTitle FROM userData JOIN mangaData ON (userData.mangaId = mangaData.mangaId) WHERE userData.userId = ?  AND userData.mangaId = ? LIMIT 1'
       )
         .bind(authId, mangaId)
         .first()) as any
@@ -117,6 +117,7 @@ export async function getUserManga(authId: string, env: Env) {
       userData.currentIndex,
       userData.userCat,
       userData.interactTime,
+      userData.userTitle,
       (
         SELECT GROUP_CONCAT(coverImages.coverIndex) 
         FROM coverImages 

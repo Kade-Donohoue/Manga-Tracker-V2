@@ -75,6 +75,7 @@ export default function Tracked() {
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [catOpen, setCatOpen] = useState(false);
+  const [titleOpen, setTitleOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [chapterOpen, setChapterOpen] = useState(false);
   const [removeOpen, setRemoveOpen] = useState(false);
@@ -168,6 +169,8 @@ export default function Tracked() {
         setModalOpen={setModalOpen}
         catOpen={catOpen}
         setCatOpen={setCatOpen}
+        titleOpen={titleOpen}
+        setTitleOpen={setTitleOpen}
         addOpen={addOpen}
         setAddOpen={setAddOpen}
         chapterOpen={chapterOpen}
@@ -298,6 +301,10 @@ export default function Tracked() {
           }}
           onChangeCategory={() => {
             setCatOpen(true);
+            setAnchorPosition(null);
+          }}
+          onChangeTitle={() => {
+            setTitleOpen(true);
             setAnchorPosition(null);
           }}
           onMarkRead={() => {

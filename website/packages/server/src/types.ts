@@ -66,6 +66,7 @@ export const mangaDetailsSchema = mangaDataRow.merge(
     currentChap: z.coerce.number(),
     userCat: z.string(),
     interactTime: z.coerce.number().int().min(0),
+    userTitle: z.string().nullable(),
     imageIndexes: imageIndexes,
     sharedFriends: z
       .string()
@@ -202,6 +203,11 @@ export const changeMangaCatSchema = z.object({
   newCat: z.coerce.string(),
 });
 
+export const setUserTitleSchema = z.object({
+  mangaId: z.coerce.string().uuid(),
+  newTitle: z.coerce.string().nullable(),
+});
+
 export const updateUserCategoriesSchema = z.object({
   newCatList: z.array(
     z.object({
@@ -228,7 +234,8 @@ export const clerkUserSchema = z
   })
   .passthrough();
 
-const friendRecomendationsSchema = z.object({
+const friendRecomendationsSchema = z
+  .object({
     id: z.number(),
     mangaName: z.string().min(1),
     status: z.string(),
@@ -240,18 +247,19 @@ const friendRecomendationsSchema = z.object({
     chapterTextList: z
       .union([z.string(), z.array(z.string())])
       .transform((val) => (typeof val === 'string' ? val.split(',') : val)),
-  }).array()
+  })
+  .array();
 
 export const friendDetailsSchema = z.object({
   recomendations: z.object({
     received: friendRecomendationsSchema,
-    sent: friendRecomendationsSchema
+    sent: friendRecomendationsSchema,
   }),
   stats: z.object({
     readChapters: z.number(),
     trackedChapters: z.number(),
     readThisMonth: z.number(),
     averagePerDay: z.number(),
-  })
+  }),
 });
 // .array();

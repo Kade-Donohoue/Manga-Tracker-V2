@@ -76,6 +76,24 @@ export async function changeMangaCat(authId: string, mangaId: string, newCat: st
   });
 }
 
+export async function setUserTitle(userId: string, mangaId: string, newTitle: string, env: Env) {
+  const results = await env.DB.prepare(
+    `UPDATE userData SET userTitle = ? WHERE userID = ? AND mangaId = ?`
+  )
+    .bind(newTitle, userId, mangaId)
+    .run();
+
+  if (results.success) return new Response(JSON.stringify({ message: 'Success' }), { status: 200 });
+
+  console.error(results.error);
+  return new Response(
+    JSON.stringify({ message: 'Unable to change User Title. Contact an Admin!' }),
+    {
+      status: 500,
+    }
+  );
+}
+
 export async function updateUserCategories(
   authId: string,
   newCatList: {

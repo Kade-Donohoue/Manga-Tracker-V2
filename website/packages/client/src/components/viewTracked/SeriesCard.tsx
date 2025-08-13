@@ -25,7 +25,6 @@ export default function SeriesCard({
   openMangaOverview,
   catOptions,
 }: Props) {
-
   const findCat = (catVal: string): dropdownOption => {
     return (
       catOptions?.find((cat) => cat.value === catVal) || {
@@ -87,7 +86,7 @@ export default function SeriesCard({
         >
           {/* Title */}
           <Box sx={{ overflow: 'hidden' }}>
-            <Tooltip title={data.mangaName} enterDelay={700}>
+            <Tooltip title={data.userTitle ? data.userTitle : data.mangaName} enterDelay={700}>
               <Typography
                 gutterBottom
                 variant="h5"
@@ -101,7 +100,7 @@ export default function SeriesCard({
                   maxHeight: '2.6em',
                 }}
               >
-                {data.mangaName}
+                {data.userTitle ? data.userTitle : data.mangaName}
               </Typography>
             </Tooltip>
           </Box>

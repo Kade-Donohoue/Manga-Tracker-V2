@@ -7,12 +7,15 @@ import ChangeChapterModal from '../changeChapterModal';
 import ChangeCategoryModal from '../changeCategoryModal';
 import { mangaDetails } from '../../types';
 import RecommendModal from '../recommendModal';
+import SetUserTitleModal from '../SetUserTitleModal';
 
 interface ModalManagerProps {
   modalOpen: boolean;
   setModalOpen: (open: boolean) => void;
   catOpen: boolean;
   setCatOpen: (open: boolean) => void;
+  titleOpen: boolean;
+  setTitleOpen: (open: boolean) => void;
   addOpen: boolean;
   setAddOpen: (open: boolean) => void;
   chapterOpen: boolean;
@@ -34,6 +37,8 @@ const ModalManager: React.FC<ModalManagerProps> = ({
   setModalOpen,
   catOpen,
   setCatOpen,
+  titleOpen,
+  setTitleOpen,
   addOpen,
   setAddOpen,
   chapterOpen,
@@ -62,6 +67,11 @@ const ModalManager: React.FC<ModalManagerProps> = ({
       <ChangeCategoryModal
         open={catOpen}
         onClose={() => setCatOpen(false)}
+        mangaId={currentMangaId || ''}
+      />
+      <SetUserTitleModal
+        open={titleOpen}
+        onClose={() => setTitleOpen(false)}
         mangaId={currentMangaId || ''}
       />
       <RecommendModal

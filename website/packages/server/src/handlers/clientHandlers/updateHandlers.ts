@@ -4,12 +4,14 @@ import {
   updateInteractTimeSchema,
   changeMangaCatSchema,
   updateUserCategoriesSchema,
+  setUserTitleSchema,
 } from '../../types';
 import {
   updateCurrentIndex,
   updateInteractTime,
   changeMangaCat,
   updateUserCategories,
+  setUserTitle,
 } from '../../dataUtils/updateUtils';
 import { zodParse } from '../../utils';
 
@@ -47,5 +49,15 @@ export default async function updateHandler(
 
       return await updateUserCategories(userId, body.newCatList, env);
     }
+
+    case 'userTitle': {
+      const body = await zodParse(request, setUserTitleSchema);
+      if (body instanceof Response) return body; // returns zod errors
+
+      return await setUserTitle(userId, body.mangaId, body.newTitle, env);
+    }
+
+    default:
+      return new Response('Not found', {status: 404}); 
   }
 }
