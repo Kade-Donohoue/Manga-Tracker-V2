@@ -41,7 +41,8 @@ CREATE TABLE IF NOT EXISTS mangaData (
     chapterTextList TEXT NOT NULL,
     latestChapterText REAL NOT NULL,
     updateTime TEXT NOT NULL,
-    useAltStatCalc BOOLEAN NOT NULL DEFAULT FALSE
+    useAltStatCalc BOOLEAN NOT NULL DEFAULT FALSE,
+    specialFetchData TEXT,
 );
 
 CREATE TABLE IF NOT EXISTS userCategories (

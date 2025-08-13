@@ -22,6 +22,7 @@ export async function getManga(
   ignoreIndex = false,
   currentImageIndex: number,
   maxSavedAt: string,
+  specialFetchData: any,
   job: Job
 ): Promise<fetchData> {
   if (config.logging.verboseLogging) console.log('comick');
@@ -31,7 +32,7 @@ export async function getManga(
     const slug = extractSlug(url);
     if (config.logging.verboseLogging) console.log('slug: ', slug);
     job.log(logWithTimestamp('Fetching Comic Data with following slug: ' + slug));
-    const comicReq = await fetch(`https://api.comick.fun/comic/${slug}?tachiyomi=true`);
+    const comicReq = await fetch(`https://api.comick.fun/comic/${specialFetchData?specialFetchData:slug}?tachiyomi=true`);
 
     if (!comicReq.ok) throw new Error('Manga: Unable to fetch Comick Data!');
     const comicData: comicData = await comicReq.json();

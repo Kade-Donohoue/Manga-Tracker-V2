@@ -152,6 +152,7 @@ async function updateAllManga() {
       mangaName: string;
       maxCoverIndex: number;
       maxSavedAt: string;
+      specialFetchData: any;
     }[] = (await resp.json()).data;
     if (config.logging.verboseLogging) console.log(returnData.length);
     // console.log(returnData)
@@ -218,6 +219,7 @@ async function updateAllManga() {
           maxCoverIndex: returnData[i].maxCoverIndex,
           maxSavedAt: returnData[i].maxSavedAt,
           batchId: batchId,
+          specialFetchData: returnData[i].specialFetchData
         },
         opts: {
           priority: 2,

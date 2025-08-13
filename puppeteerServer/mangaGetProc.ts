@@ -43,6 +43,7 @@ export default async function (job: Job) {
         job.data.update,
         job.data.maxCoverIndex,
         job.data.maxSavedAt,
+        job.data.specialFetchData,
         job
       );
     default:

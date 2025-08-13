@@ -123,22 +123,22 @@ export async function saveManga(
       return new Response(JSON.stringify({ results: userReturn }), { status: 200 });
 
     //check if manga already in DB if so update otherwise insert new magna
-    const mangaNames = newMangaInfo.map((m) => m.mangaName);
+    const mangaUrlBases = newMangaInfo.map((m) => m.urlBase);
 
     const selectQuery = `SELECT m.mangaId, m.mangaName, max(c.coverIndex) as maxCoverIndex 
       FROM mangaData m 
       JOIN coverImages c 
         ON m.mangaId = c.mangaId 
-      WHERE m.mangaName IN (${mangaNames.map(() => '?').join(', ')})
-      GROUP BY m.mangaId, m.mangaName`;
+      WHERE m.urlBase IN (${mangaUrlBases.map(() => '?').join(', ')})
+      GROUP BY m.mangaId, m.urlBase`;
 
     const existingMangaRows = (await env.DB.prepare(selectQuery)
-      .bind(...mangaNames)
-      .all()) as { results: { mangaId: string; mangaName: string; maxCoverIndex: number }[] };
+      .bind(...mangaUrlBases)
+      .all()) as { results: { mangaId: string; urlBase: string; maxCoverIndex: number }[] };
 
     const existingMangaMap = new Map(
       existingMangaRows.results.map((row) => [
-        row.mangaName,
+        row.urlBase,
         { mangaId: row.mangaId, maxCoverIndex: row.maxCoverIndex },
       ])
     );
@@ -158,7 +158,7 @@ export async function saveManga(
       newMangaInfo.map(async (manga) => {
         const newBoundStmt: D1PreparedStatement[] = [];
 
-        const mangaId = existingMangaMap.get(manga.mangaName)?.mangaId || crypto.randomUUID();
+        const mangaId = existingMangaMap.get(manga.urlBase)?.mangaId || crypto.randomUUID();
 
         console.log('Binding values:', {
           mangaId,
@@ -171,7 +171,7 @@ export async function saveManga(
 
         newBoundStmt.push(
           env.DB.prepare(
-            'INSERT INTO mangaData (mangaId,mangaName,urlBase,slugList,chapterTextList,latestChapterText,updateTime) VALUES (?,?,?,?,?,?,?) ON CONFLICT(mangaId) DO UPDATE SET urlBase = excluded.urlBase, slugList = excluded.slugList, chapterTextList = excluded.chapterTextList, updateTime = excluded.updateTime'
+            'INSERT INTO mangaData (mangaId,mangaName,urlBase,slugList,chapterTextList,latestChapterText,updateTime,specialFetchData) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(mangaId) DO UPDATE SET urlBase = excluded.urlBase, slugList = excluded.slugList, chapterTextList = excluded.chapterTextList, updateTime = excluded.updateTime, specialFetchData = excluded.specialFetchData'
           ).bind(
             mangaId,
             manga.mangaName,
@@ -179,7 +179,8 @@ export async function saveManga(
             manga.slugList,
             manga.chapterTextList,
             manga.chapterTextList.slice(manga.chapterTextList.lastIndexOf(',') + 1),
-            currentTime
+            currentTime,
+            manga.specialFetchData
           )
         );
 
@@ -255,19 +256,38 @@ export async function saveManga(
   }
 }
 
-export async function existingManga(authId: string, mangaId: string, index: number, userCat: string, currentChap: string,  env: Env) {
-  const results = await env.DB.prepare('INSERT INTO userData (userId, mangaId, currentIndex, currentChap, userCat, interactTime) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(userID, mangaId) DO UPDATE SET currentIndex = excluded.currentIndex, currentChap = excluded.currentChap, userCat = excluded.userCat, interactTime = excluded.interactTime').bind(authId, mangaId, index, currentChap, userCat, Date.now()).run()
+export async function existingManga(
+  authId: string,
+  mangaId: string,
+  index: number,
+  userCat: string,
+  currentChap: string,
+  env: Env
+) {
+  const results = await env.DB.prepare(
+    'INSERT INTO userData (userId, mangaId, currentIndex, currentChap, userCat, interactTime) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(userID, mangaId) DO UPDATE SET currentIndex = excluded.currentIndex, currentChap = excluded.currentChap, userCat = excluded.userCat, interactTime = excluded.interactTime'
+  )
+    .bind(authId, mangaId, index, currentChap, userCat, Date.now())
+    .run();
 
   if (!results.success) {
-    return new Response(JSON.stringify({ message: 'Unable to save to Database contact support!' }), {
-      status: 500,
-    });
+    return new Response(
+      JSON.stringify({ message: 'Unable to save to Database contact support!' }),
+      {
+        status: 500,
+      }
+    );
   }
 
-  await env.DB.prepare(`UPDATE recommendations SET status = 'accepted' WHERE receiverId = ? AND mangaId = ?`).bind(authId, mangaId).run()
+  await env.DB.prepare(
+    `UPDATE recommendations SET status = 'accepted' WHERE receiverId = ? AND mangaId = ?`
+  )
+    .bind(authId, mangaId)
+    .run();
 
-  if (results.meta.rows_written <= 0 || !results.meta.changed_db) return new Response(JSON.stringify({ message: 'Already Tracked, Updated chapter!' }), {
+  if (results.meta.rows_written <= 0 || !results.meta.changed_db)
+    return new Response(JSON.stringify({ message: 'Already Tracked, Updated chapter!' }), {
       status: 200,
     });
-  return new Response(JSON.stringify({message: 'Success!'}), {status: 200})
+  return new Response(JSON.stringify({ message: 'Success!' }), { status: 200 });
 }

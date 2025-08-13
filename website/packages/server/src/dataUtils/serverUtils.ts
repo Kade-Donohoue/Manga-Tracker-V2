@@ -8,7 +8,7 @@ import { clerkUserSchema, Env, updateDataType } from '../types';
  */
 export async function getAllManga(env: Env) {
   try {
-    const allManga: [{ mangaId: string; urlBase: string; slugList: string; mangaName: string }] = (
+    const allManga: [{ mangaId: string; urlBase: string; slugList: string; mangaName: string, maxSavedAt:string, maxCoverIndex:number, specialFetchData: any }] = (
       await env.DB.prepare(
         `SELECT 
             m.urlBase,
@@ -17,6 +17,7 @@ export async function getAllManga(env: Env) {
             m.mangaName,
             ci.maxSavedAt,
             ci.maxCoverIndex
+            m.specialFetchData
         FROM mangaData m
         LEFT JOIN (
             SELECT 
