@@ -1,14 +1,14 @@
-import Box from '@mui/material/Box';
 import FriendOutgoingCard from '../../../components/friends/FriendOutgoingCard';
 import { friend } from '../../../types';
 import { fetchPath } from '../../../vars';
-import { toast } from 'react-toastify';
 import { useQuery } from '@tanstack/react-query';
-import { Card, CardActionArea } from '@mui/material';
+import React from 'react';
 
+import Box from '@mui/material/Box';
 import AddCircleOutlinedIcon from '@mui/icons-material/AddCircleOutlined';
 import AddFriendModal from '../../../components/friends/AddFriendModal';
-import React from 'react';
+import CardActionArea from '@mui/material/CardActionArea';
+import Card from '@mui/material/Card';
 
 async function fetchRequests(): Promise<{ message: string; data: friend[] }> {
   const resp = await fetch(`${fetchPath}/api/friends/getSent`, {

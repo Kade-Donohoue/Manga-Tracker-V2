@@ -1,28 +1,26 @@
 import React, { useRef, useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Typography,
-  List,
-  ListItem,
-  ListItemText,
-  Box,
-  IconButton,
-  Tooltip,
-  Menu,
-  MenuItem,
-} from '@mui/material';
-import Avatar from '@mui/material/Avatar';
-import AvatarGroup from '@mui/material/AvatarGroup';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-
-import { friend, mangaDetails } from '../../types'; // Update path if needed
+import { mangaDetails } from '../../types';
 import { fetchPath } from '../../vars';
 import { toast } from 'react-toastify';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
+import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import Avatar from '@mui/material/Avatar';
+import AvatarGroup from '@mui/material/AvatarGroup';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 interface SeriesModalProps {
   open: boolean;

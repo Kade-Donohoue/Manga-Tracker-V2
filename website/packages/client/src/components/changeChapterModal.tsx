@@ -1,11 +1,16 @@
 import React from 'react';
 import { dropdownOption, mangaDetails } from '../types';
-import { Modal, Box, Button, SvgIcon, Stack, TextField } from '@mui/material';
-import CancelIcon from '@mui/icons-material/Cancel';
 import Select from 'react-select';
 import { toast } from 'react-toastify';
 import { fetchPath } from '../vars';
 import { useQueryClient } from '@tanstack/react-query';
+
+import Modal from '@mui/material/Modal';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import SvgIcon from '@mui/material/SvgIcon';
+import Stack from '@mui/material/Stack';
+import CancelIcon from '@mui/icons-material/Cancel';
 
 interface ChangeChapterModalProps {
   open: boolean;

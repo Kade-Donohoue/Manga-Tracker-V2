@@ -1,4 +1,7 @@
-import { Card, CardActionArea, CardContent, Skeleton } from '@mui/material';
+import Card from '@mui/material/Card';
+import CardActionArea from '@mui/material/CardActionArea';
+import CardContent from '@mui/material/CardContent';
+import Skeleton from '@mui/material/Skeleton';
 
 const SkeletonCard = () => (
   <Card sx={{ width: 320, height: 350, backgroundColor: 'black', color: 'white' }}>

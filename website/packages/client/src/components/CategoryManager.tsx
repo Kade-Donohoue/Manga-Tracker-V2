@@ -16,23 +16,22 @@ import { CSS } from '@dnd-kit/utilities';
 import { useEffect, useRef, useState } from 'react';
 import type { categoryOption } from '../types';
 
-import {
-  Box,
-  TextField,
-  Checkbox,
-  FormControlLabel,
-  IconButton,
-  Button,
-  Grid,
-  Skeleton,
-} from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchPath } from '../vars';
 import { debounce } from '../utils';
 import { toast } from 'react-toastify';
 import { useUserCategories } from '../hooks/useUserCategories';
+
+import Box from '@mui/material/Box';
+import TextField from '@mui/material/TextField';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import IconButton from '@mui/material/IconButton';
+import Button from '@mui/material/Button';
+import Grid from '@mui/material/Grid';
+import Skeleton from '@mui/material/Skeleton';
+import DeleteIcon from '@mui/icons-material/Delete';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 
 const SortableItem = ({
   item,

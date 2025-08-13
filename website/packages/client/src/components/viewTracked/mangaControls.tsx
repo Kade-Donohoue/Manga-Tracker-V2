@@ -1,9 +1,13 @@
 // src/components/MangaControls.tsx
 import React, { ChangeEvent } from 'react';
-import { TextField, Box, FormControlLabel, Checkbox } from '@mui/material';
 import Select from 'react-select';
 import { dropdownOption } from '../../types';
 import { customStyles } from '../../styled';
+
+import TextField from '@mui/material/TextField';
+import Box from '@mui/material/Box';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
 
 interface MangaControlsProps {
   currentSearch: string;

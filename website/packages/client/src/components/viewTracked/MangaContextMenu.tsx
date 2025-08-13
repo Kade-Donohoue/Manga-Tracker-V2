@@ -1,6 +1,8 @@
 // src/components/MangaContextMenu.tsx
 import React from 'react';
-import { Menu, MenuItem } from '@mui/material';
+
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
 
 interface MangaContextMenuProps {
   anchorPosition: { top: number; left: number } | null;

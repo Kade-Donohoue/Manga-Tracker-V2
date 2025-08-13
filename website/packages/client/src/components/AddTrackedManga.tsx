@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
-import { dropdownOption, mangaDetails } from '../types';
-import { Modal, Box, Button, SvgIcon } from '@mui/material';
+import { dropdownOption } from '../types';
 import CancelIcon from '@mui/icons-material/Cancel';
 import Select, { StylesConfig } from 'react-select';
 import { toast } from 'react-toastify';
 import { fetchPath } from '../vars';
 import { useQueryClient } from '@tanstack/react-query';
 import { useUserCategories } from '../hooks/useUserCategories';
+
+import Modal from '@mui/material/Modal';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import SvgIcon from '@mui/material/SvgIcon';
 
 interface ChangeChapterModalProps {
   open: boolean;
@@ -16,9 +20,9 @@ interface ChangeChapterModalProps {
     mangaId: string;
     urlBase: string;
     slugList: string[];
-    chapterTextList: string[]
-  } | null,
-  friendId: string
+    chapterTextList: string[];
+  } | null;
+  friendId: string;
 }
 
 const modalStyle = {
@@ -58,14 +62,16 @@ export default function AddTrackedManga({
   open,
   onClose,
   manga,
-  friendId
+  friendId,
 }: ChangeChapterModalProps) {
   const queryClient = useQueryClient();
 
   const [newChapter, setChapter] = React.useState<dropdownOption | null>(null);
 
   const { data: catOptions, isLoading: isLoadingCats, isError } = useUserCategories();
-  const [selectedCat, setSelectedCat] = useState<dropdownOption | null>(catOptions ? catOptions[0] : null);
+  const [selectedCat, setSelectedCat] = useState<dropdownOption | null>(
+    catOptions ? catOptions[0] : null
+  );
 
   React.useEffect(() => {
     if (manga) {
@@ -110,7 +116,7 @@ export default function AddTrackedManga({
           mangaId: manga.mangaId,
           index: index,
           currentChap: manga.chapterTextList[index],
-          userCat: selectedCat?.value
+          userCat: selectedCat?.value,
         }),
       });
 
@@ -118,7 +124,7 @@ export default function AddTrackedManga({
         queryClient.invalidateQueries({ queryKey: ['userManga'] });
         queryClient.invalidateQueries({ queryKey: [friendId] });
 
-        const replyBody: {message: string} = await reply.json()
+        const replyBody: { message: string } = await reply.json();
 
         toast.update(notif, {
           render: replyBody.message,
@@ -156,26 +162,24 @@ export default function AddTrackedManga({
       aria-describedby="chap-modal-description"
     >
       <Box sx={{ width: '80vw', ...modalStyle }}>
-        <h1 style={{ color: 'white' }}>
-          {manga.mangaName}
-        </h1>
+        <h1 style={{ color: 'white' }}>{manga.mangaName}</h1>
         <h2 id="chap-modal-title" style={{ color: 'white' }}>
           Select the Last Chapter You’ve Read
         </h2>
-        Chapter: 
+        Chapter:
         <Select
           name="chap"
           id="chap"
           className="chapSelect"
           value={newChapter}
           onChange={setChapter}
-          options={manga
-            ?.chapterTextList.slice()
+          options={manga?.chapterTextList
+            .slice()
             .reverse()
             .map((text) => ({ value: text, label: text }))}
           styles={customStyles}
         />
-        Category: 
+        Category:
         <Select
           name="categories"
           id="cat-select"
@@ -186,7 +190,6 @@ export default function AddTrackedManga({
           styles={customStyles as StylesConfig<dropdownOption, false>}
           isSearchable={false}
         />
-
         <Button
           onClick={() => {
             addExistingManga();
@@ -199,7 +202,6 @@ export default function AddTrackedManga({
         >
           Submit
         </Button>
-
         <SvgIcon
           onClick={onClose}
           sx={{ position: 'absolute', top: 10, right: 10, cursor: 'pointer' }}

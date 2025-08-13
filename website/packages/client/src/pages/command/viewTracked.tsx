@@ -1,8 +1,5 @@
 import React, { useRef, useState, useMemo } from 'react';
 import Fuse from 'fuse.js';
-import { Box, Card, CardActionArea, Fade, IconButton, useTheme } from '@mui/material';
-import AddCircleOutlinedIcon from '@mui/icons-material/AddCircleOutlined';
-import { KeyboardArrowDown, KeyboardArrowUp } from '@mui/icons-material';
 import { dropdownOption, mangaDetails } from '../../types';
 
 import { useUserManga } from '../../hooks/useUserManga';
@@ -17,6 +14,17 @@ import MangaControls from '../../components/viewTracked/mangaControls';
 import SeriesCard from '../../components/viewTracked/SeriesCard';
 import MangaContextMenu from '../../components/viewTracked/MangaContextMenu';
 import { useUserCategories } from '../../hooks/useUserCategories';
+
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import CardActionArea from '@mui/material/CardActionArea';
+import Fade from '@mui/material/Fade';
+import IconButton from '@mui/material/IconButton';
+import { useTheme } from '@mui/material/styles';
+
+import AddCircleOutlinedIcon from '@mui/icons-material/AddCircleOutlined';
+import KeyboardArrowDown from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUp from '@mui/icons-material/KeyboardArrowUp';
 
 const combinedSortOptions: dropdownOption[] = [
   { value: 'mangaName_asc', label: 'Alphabetical (A → Z)' },

@@ -15,21 +15,14 @@ import DesignSystemProvider from './components/DesignSystemProvider';
 import { setFetchPath } from './vars';
 
 import Home from './pages/Home';
-import feed from './pages/command/feed';
 import addManga from './pages/command/addManga';
-import removeManga from './pages/command/removeManga';
 import stats from './pages/command/stats';
 import tracked from './pages/command/viewTracked';
-import addBookmarks from './pages/command/addBookmarks';
 import settings from './pages/settings';
 import friends from './pages/command/friends/friendsContainer';
 
-import HomeIcon from '@mui/icons-material/Home';
-import DynamicFeedIcon from '@mui/icons-material/DynamicFeed';
 import ArtTrackIcon from '@mui/icons-material/ArtTrack';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
-import UploadFileIcon from '@mui/icons-material/UploadFile';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import AnalyticsIcon from '@mui/icons-material/Analytics';
 import BugReportIcon from '@mui/icons-material/BugReport';
 import GroupIcon from '@mui/icons-material/Group';
@@ -37,7 +30,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import MenuIcon from '@mui/icons-material/Menu';
 
 import * as S from './AppStyles';
-import { IconButton } from '@mui/material';
+import IconButton from '@mui/material/IconButton';
 import { RedirectToSignIn, SignedIn, SignedOut, SignIn, SignUp } from '@clerk/clerk-react';
 import CookieBanner from './components/cookies';
 import { queryClient } from './queryClient';

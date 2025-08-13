@@ -16,5 +16,11 @@ module.exports = {
     rules: {
         indent: ['error', 2],
         'prettier/prettier': ['error', { tabWidth: 2 }],
+        "no-restricted-imports": [
+            "error",
+            {
+                "patterns": [{ "regex": "^@mui/[^/]+$" }]
+            }
+        ]
     },
 };

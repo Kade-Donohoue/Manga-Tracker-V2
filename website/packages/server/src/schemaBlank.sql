@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS friends (
 CREATE TABLE IF NOT EXISTS userData (
     userID TEXT NOT NULL,
     mangaId TEXT NOT NULL,
+    userTitle Text,
     currentIndex INTEGER NOT NULL,
     currentChap REAL NOT NULL,
     userCat TEXT NOT NULL,

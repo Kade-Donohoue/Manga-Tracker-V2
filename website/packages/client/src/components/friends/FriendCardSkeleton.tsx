@@ -1,14 +1,12 @@
-import {
-  Card,
-  CardActionArea,
-  CardHeader,
-  CardActions,
-  Avatar,
-  IconButton,
-  Skeleton,
-  Box,
-} from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import Card from '@mui/material/Card';
+import CardActionArea from '@mui/material/CardActionArea';
+import CardHeader from '@mui/material/CardHeader';
+import CardActions from '@mui/material/CardActions';
+import Avatar from '@mui/material/Avatar';
+import IconButton from '@mui/material/IconButton';
+import Skeleton from '@mui/material/Skeleton';
+import Box from '@mui/material/Box';
 
 export default function FriendCardSkeleton() {
   return (

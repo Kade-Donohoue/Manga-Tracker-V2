@@ -1,13 +1,17 @@
-import { Avatar, Button, Card, CardActions, CardHeader } from '@mui/material';
-import IconButton from '@mui/material/IconButton';
-
-import CloseIcon from '@mui/icons-material/Close';
-import CheckIcon from '@mui/icons-material/Check';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { timeAgo } from '../../utils';
 import { toast } from 'react-toastify';
 import { fetchPath } from '../../vars';
 import { useQueryClient } from '@tanstack/react-query';
+
+import Avatar from '@mui/material/Avatar';
+import Button from '@mui/material/Button';
+import Card from '@mui/material/Card';
+import CardActions from '@mui/material/CardActions';
+import CardHeader from '@mui/material/CardHeader';
+import IconButton from '@mui/material/IconButton';
+import CloseIcon from '@mui/icons-material/Close';
+import CheckIcon from '@mui/icons-material/Check';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 export default function FriendIncommingCard(userData: {
   userId: string;

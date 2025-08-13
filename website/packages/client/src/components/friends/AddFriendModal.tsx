@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
-import { Modal, Box, Button, SvgIcon } from '@mui/material';
 import CancelIcon from '@mui/icons-material/Cancel';
 import { toast } from 'react-toastify';
 import { useQueryClient } from '@tanstack/react-query';
 import { fetchPath } from '../../vars';
 import { modalStyle } from '../../AppStyles';
+
+import Modal from '@mui/material/Modal';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import SvgIcon from '@mui/material/SvgIcon';
 
 interface addFriendModalProps {
   open: boolean;

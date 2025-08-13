@@ -1,12 +1,16 @@
 import React from 'react';
-import { Modal, Box, Button, SvgIcon } from '@mui/material';
-import CancelIcon from '@mui/icons-material/Cancel';
 import Select from 'react-select';
 import { toast } from 'react-toastify';
 import { fetchPath } from '../vars';
 import { dropdownOption, mangaDetails } from '../types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useUserCategories } from '../hooks/useUserCategories';
+
+import Modal from '@mui/material/Modal';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import SvgIcon from '@mui/material/SvgIcon';
+import CancelIcon from '@mui/icons-material/Cancel';
 
 interface ChangeCategoryModalProps {
   open: boolean;
