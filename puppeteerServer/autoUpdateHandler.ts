@@ -2,7 +2,6 @@ import { Job } from 'bullmq';
 import config from './config.json';
 import { comickGetWorker, comickQueue, getQueue, mainGetWorker } from './jobQueue';
 import { dataType, fetchData, updateCollector } from './types';
-import fs from 'fs';
 import { validMangaCheck } from './util';
 
 export function startAutoUpdate() {
@@ -46,8 +45,6 @@ async function updateAllManga() {
     console.log(`Starting to Fetch ${returnData.length} Manga!`);
     // console.log(returnData)
     let batchId = Date.now();
-
-    fs.writeFileSync('output.json', JSON.stringify(returnData), 'utf-8');
 
     dataCollector.set(batchId, {
       batchId: batchId,
@@ -213,6 +210,10 @@ function logArrayDifferences(oldArr, newArr) {
 
 async function mangaFailedEvent(job: Job) {
   if (!job.data.update) return;
+
+  if (job.attemptsMade < (job.opts.attempts ?? 1)) {
+    return;
+  }
 
   const batch = dataCollector.get(job.data.batchId);
   if (!batch) {

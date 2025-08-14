@@ -40,7 +40,6 @@ export function createWorkers() {
   return { mainGetWorker, comickGetWorker };
 }
 
-
 let browser: Browser | null = null;
 export async function getBrowser() {
   if (!browser) {
