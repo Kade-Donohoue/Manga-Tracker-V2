@@ -147,6 +147,7 @@ export async function getManga(
       currentIndex: currIndex,
       iconBuffer: resizedImage,
       newCoverImageIndex: 0,
+      specialFetchData: null,
     };
   } catch (err) {
     job.log(logWithTimestamp(`Error: ${err}`));

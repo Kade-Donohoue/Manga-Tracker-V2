@@ -123,6 +123,7 @@ export const updateData = z.array(
     chapterTextList: z.string(),
     newChapterCount: z.coerce.number(),
     currentIndex: z.coerce.string(),
+    specialFetchData: z.any().nullable(),
     iconBuffer: z
       .object({
         type: z.literal('Buffer'),
