@@ -17,6 +17,7 @@ export interface Env {
   PUPPETEER_SERVER: string;
   SERVER_PASSWORD: string;
   CLERK_SECRET_KEY: string;
+  NOTIF_WEBHOOK_URLS: string;
 }
 
 export const mangaDataRow = z.object({

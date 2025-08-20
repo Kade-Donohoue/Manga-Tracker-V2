@@ -2,7 +2,7 @@ import { Job } from 'bullmq';
 import config from './config.json';
 import { comickGetWorker, comickQueue, getQueue, mainGetWorker } from './jobQueue';
 import { dataType, fetchData, updateCollector } from './types';
-import { validMangaCheck } from './util';
+import { validMangaCheck, sendNotif } from './util';
 
 export function startAutoUpdate() {
   comickGetWorker.on('completed', mangaCompleteFuction);
@@ -31,7 +31,16 @@ async function updateAllManga() {
       },
     });
     if (config.logging.verboseLogging) console.log(resp);
-    if (resp.status != 200) return console.log('issue fetching data to update all manga:');
+    if (resp.status != 200) {
+      if (config.notif.updateFetchFailureNotif) {
+        await sendNotif(
+          'Failed to get update Data!',
+          `Encountered Error ${resp.status}:${resp.statusText}, Check Puppeteer Logs!`
+        );
+      }
+
+      return console.log('issue fetching data to update all manga:');
+    }
 
     const returnData: {
       mangaId: string;
@@ -215,6 +224,10 @@ async function mangaFailedEvent(job: Job) {
     return;
   }
 
+  if (config.notif.mangaFailureNotif) {
+    await sendNotif(`Manga Failed!`, `A Job Has Failed!, jobId: ${job.id}`);
+  }
+
   const batch = dataCollector.get(job.data.batchId);
   if (!batch) {
     console.warn(`Batch ${job.data.batchId} not found for failed job ${job.id}`);
@@ -249,11 +262,21 @@ async function sendUpdate(batch: updateCollector) {
       }),
     });
 
-    if (!resp.ok) console.warn(resp);
-    else
-      console.log(
-        `${batch.batchData.newData.length} / ${batch.batchData.completedCount} Manga Update Saved With ${batch.batchData.newChapterCount} New Chapters!`
-      );
+    if (!resp.ok) {
+      if (config.notif.batchFailureNotif) {
+        await sendNotif(
+          `Failed to send update Data!`,
+          `Encountered Error ${resp.status}:${resp.statusText}, Check Puppeteer Logs!`
+        );
+      }
+      console.warn(resp);
+    } else {
+      const successMessage = `${batch.batchData.newData.length} / ${batch.batchData.completedCount} Manga Update Saved With ${batch.batchData.newChapterCount} New Chapters!`;
+      if (config.notif.batchSuccessNotif) {
+        await sendNotif(`Puppeteer: Successfully sent update Data!`, successMessage);
+      }
+      console.log(successMessage);
+    }
 
     for (let i = 0; i < batch.batchData.newData.length; i++) {
       if (!batch.batchData.newData[i].iconBuffer) continue;
