@@ -187,7 +187,7 @@ var body = { userCat: '', urls: [] };
 export type getMangaType = z.infer<typeof mangaIdSchema>;
 
 export const addMangaSchema = z.object({
-  urls: z.coerce.string().array().min(1),
+  urls: z.array(z.coerce.string()).min(1),
   userCat: z.coerce.string().min(1),
 });
 

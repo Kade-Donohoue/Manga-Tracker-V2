@@ -8,9 +8,7 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     base: './',
     define: {
-      'process.env': {
-        VITE_SERVER_URL: env.VITE_SERVER_URL,
-      },
+      VITE_SERVER_URL: JSON.stringify(env.VITE_SERVER_URL),
     },
     envDir: '../../',
     build: {
@@ -26,12 +24,12 @@ export default defineConfig(({ mode }) => {
           ws: true,
         },
       },
-      host: '0.0.0.0',  // Allow external access through cloudflared
-      port: 3000,  // Main app still runs on 5173
+      host: '0.0.0.0', // Allow external access through cloudflared
+      port: 3000, // Main app still runs on 5173
       hmr: {
-        protocol: 'wss',  // WebSocket over HTTPS
-        host: 'devmanga.kdonohoue.com',  // Cloudflare tunnel domain
-        clientPort: 443,  // Client (browser) connects to port 443
+        protocol: 'wss', // WebSocket over HTTPS
+        host: 'devmanga.kdonohoue.com', // Cloudflare tunnel domain
+        // clientPort: 443, // Client (browser) connects to port 443
       },
     },
   };
