@@ -30,20 +30,20 @@ const SetUserTitleModal: React.FC<SetUserTitleModalProps> = ({ open, onClose, ma
       const titleBox = document.getElementById('titleInput') as HTMLInputElement | null;
       let title: string | null = titleBox?.value || null;
 
-      // if (!title) {
-      //   toast.update(notif, {
-      //     render: 'No Title Provided!',
-      //     type: 'error',
-      //     isLoading: false,
-      //     autoClose: 5000,
-      //     hideProgressBar: false,
-      //     closeOnClick: true,
-      //     draggable: true,
-      //     progress: 0,
-      //   });
-      //   setIsLoading(false);
-      //   return;
-      // }
+      if (title?.length ? title.length > 192 : true) {
+        toast.update(notif, {
+          render: 'Title is To Long, max length of 192',
+          type: 'error',
+          isLoading: false,
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          draggable: true,
+          progress: 0,
+        });
+        setIsLoading(false);
+        return;
+      }
 
       const reply = await fetch(`${fetchPath}/api/data/update/userTitle`, {
         method: 'POST',

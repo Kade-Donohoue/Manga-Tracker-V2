@@ -11,6 +11,8 @@ import Button from '@mui/material/Button';
 import SvgIcon from '@mui/material/SvgIcon';
 import Stack from '@mui/material/Stack';
 import CancelIcon from '@mui/icons-material/Cancel';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
 
 interface ChangeChapterModalProps {
   open: boolean;
@@ -62,6 +64,32 @@ export default function ChangeChapterModal({
   const queryClient = useQueryClient();
   const [newChapter, setChapter] = React.useState<dropdownOption | null>(null);
   const [chapterOptions, setChapterOptions] = React.useState<dropdownOption[]>([]);
+
+  const [menuAnchor, setMenuAnchor] = React.useState<null | HTMLElement>(null);
+  const [menuType, setMenuType] = React.useState<'next' | 'prev' | null>(null);
+
+  const handleContextMenu = (event: React.MouseEvent, type: 'next' | 'prev') => {
+    event.preventDefault(); // stop default browser menu
+    setMenuAnchor(event.currentTarget as HTMLElement);
+    setMenuType(type);
+  };
+
+  const handleJump = (amount: number, menuType: 'next' | 'prev' | null) => {
+    if (!newChapter) return setChapter(chapterOptions.at(-1) ?? null);
+
+    const curIndex = chapterOptions.indexOf(newChapter);
+    let newIndex;
+
+    if (menuType === 'prev') {
+      newIndex = (curIndex + amount) % chapterOptions.length;
+    } else {
+      newIndex = newIndex = (curIndex - amount + chapterOptions.length) % chapterOptions.length;
+    }
+
+    setChapter(chapterOptions[newIndex]);
+    setMenuAnchor(null);
+    setMenuType(null);
+  };
 
   React.useEffect(() => {
     if (mangaInfo && mangaId) {
@@ -167,18 +195,29 @@ export default function ChangeChapterModal({
           <h3 id="chap-modal-title" style={{ color: 'white' }}>
             Jump To
           </h3>
-          <Stack direction="row" spacing={1}>
-            <Button variant="outlined" onClick={() => setChapter(chapterOptions.at(-1) ?? null)}>
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ maxWidth: '100%' }}>
+            <Button
+              variant="outlined"
+              onClick={() => setChapter(chapterOptions.at(-1) ?? null)}
+              sx={{
+                flex: '1 1 auto',
+                minWidth: '100px',
+                maxWidth: '150px',
+              }}
+            >
               First
             </Button>
             <Button
               variant="outlined"
               onClick={() => {
-                if (!newChapter) return setChapter(chapterOptions.at(-1) ?? null);
-                const curIndex = chapterOptions.indexOf(newChapter);
-                const newIndex = curIndex + 1 >= chapterOptions.length ? 0 : curIndex + 1;
-                setChapter(chapterOptions[newIndex]);
+                handleJump(1, 'prev');
               }}
+              sx={{
+                flex: '1 1 auto',
+                minWidth: '100px',
+                maxWidth: '150px',
+              }}
+              onContextMenu={(e) => handleContextMenu(e, 'prev')}
             >
               prev
             </Button>
@@ -193,41 +232,39 @@ export default function ChangeChapterModal({
                   ]
                 )
               }
+              sx={{
+                flex: '1 1 auto',
+                minWidth: '100px',
+                maxWidth: '150px',
+              }}
             >
               Current
             </Button>
             <Button
               variant="outlined"
               onClick={() => {
-                if (!newChapter) return setChapter(chapterOptions.at(-1) ?? null);
-                const curIndex = chapterOptions.indexOf(newChapter);
-                const newIndex = curIndex - 1 < 0 ? chapterOptions.length - 1 : curIndex - 1;
-                setChapter(chapterOptions[newIndex]);
+                handleJump(1, 'next');
               }}
+              sx={{
+                flex: '1 1 auto',
+                minWidth: '100px',
+                maxWidth: '150px',
+              }}
+              onContextMenu={(e) => handleContextMenu(e, 'next')}
             >
               next
             </Button>
-            <Button variant="outlined" onClick={() => setChapter(chapterOptions[0])}>
+            <Button
+              variant="outlined"
+              onClick={() => setChapter(chapterOptions[0])}
+              sx={{
+                flex: '1 1 auto',
+                minWidth: '100px',
+                maxWidth: '150px',
+              }}
+            >
               Latest
             </Button>
-            {/* Search for chapter */}
-            {/* <TextField
-              label="Jump to..."
-              variant="outlined"
-              size="small"
-              value={jumpTo}
-              onChange={(e) => setJumpTo(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  const target = chapterOptions.find((opt) => opt.label === jumpTo);
-                  if (target) setChapter(target);
-                }
-              }}
-              sx={{
-                input: { color: 'white' },
-                label: { color: 'white' },
-              }}
-            /> */}
           </Stack>
 
           <Button
@@ -249,6 +286,13 @@ export default function ChangeChapterModal({
         >
           <CancelIcon sx={{ color: 'white' }} />
         </SvgIcon>
+        <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => setMenuAnchor(null)}>
+          {[5, 10, 15, 20, 25].map((amt) => (
+            <MenuItem key={amt} onClick={() => handleJump(amt, menuType)}>
+              {menuType === 'next' ? `Go Forward ${amt}` : `Go Back ${amt}`}
+            </MenuItem>
+          ))}
+        </Menu>
       </Box>
     </Modal>
   );

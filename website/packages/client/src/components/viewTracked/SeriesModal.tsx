@@ -249,7 +249,7 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
             }}
             onClick={() => setTooltipOpen(true)}
           >
-            {manga.mangaName}
+            {manga.userTitle ? manga.userTitle : manga.mangaName}
           </Typography>
         </Tooltip>
       </DialogTitle>

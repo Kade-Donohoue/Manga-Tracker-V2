@@ -23,8 +23,8 @@ const darkTheme = createTheme({
     mode: 'dark',
     primary: indigo,
     background: {
-      default: grey[900],
-      paper: grey[800],
+      default: '#202425ff',
+      paper: '#202425ff',
     },
     text: {
       primary: grey[50],

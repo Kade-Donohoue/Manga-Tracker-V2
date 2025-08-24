@@ -1,4 +1,4 @@
-import { styled } from '@mui/system';
+import { styled, SxProps } from '@mui/system';
 import { Link as RouterLink } from 'react-router-dom';
 import { Box } from '@mui/material';
 
@@ -64,17 +64,17 @@ export const SiteWrapper = styled(Box)(({ theme }) => ({
 }));
 
 // ---- Modal Style ----
-export const modalStyle = (theme: any) => ({
-  position: 'absolute' as 'absolute',
+export const modalStyle: SxProps = {
+  position: 'absolute',
   top: '50%',
   left: '50%',
   transform: 'translate(-50%, -50%)',
-  bgcolor: theme.palette.background.paper,
-  border: `2px solid ${theme.palette.divider}`,
-  borderRadius: '25px',
-  boxShadow: theme.shadows[24],
+  bgcolor: 'background.paper',
+  borderRadius: 2,
+  boxShadow: 24,
   p: 4,
-});
+  width: { xs: '90vw', sm: '75vw' }, // responsive
+};
 
 // import {styled} from './styled';
 // import {Link} from 'react-router-dom';

@@ -44,6 +44,7 @@ const MangaControls: React.FC<MangaControlsProps> = ({
         gap: '12px',
         alignItems: 'center',
         justifyContent: 'center',
+        marginTop: 10,
       }}
     >
       <TextField

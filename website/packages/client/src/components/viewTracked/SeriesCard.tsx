@@ -11,6 +11,8 @@ import CardContent from '@mui/material/CardContent';
 import CardMedia from '@mui/material/CardMedia';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 interface Props {
   data: mangaDetails;
@@ -58,6 +60,7 @@ export default function SeriesCard({
         height: 350,
         backgroundColor: 'black',
         color: 'white',
+        position: 'relative',
       }}
       onContextMenu={(e) => handleContextMenu(e, data.mangaId)}
     >
@@ -137,8 +140,11 @@ export default function SeriesCard({
                 </tr>
               </tbody>
             </table>
-            <Box sx={{ mt: 1 }}>
-              <AvatarGroup max={4} sx={{ justifyContent: 'flex-start' }}>
+            <Box sx={{ mt: 1, position: 'absolute', bottom: 0, left: 0, right: 0 }}>
+              <AvatarGroup
+                max={4}
+                sx={{ justifyContent: 'flex-start', bottom: 8, right: 40, position: 'absolute' }}
+              >
                 {data.sharedFriends
                   .filter((val) => val)
                   .map((friend) => (
@@ -156,6 +162,15 @@ export default function SeriesCard({
           </Box>
         </CardContent>
       </CardActionArea>
+      <IconButton
+        sx={{ bottom: 0, right: 0, position: 'absolute' }}
+        onClick={(e) => {
+          e.stopPropagation();
+          handleContextMenu(e, data.mangaId);
+        }}
+      >
+        <MoreVertIcon />
+      </IconButton>
     </Card>
   );
 }

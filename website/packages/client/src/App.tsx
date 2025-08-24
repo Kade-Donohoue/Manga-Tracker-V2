@@ -36,6 +36,7 @@ import CookieBanner from './components/cookies';
 import { queryClient } from './queryClient';
 import Box from '@mui/material/Box';
 import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 interface CenteredPageProps {
   children: React.ReactNode;
@@ -230,67 +231,106 @@ export function RootedApp() {
   const theme = useTheme();
   const [sideBarExpanded, setSideBarExpanded] = React.useState(true);
   const location = useLocation();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   return (
     <S.SiteWrapper>
-      {/* Sidebar */}
-      <Box
-        sx={{
-          width: sideBarExpanded ? 200 : 65,
-          display: 'flex',
-          flexDirection: 'column',
-          border: '1px solid',
-          borderColor: 'divider',
-          flexShrink: 0,
-          [theme.breakpoints.down('sm')]: { width: '100%' },
-        }}
-      >
-        <IconButton
-          // sx={{ borderRadius: 0 }}
-          onClick={() => setSideBarExpanded(!sideBarExpanded)}
-          sx={{
-            width: '100%',
-            height: 56, // or whatever row height you want
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            borderRadius: 0,
-            mb: 1, // optional margin below
-          }}
-        >
-          <MenuIcon sx={{ fontSize: 30, color: 'white' }} />
-        </IconButton>
+      {/* Sidebar / Bottom Nav */}
+      {!isMobile ? (
+        // Desktop / Tablet Sidebar
         <Box
           sx={{
-            flex: 1, // fills remaining vertical space
-            overflowY: 'auto', // allows scrolling
-            '&::-webkit-scrollbar': { width: 6 },
-            '&::-webkit-scrollbar-thumb': {
-              backgroundColor: 'rgba(255,255,255,0.2)',
-              borderRadius: 3,
-            },
+            width: sideBarExpanded ? 200 : 65,
+            display: 'flex',
+            flexDirection: 'column',
+            border: '1px solid',
+            borderColor: 'divider',
+            flexShrink: 0,
           }}
         >
-          <S.Ul>
-            {Object.values(routes).map((r) => (
-              <S.Li
-                key={r.path}
-                to={r.path}
-                selected={location.pathname === r.path}
-                sx={{
-                  display: { xs: sideBarExpanded ? 'flex' : 'none', sm: 'flex' },
-                }}
-              >
-                <r.icon sx={{ fontSize: 20 }} />
-                {sideBarExpanded && <span>{r.name}</span>}
-              </S.Li>
-            ))}
-          </S.Ul>
+          {/* Collapse Button */}
+          <IconButton
+            onClick={() => setSideBarExpanded(!sideBarExpanded)}
+            sx={{
+              width: '100%',
+              height: 56,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              borderRadius: 0,
+              mb: 1,
+            }}
+          >
+            <MenuIcon sx={{ fontSize: 30, color: 'white' }} />
+          </IconButton>
+
+          {/* Nav Items */}
+          <Box
+            sx={{
+              flex: 1,
+              overflowY: 'auto',
+              '&::-webkit-scrollbar': { width: 6 },
+              '&::-webkit-scrollbar-thumb': {
+                backgroundColor: 'rgba(255,255,255,0.2)',
+                borderRadius: 3,
+              },
+            }}
+          >
+            <S.Ul>
+              {Object.values(routes).map((r) => (
+                <S.Li
+                  key={r.path}
+                  to={r.path}
+                  selected={location.pathname === r.path}
+                  sx={{
+                    display: 'flex',
+                    gap: 1,
+                  }}
+                >
+                  <r.icon sx={{ fontSize: 20 }} />
+                  {sideBarExpanded && <span>{r.name}</span>}
+                </S.Li>
+              ))}
+            </S.Ul>
+          </Box>
         </Box>
-      </Box>
+      ) : (
+        // Mobile Bottom Bar
+        <Box
+          sx={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: 56,
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            display: 'flex',
+            justifyContent: 'space-around',
+            alignItems: 'center',
+            backgroundColor: theme.palette.background.paper,
+            zIndex: 10,
+          }}
+        >
+          {Object.values(routes).map((r) => (
+            <S.Li
+              key={r.path}
+              to={r.path}
+              selected={location.pathname === r.path}
+              sx={{
+                flex: 1,
+                justifyContent: 'center',
+                display: 'flex',
+              }}
+            >
+              <r.icon sx={{ fontSize: 24 }} />
+            </S.Li>
+          ))}
+        </Box>
+      )}
 
       {/* Main Content */}
-      <Box sx={{ flex: 1, overflow: 'auto' }}>
+      <Box sx={{ flex: 1, overflow: 'auto', pb: isMobile ? 7 : 0 }}>
         <Routes>
           {Object.values(routes).map((r) => (
             <Route key={r.path} path={r.path} element={<r.component />} />

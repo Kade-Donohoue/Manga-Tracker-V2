@@ -208,7 +208,7 @@ export const changeMangaCatSchema = z.object({
 
 export const setUserTitleSchema = z.object({
   mangaId: z.coerce.string().uuid(),
-  newTitle: z.coerce.string().nullable(),
+  newTitle: z.coerce.string().max(192).nullable(),
 });
 
 export const updateUserCategoriesSchema = z.object({
