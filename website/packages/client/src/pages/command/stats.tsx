@@ -14,6 +14,7 @@ type StatsResponse = {
     readManga: number;
     readThisMonth: number;
     averagePerDay: number;
+    priorAveragePerDay: number;
   };
   globalStats: {
     mangaCount: number;
@@ -50,6 +51,7 @@ export default function Stats() {
         readManga: -1,
         readThisMonth: -1,
         averagePerDay: -1,
+        priorAveragePerDay: -1,
       },
       globalStats: {
         mangaCount: -1,
@@ -80,7 +82,11 @@ export default function Stats() {
         <StatCard label="Tracked Manga" value={userStats.readManga} />
         <StatCard label="Unread Manga" value={userStats.unreadManga} />
         <StatCard label="Chapters Read (Month)" value={userStats.readThisMonth} />
-        <StatCard label="Average Daily Chapters" value={userStats.averagePerDay} />
+        <StatCard
+          label="Average Daily Chapters"
+          value={userStats.averagePerDay}
+          compareValue={userStats.priorAveragePerDay}
+        />
       </Grid>
 
       <Typography variant="h6" sx={{ mt: 3 }} gutterBottom>

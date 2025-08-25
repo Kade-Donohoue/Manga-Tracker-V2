@@ -341,7 +341,7 @@ export async function userStats(userId: string, env: Env) {
         WITH dailySums AS (
           SELECT DATE(timestamp) AS day, SUM(value) AS totalPerDay
           FROM userStats 
-          WHERE userID = ? AND timestamp > datetime("now", "-30 days")
+          WHERE userID = ? AND timestamp > datetime("now", "-31 days")
           GROUP BY day
         )
         SELECT
@@ -365,7 +365,11 @@ export async function userStats(userId: string, env: Env) {
           FROM userStats
           WHERE type = 'chapsRead' AND timestamp > datetime('now', '-30 days') AND userID = ?) AS readThisMonth,
 
-          (SELECT AVG(totalPerDay) FROM dailySums) AS averagePerDay
+          (SELECT AVG(totalPerDay) FROM dailySums WHERE day >= DATE('now','-30 days')) AS averagePerDay,
+
+          (SELECT AVG(totalPerDay)
+            FROM dailySums
+            WHERE day >= DATE('now','-31 days') AND day < DATE('now')) AS priorAveragePerDay
       `
       ).bind(userId, userId, userId, userId),
       userManga: env.DB.prepare(
@@ -401,6 +405,7 @@ export async function userStats(userId: string, env: Env) {
       trackedChapters: number;
       readThisMonth: number;
       averagePerDay: number;
+      priorAveragePerDay: number;
     };
 
     let unreadManga: number = 0;
