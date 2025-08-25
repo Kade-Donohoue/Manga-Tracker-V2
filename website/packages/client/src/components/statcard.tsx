@@ -16,7 +16,7 @@ export const StatCard = ({
   compareValue?: number | null;
 }) => {
   const hasValue = typeof value === 'number';
-  const hasCompare = typeof compareValue === 'number' && hasValue;
+  const hasCompare = typeof compareValue === 'number' && hasValue && compareValue != value;
 
   const diff = hasCompare && compareValue !== null ? value! - compareValue! : 0;
   const isUp = diff > 0;
@@ -43,60 +43,67 @@ export const StatCard = ({
         <Box textAlign="center" width="100%">
           <Box
             display="flex"
-            alignItems="center"
             justifyContent="center"
+            alignItems="center"
             sx={{ position: 'relative', mb: 0.5 }}
           >
-            <Typography variant="h4" component="div" gutterBottom>
-              {hasValue ? (
-                value!.toLocaleString()
-              ) : (
-                <Skeleton variant="text" height="2.615rem" width="4rem" />
+            <Box display="inline-block" position="relative">
+              <Typography variant="h4" component="div" gutterBottom>
+                {hasValue ? (
+                  value!.toLocaleString()
+                ) : (
+                  <Skeleton variant="text" height="2.615rem" width="4rem" />
+                )}
+              </Typography>
+
+              {hasCompare && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: '35%',
+                    left: '100%', 
+                    transform: 'translateY(-50%)',
+                    ml: 1, 
+                    textAlign: 'center',
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    color={isUp ? 'success.main' : 'error.main'}
+                    sx={{ lineHeight: 1 }}
+                  >
+                    {isUp ? `+${diff.toLocaleString()}` : diff.toLocaleString()}
+                  </Typography>
+
+                  {isUp && (
+                    <ArrowDropUpIcon
+                      color="success"
+                      fontSize="small"
+                      sx={{
+                        position: 'absolute',
+                        bottom: '100%', 
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        mb: -1.5,
+                      }}
+                    />
+                  )}
+                  {isDown && (
+                    <ArrowDropDownIcon
+                      color="error"
+                      fontSize="small"
+                      sx={{
+                        position: 'absolute',
+                        top: '100%',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        mt: -1.5,
+                      }}
+                    />
+                  )}
+                </Box>
               )}
-            </Typography>
-
-            {hasCompare && (
-              <Box
-                sx={{
-                  position: 'absolute',
-                  right: 10,
-                  top: '50%',
-                  transform: 'translateY(-75%)', // keeps number aligned to value center
-                  textAlign: 'center',
-                }}
-              >
-                {/* Number stays fixed at center */}
-                <Typography variant="caption" color={isUp ? 'success.main' : 'error.main'}>
-                  {isUp ? `+${diff.toLocaleString()}` : diff.toLocaleString()}
-                </Typography>
-
-                {/* Arrow floats separately */}
-                {isUp && (
-                  <ArrowDropUpIcon
-                    color="success"
-                    fontSize="small"
-                    sx={{
-                      position: 'absolute',
-                      top: '-0.75rem',
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                    }}
-                  />
-                )}
-                {isDown && (
-                  <ArrowDropDownIcon
-                    color="error"
-                    fontSize="small"
-                    sx={{
-                      position: 'absolute',
-                      bottom: '-0.75rem',
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                    }}
-                  />
-                )}
-              </Box>
-            )}
+            </Box>
           </Box>
 
           <Typography
