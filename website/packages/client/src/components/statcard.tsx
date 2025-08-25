@@ -40,40 +40,13 @@ export const StatCard = ({
           mx: 'auto',
         }}
       >
-        <Box>
+        <Box textAlign="center" width="100%">
           <Box
             display="flex"
             alignItems="center"
             justifyContent="center"
-            gap={0.5}
-            sx={{ mb: 0.5 }}
+            sx={{ position: 'relative', mb: 0.5 }}
           >
-            {hasCompare && (
-              <Box
-                display="flex"
-                flexDirection="column"
-                alignItems="center"
-                justifyContent="center"
-                lineHeight={1}
-              >
-                {isUp ? (
-                  <>
-                    <ArrowDropUpIcon color="success" />
-                    <Typography variant="caption" color="success.main" sx={{ mt: -1.5 }}>
-                      +{diff.toLocaleString()}
-                    </Typography>
-                  </>
-                ) : isDown ? (
-                  <>
-                    <Typography variant="caption" color="error.main" sx={{ mb: -1.5 }}>
-                      {diff.toLocaleString()}
-                    </Typography>
-                    <ArrowDropDownIcon color="error" />
-                  </>
-                ) : null}
-              </Box>
-            )}
-
             <Typography variant="h4" component="div" gutterBottom>
               {hasValue ? (
                 value!.toLocaleString()
@@ -81,6 +54,49 @@ export const StatCard = ({
                 <Skeleton variant="text" height="2.615rem" width="4rem" />
               )}
             </Typography>
+
+            {hasCompare && (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  right: 10,
+                  top: '50%',
+                  transform: 'translateY(-75%)', // keeps number aligned to value center
+                  textAlign: 'center',
+                }}
+              >
+                {/* Number stays fixed at center */}
+                <Typography variant="caption" color={isUp ? 'success.main' : 'error.main'}>
+                  {isUp ? `+${diff.toLocaleString()}` : diff.toLocaleString()}
+                </Typography>
+
+                {/* Arrow floats separately */}
+                {isUp && (
+                  <ArrowDropUpIcon
+                    color="success"
+                    fontSize="small"
+                    sx={{
+                      position: 'absolute',
+                      top: '-0.75rem',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                    }}
+                  />
+                )}
+                {isDown && (
+                  <ArrowDropDownIcon
+                    color="error"
+                    fontSize="small"
+                    sx={{
+                      position: 'absolute',
+                      bottom: '-0.75rem',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                    }}
+                  />
+                )}
+              </Box>
+            )}
           </Box>
 
           <Typography
