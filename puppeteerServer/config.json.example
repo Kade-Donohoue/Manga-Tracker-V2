@@ -1,4 +1,11 @@
 {
+  "notif": {
+    "webhookUrl": "https://example.com/api/webhook/example_key",
+    "batchSuccessNotif": false,
+    "batchFailureNotif": true,
+    "mangaFailureNotif": false,
+    "updateFetchFailureNotif": true
+  },
   "sites": {
     "allowManganatoScans": true,
     "allowMangaDex": true,

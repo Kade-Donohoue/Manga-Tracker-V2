@@ -15,21 +15,14 @@ import DesignSystemProvider from './components/DesignSystemProvider';
 import { setFetchPath } from './vars';
 
 import Home from './pages/Home';
-import feed from './pages/command/feed';
 import addManga from './pages/command/addManga';
-import removeManga from './pages/command/removeManga';
 import stats from './pages/command/stats';
 import tracked from './pages/command/viewTracked';
-import addBookmarks from './pages/command/addBookmarks';
 import settings from './pages/settings';
 import friends from './pages/command/friends/friendsContainer';
 
-import HomeIcon from '@mui/icons-material/Home';
-import DynamicFeedIcon from '@mui/icons-material/DynamicFeed';
 import ArtTrackIcon from '@mui/icons-material/ArtTrack';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
-import UploadFileIcon from '@mui/icons-material/UploadFile';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import AnalyticsIcon from '@mui/icons-material/Analytics';
 import BugReportIcon from '@mui/icons-material/BugReport';
 import GroupIcon from '@mui/icons-material/Group';
@@ -37,10 +30,13 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import MenuIcon from '@mui/icons-material/Menu';
 
 import * as S from './AppStyles';
-import { IconButton } from '@mui/material';
+import IconButton from '@mui/material/IconButton';
 import { RedirectToSignIn, SignedIn, SignedOut, SignIn, SignUp } from '@clerk/clerk-react';
 import CookieBanner from './components/cookies';
 import { queryClient } from './queryClient';
+import Box from '@mui/material/Box';
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 interface CenteredPageProps {
   children: React.ReactNode;
@@ -231,69 +227,116 @@ const routes: Record<string, AppRoute> = {
   },
 };
 
-function RootedApp(): React.ReactElement {
-  React.useEffect(() => {
-    if (import.meta.env.DEV) {
-      setFetchPath('');
-    } else {
-      setFetchPath(import.meta.env.VITE_SERVER_URL);
-    }
-  }, []);
-
-  const [sideBarExpanded, setSideBarExpanded] = React.useState<boolean>(true);
-
+export function RootedApp() {
+  const theme = useTheme();
+  const [sideBarExpanded, setSideBarExpanded] = React.useState(true);
   const location = useLocation();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   return (
     <S.SiteWrapper>
-      <Scrollable.Root
-        css={{
-          border: '1px solid black',
-          height: '100%',
-          width: sideBarExpanded ? '200px' : '65px',
-          '@small': { height: sideBarExpanded ? '200px' : '50px', width: '100%' },
-          '@xsmall': { height: sideBarExpanded ? '100%' : '40px', width: '100%' },
-        }}
-      >
-        <Scrollable.Viewport>
-          <S.Ul>
-            <IconButton
-              sx={{ borderRadius: 0 }}
-              onClick={(e) => setSideBarExpanded(!sideBarExpanded)}
+      {/* Sidebar / Bottom Nav */}
+      {!isMobile ? (
+        // Desktop / Tablet Sidebar
+        <Box
+          sx={{
+            width: sideBarExpanded ? 200 : 65,
+            display: 'flex',
+            flexDirection: 'column',
+            border: '1px solid',
+            borderColor: 'divider',
+            flexShrink: 0,
+          }}
+        >
+          {/* Collapse Button */}
+          <IconButton
+            onClick={() => setSideBarExpanded(!sideBarExpanded)}
+            sx={{
+              width: '100%',
+              height: 56,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              borderRadius: 0,
+              mb: 1,
+            }}
+          >
+            <MenuIcon sx={{ fontSize: 30, color: 'white' }} />
+          </IconButton>
+
+          {/* Nav Items */}
+          <Box
+            sx={{
+              flex: 1,
+              overflowY: 'auto',
+              '&::-webkit-scrollbar': { width: 6 },
+              '&::-webkit-scrollbar-thumb': {
+                backgroundColor: 'rgba(255,255,255,0.2)',
+                borderRadius: 3,
+              },
+            }}
+          >
+            <S.Ul>
+              {Object.values(routes).map((r) => (
+                <S.Li
+                  key={r.path}
+                  to={r.path}
+                  selected={location.pathname === r.path}
+                  sx={{
+                    display: 'flex',
+                    gap: 1,
+                  }}
+                >
+                  <r.icon sx={{ fontSize: 20 }} />
+                  {sideBarExpanded && <span>{r.name}</span>}
+                </S.Li>
+              ))}
+            </S.Ul>
+          </Box>
+        </Box>
+      ) : (
+        // Mobile Bottom Bar
+        <Box
+          sx={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: 56,
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            display: 'flex',
+            justifyContent: 'space-around',
+            alignItems: 'center',
+            backgroundColor: theme.palette.background.paper,
+            zIndex: 10,
+          }}
+        >
+          {Object.values(routes).map((r) => (
+            <S.Li
+              key={r.path}
+              to={r.path}
+              selected={location.pathname === r.path}
+              sx={{
+                flex: 1,
+                justifyContent: 'center',
+                display: 'flex',
+              }}
             >
-              <MenuIcon sx={{ fontSize: 30, align: 'left', color: 'white' }} />
-            </IconButton>
-            {Object.values(routes).map((r) => (
-              <S.Li
-                as={Link}
-                to={r.path}
-                key={r.path}
-                selected={location.pathname === r.path}
-                css={{ '@small': { display: sideBarExpanded ? 'block' : 'none' } }}
-              >
-                <p style={{ display: 'flex', alignItems: 'center', fontSize: 16 }}>
-                  <r.icon sx={{ fontSize: 18, align: 'center' }} />
-                  {sideBarExpanded ? ` ${r.name}` : ''}
-                </p>
-              </S.Li>
-            ))}
-          </S.Ul>
-        </Scrollable.Viewport>
-        <Scrollable.Scrollbar orientation="vertical">
-          <Scrollable.Thumb />
-        </Scrollable.Scrollbar>
-      </Scrollable.Root>
-      <Scrollable.Root css={{ flex: 1 }}>
-        <Scrollable.Viewport css={{ width: '100%' }}>
-          <Routes>
-            {Object.values(routes).map((r) => (
-              <Route key={r.path} path={r.path} element={<r.component />} />
-            ))}
-          </Routes>
-        </Scrollable.Viewport>
-        <Scrollable.Scrollbar orientation="vertical">
-          <Scrollable.Thumb />
-        </Scrollable.Scrollbar>
-      </Scrollable.Root>
+              <r.icon sx={{ fontSize: 24 }} />
+            </S.Li>
+          ))}
+        </Box>
+      )}
+
+      {/* Main Content */}
+      <Box sx={{ flex: 1, overflow: 'auto', pb: isMobile ? 7 : 0 }}>
+        <Routes>
+          {Object.values(routes).map((r) => (
+            <Route key={r.path} path={r.path} element={<r.component />} />
+          ))}
+        </Routes>
+      </Box>
     </S.SiteWrapper>
   );
 }

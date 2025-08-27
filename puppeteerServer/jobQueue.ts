@@ -20,8 +20,8 @@ export const comickQueue = new Queue('Comick Manga Queue', {
   connection,
 });
 
-let mainGetWorker: Worker | null = null;
-let comickGetWorker: Worker | null = null;
+export let mainGetWorker: Worker | null = null;
+export let comickGetWorker: Worker | null = null;
 
 export function createWorkers() {
   mainGetWorker = new Worker('Get Manga Queue', mangaGetProc, {
@@ -39,7 +39,6 @@ export function createWorkers() {
 
   return { mainGetWorker, comickGetWorker };
 }
-
 
 let browser: Browser | null = null;
 export async function getBrowser() {

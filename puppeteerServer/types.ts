@@ -6,6 +6,7 @@ export type fetchData = {
   currentIndex: number;
   iconBuffer: Buffer | null;
   newCoverImageIndex: number;
+  specialFetchData: any;
 };
 
 export type dataType = {
@@ -17,6 +18,7 @@ export type dataType = {
   length: number;
   oldSlugList: string;
   batchId: number;
+  specialFetchData: any;
 };
 
 export type updateCollector = {
@@ -35,6 +37,7 @@ export type updateCollector = {
       mangaId: string;
       newCoverImageIndex: number;
       newChapterCount: number;
+      specialFetchData: any;
     }[];
   };
 };

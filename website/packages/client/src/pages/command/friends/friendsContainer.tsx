@@ -1,19 +1,19 @@
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
-import Box from '@mui/material/Box';
 import React from 'react';
 
 import FriendsPanel from './FriendsPanel';
 
-import ArchiveIcon from '@mui/icons-material/Archive';
-import UnarchiveIcon from '@mui/icons-material/Unarchive';
-import GroupIcon from '@mui/icons-material/Group';
 import IncommingFriendsPanel from './IncommingFriendsPanel';
-import { Badge } from '@mui/material';
 import OutgoingFriendsPanel from './OutgoingFriendsPanel';
 import { useQuery } from '@tanstack/react-query';
 import { fetchPath } from '../../../vars';
-import { toast } from 'react-toastify';
+
+import Badge from '@mui/material/Badge';
+import ArchiveIcon from '@mui/icons-material/Archive';
+import UnarchiveIcon from '@mui/icons-material/Unarchive';
+import GroupIcon from '@mui/icons-material/Group';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+import Box from '@mui/material/Box';
 
 function TabPanel({
   value,
@@ -73,7 +73,8 @@ export default function friends() {
       >
         <Tab
           icon={
-            <Badge badgeContent={data?.data.friendCount} color="primary">
+            <Badge badgeContent={0} color="primary">
+              {/*data?.data.friendCount*/}
               <GroupIcon />
             </Badge>
           }

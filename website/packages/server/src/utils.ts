@@ -110,9 +110,41 @@ export async function zodParse<T extends ZodSchema<any>>(
   }
 }
 
+/**
+ * Extracts a numeric value from the first object in an array by a specified key.
+ *
+ * @template T - The key type, constrained to string.
+ * @param res - An array of unknown objects to search.
+ * @param key - The property name to extract from the first object in the array.
+ * @param fallback - A default value to return if the key does not exist or the value is not a number (default is 0).
+ * @returns The numeric value corresponding to the key in the first object, or the fallback if unavailable.
+ *
+ * @example
+ * const data = [{ count: 5, name: 'Item' }];
+ * const value = extractValue(data, 'count'); // returns 5
+ *
+ * const emptyData: any[] = [];
+ * const value2 = extractValue(emptyData, 'count', 10); // returns 10
+ */
 export function extractValue<T extends string>(res: unknown[], key: T, fallback = 0): number {
   if (res && res.length && typeof (res[0] as any)[key] === 'number') {
     return (res[0] as Record<T, number>)[key];
   }
   return fallback;
+}
+
+export async function sendNotif(title: string, message: string, env: Env) {
+  const webhookUrls = env.NOTIF_WEBHOOK_URLS.split(',');
+  const results = await Promise.allSettled(
+    webhookUrls.map((url) =>
+      fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: 'Server: ' + title,
+          content: message,
+        }),
+      })
+    )
+  );
 }

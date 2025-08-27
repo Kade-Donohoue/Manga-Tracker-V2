@@ -1,24 +1,4 @@
 import React, { useState } from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  Typography,
-  Box,
-  IconButton,
-  Tooltip,
-  Menu,
-  MenuItem,
-  Card,
-  Grid,
-  CardMedia,
-  CardActionArea,
-  CardContent,
-  SvgIcon,
-} from '@mui/material';
-import Avatar from '@mui/material/Avatar';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import CancelIcon from '@mui/icons-material/Cancel';
 
 import { friend, mangaDetails } from '../../types'; // Update path if needed
 import { fetchPath } from '../../vars';
@@ -26,8 +6,25 @@ import { toast } from 'react-toastify';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { StatCard } from '../statcard';
 import AddTrackedManga from '../AddTrackedManga';
-import { Flag } from '@mui/icons-material';
-import { error } from 'console';
+
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import Card from '@mui/material/Card';
+import Grid from '@mui/material/Grid';
+import CardMedia from '@mui/material/CardMedia';
+import CardActionArea from '@mui/material/CardActionArea';
+import CardContent from '@mui/material/CardContent';
+import SvgIcon from '@mui/material/SvgIcon';
+import Avatar from '@mui/material/Avatar';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import CancelIcon from '@mui/icons-material/Cancel';
 
 interface friendModalProps {
   open: boolean;

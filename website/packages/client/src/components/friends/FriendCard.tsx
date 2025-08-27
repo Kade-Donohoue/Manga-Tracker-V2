@@ -1,22 +1,21 @@
-import {
-  Avatar,
-  Card,
-  CardActionArea,
-  CardActions,
-  CardHeader,
-  IconButton,
-  MenuItem,
-  Menu,
-} from '@mui/material';
-import Box from '@mui/material/Box';
-import React from 'react';
-
-import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { friend } from '../../types';
 import { fetchPath } from '../../vars';
 import { toast } from 'react-toastify';
+
+import Box from '@mui/material/Box';
+import React from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import ConfirmRemoveDialog from '../ConfirmRemoveDialog';
+
+import Avatar from '@mui/material/Avatar';
+import Card from '@mui/material/Card';
+import CardActionArea from '@mui/material/CardActionArea';
+import CardActions from '@mui/material/CardActions';
+import CardHeader from '@mui/material/CardHeader';
+import IconButton from '@mui/material/IconButton';
+import MenuItem from '@mui/material/MenuItem';
+import Menu from '@mui/material/Menu';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 export default function FriendCard({
   friend,

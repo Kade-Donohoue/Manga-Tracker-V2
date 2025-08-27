@@ -1,7 +1,4 @@
-import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { toast } from 'react-toastify';
-// import './stats.css';
 import { fetchPath } from '../../vars';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -10,20 +7,21 @@ import { StatCard } from '../../components/statcard';
 
 type StatsResponse = {
   userStats: {
-    readChapters: number;
-    trackedChapters: number;
-    chaptersUnread: number;
-    unreadManga: number;
-    readManga: number;
-    readThisMonth: number;
-    averagePerDay: number;
+    readChapters: number | null;
+    trackedChapters: number | null;
+    chaptersUnread: number | null;
+    unreadManga: number | null;
+    readManga: number | null;
+    readThisMonth: number | null;
+    averagePerDay: number | null;
+    priorAveragePerDay: number | null;
   };
   globalStats: {
-    mangaCount: number;
-    trackedChapters: number;
-    newManga: number;
-    newChapters: number;
-    readThisMonth: number;
+    mangaCount: number | null;
+    trackedChapters: number | null;
+    newManga: number | null;
+    newChapters: number | null;
+    readThisMonth: number | null;
   };
 };
 
@@ -46,20 +44,21 @@ export default function Stats() {
     queryFn: fetchUserMangaStats,
     placeholderData: {
       userStats: {
-        readChapters: -1,
-        trackedChapters: -1,
-        chaptersUnread: -1,
-        unreadManga: -1,
-        readManga: -1,
-        readThisMonth: -1,
-        averagePerDay: -1,
+        readChapters: null,
+        trackedChapters: null,
+        chaptersUnread: null,
+        unreadManga: null,
+        readManga: null,
+        readThisMonth: null,
+        averagePerDay: null,
+        priorAveragePerDay: null,
       },
       globalStats: {
-        mangaCount: -1,
-        trackedChapters: -1,
-        newManga: -1,
-        newChapters: -1,
-        readThisMonth: -1,
+        mangaCount: null,
+        trackedChapters: null,
+        newManga: null,
+        newChapters: null,
+        readThisMonth: null,
       },
     },
     meta: {
@@ -83,7 +82,11 @@ export default function Stats() {
         <StatCard label="Tracked Manga" value={userStats.readManga} />
         <StatCard label="Unread Manga" value={userStats.unreadManga} />
         <StatCard label="Chapters Read (Month)" value={userStats.readThisMonth} />
-        <StatCard label="Average Daily Chapters" value={userStats.averagePerDay} />
+        <StatCard
+          label="Average Daily Chapters"
+          value={userStats.averagePerDay}
+          compareValue={userStats.priorAveragePerDay}
+        />
       </Grid>
 
       <Typography variant="h6" sx={{ mt: 3 }} gutterBottom>

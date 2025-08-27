@@ -1,13 +1,17 @@
-import { Avatar, Button, Card, CardActions, CardHeader } from '@mui/material';
-import IconButton from '@mui/material/IconButton';
-
-import CloseIcon from '@mui/icons-material/Close';
-import CheckIcon from '@mui/icons-material/Check';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { timeAgo } from '../../utils';
 import { toast } from 'react-toastify';
 import { fetchPath } from '../../vars';
 import { useQueryClient } from '@tanstack/react-query';
+
+import Avatar from '@mui/material/Avatar';
+import Button from '@mui/material/Button';
+import Card from '@mui/material/Card';
+import CardActions from '@mui/material/CardActions';
+import CardHeader from '@mui/material/CardHeader';
+import IconButton from '@mui/material/IconButton';
+import CloseIcon from '@mui/icons-material/Close';
+import CheckIcon from '@mui/icons-material/Check';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 export default function FriendIncommingCard(userData: {
   userId: string;
@@ -19,7 +23,7 @@ export default function FriendIncommingCard(userData: {
   const queryClient = useQueryClient();
 
   async function updateRequest(requestId: number, newStatus: string) {
-    const notif = toast.loading('Sending Request!', { closeOnClick: true, draggable: true });
+    const notif = toast.loading('Accepting Request!', { closeOnClick: true, draggable: true });
 
     const results = await fetch(`${fetchPath}/api/friends/updateStatus`, {
       method: 'POST',

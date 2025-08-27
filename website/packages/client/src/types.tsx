@@ -28,6 +28,7 @@ export interface mangaDetails {
   interactTime: number;
   imageIndexes: number[];
   currentChap: number;
+  userTitle: string | null;
   sharedFriends: {
     userID: string;
     avatarUrl: string;

@@ -1,18 +1,18 @@
 import React from 'react';
-import {
-  Box,
-  Card,
-  CardActionArea,
-  CardContent,
-  CardMedia,
-  Tooltip,
-  Typography,
-} from '@mui/material';
 import { categoryOption, dropdownOption, mangaDetails } from '../../types';
 import { fetchPath } from '../../vars';
 
 import Avatar from '@mui/material/Avatar';
 import AvatarGroup from '@mui/material/AvatarGroup';
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import CardActionArea from '@mui/material/CardActionArea';
+import CardContent from '@mui/material/CardContent';
+import CardMedia from '@mui/material/CardMedia';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 interface Props {
   data: mangaDetails;
@@ -27,7 +27,6 @@ export default function SeriesCard({
   openMangaOverview,
   catOptions,
 }: Props) {
-
   const findCat = (catVal: string): dropdownOption => {
     return (
       catOptions?.find((cat) => cat.value === catVal) || {
@@ -61,6 +60,7 @@ export default function SeriesCard({
         height: 350,
         backgroundColor: 'black',
         color: 'white',
+        position: 'relative',
       }}
       onContextMenu={(e) => handleContextMenu(e, data.mangaId)}
     >
@@ -89,7 +89,7 @@ export default function SeriesCard({
         >
           {/* Title */}
           <Box sx={{ overflow: 'hidden' }}>
-            <Tooltip title={data.mangaName} enterDelay={700}>
+            <Tooltip title={data.userTitle ? data.userTitle : data.mangaName} enterDelay={700}>
               <Typography
                 gutterBottom
                 variant="h5"
@@ -103,7 +103,7 @@ export default function SeriesCard({
                   maxHeight: '2.6em',
                 }}
               >
-                {data.mangaName}
+                {data.userTitle ? data.userTitle : data.mangaName}
               </Typography>
             </Tooltip>
           </Box>
@@ -140,8 +140,11 @@ export default function SeriesCard({
                 </tr>
               </tbody>
             </table>
-            <Box sx={{ mt: 1 }}>
-              <AvatarGroup max={4} sx={{ justifyContent: 'flex-start' }}>
+            <Box sx={{ mt: 1, position: 'absolute', bottom: 0, left: 0, right: 0 }}>
+              <AvatarGroup
+                max={4}
+                sx={{ justifyContent: 'flex-start', bottom: 8, right: 40, position: 'absolute' }}
+              >
                 {data.sharedFriends
                   .filter((val) => val)
                   .map((friend) => (
@@ -159,6 +162,15 @@ export default function SeriesCard({
           </Box>
         </CardContent>
       </CardActionArea>
+      <IconButton
+        sx={{ bottom: 0, right: 0, position: 'absolute' }}
+        onClick={(e) => {
+          e.stopPropagation();
+          handleContextMenu(e, data.mangaId);
+        }}
+      >
+        <MoreVertIcon />
+      </IconButton>
     </Card>
   );
 }

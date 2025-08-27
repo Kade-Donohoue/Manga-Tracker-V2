@@ -4,8 +4,8 @@
     "start": "npx tsc && node ./dist/app.js"
   },
   "dependencies": {
-    "bullmq": "^5.53.0",
-    "fastify": "^5.4.0",
+    "bullmq": "^5.57.0",
+    "fastify": "^5.5.0",
     "puppeteer": "^24.14.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-adblocker": "^2.13.6",

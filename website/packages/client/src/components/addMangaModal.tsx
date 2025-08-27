@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
-import { Modal, Box, Button, SvgIcon, SxProps, Theme } from '@mui/material';
+
+import Modal from '@mui/material/Modal';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import SvgIcon from '@mui/material/SvgIcon';
+
 import Select, { StylesConfig } from 'react-select';
 import CancelIcon from '@mui/icons-material/Cancel';
+
 import { toast } from 'react-toastify';
 import { useQueryClient } from '@tanstack/react-query';
 import { dropdownOption } from '../types';

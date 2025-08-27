@@ -8,7 +8,17 @@ import { clerkUserSchema, Env, updateDataType } from '../types';
  */
 export async function getAllManga(env: Env) {
   try {
-    const allManga: [{ mangaId: string; urlBase: string; slugList: string; mangaName: string }] = (
+    const allManga: [
+      {
+        mangaId: string;
+        urlBase: string;
+        slugList: string;
+        mangaName: string;
+        maxSavedAt: string;
+        maxCoverIndex: number;
+        specialFetchData: any;
+      }
+    ] = (
       await env.DB.prepare(
         `SELECT 
             m.urlBase,
@@ -16,7 +26,8 @@ export async function getAllManga(env: Env) {
             m.mangaId,
             m.mangaName,
             ci.maxSavedAt,
-            ci.maxCoverIndex
+            ci.maxCoverIndex,
+            m.specialFetchData
         FROM mangaData m
         LEFT JOIN (
             SELECT 
@@ -40,8 +51,18 @@ export async function updateManga(newData: updateDataType, expiresAt: number, en
     console.log(newData);
     await env.KV.put('expiresAt', expiresAt.toString());
     const stmt = env.DB.prepare(
-      'UPDATE mangaData SET urlBase = ?, slugList = ?, chapterTextList = ?, latestChapterText = ? WHERE mangaId = ?'
+      'UPDATE mangaData SET urlBase = ?, slugList = ?, chapterTextList = ?, latestChapterText = ?, specialFetchData = ?, updateTime = ? WHERE mangaId = ?'
     );
+    const currentTime = new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      timeZone: 'America/Los_Angeles',
+      timeZoneName: 'short',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true,
+    });
 
     var boundStmt: D1PreparedStatement[] = [];
     for (var i = 0; i < newData.length; i++) {
@@ -54,6 +75,8 @@ export async function updateManga(newData: updateDataType, expiresAt: number, en
           newData[i].slugList,
           newData[i].chapterTextList,
           newData[i].chapterTextList.slice(newData[i].chapterTextList.lastIndexOf(',') + 1),
+          newData[i].specialFetchData,
+          currentTime,
           newData[i].mangaId
         )
       );
@@ -65,7 +88,11 @@ export async function updateManga(newData: updateDataType, expiresAt: number, en
       );
     }
 
-    await env.DB.batch(boundStmt);
+    const meta = await env.DB.batch(boundStmt);
+
+    meta.forEach((query) => {
+      if (query.error) console.error(query);
+    });
 
     return new Response(JSON.stringify({ message: 'Success' }), { status: 200 });
   } catch (err) {

@@ -17,6 +17,7 @@ export interface Env {
   PUPPETEER_SERVER: string;
   SERVER_PASSWORD: string;
   CLERK_SECRET_KEY: string;
+  NOTIF_WEBHOOK_URLS: string;
 }
 
 export const mangaDataRow = z.object({
@@ -66,6 +67,7 @@ export const mangaDetailsSchema = mangaDataRow.merge(
     currentChap: z.coerce.number(),
     userCat: z.string(),
     interactTime: z.coerce.number().int().min(0),
+    userTitle: z.string().nullable(),
     imageIndexes: imageIndexes,
     sharedFriends: z
       .string()
@@ -122,6 +124,7 @@ export const updateData = z.array(
     chapterTextList: z.string(),
     newChapterCount: z.coerce.number(),
     currentIndex: z.coerce.string(),
+    specialFetchData: z.any().nullable(),
     iconBuffer: z
       .object({
         type: z.literal('Buffer'),
@@ -139,6 +142,7 @@ export const newData = z.object({
   slugList: z.string(),
   chapterTextList: z.string().transform((val) => val.replace(/-/g, '.')),
   currentIndex: z.coerce.number(),
+  specialFetchData: z.any().nullable(),
   iconBuffer: z.object({
     type: z.literal('Buffer'),
     data: z.array(z.number().int().min(0).max(255)),
@@ -183,7 +187,7 @@ var body = { userCat: '', urls: [] };
 export type getMangaType = z.infer<typeof mangaIdSchema>;
 
 export const addMangaSchema = z.object({
-  urls: z.coerce.string().array().min(1),
+  urls: z.array(z.coerce.string()).min(1),
   userCat: z.coerce.string().min(1),
 });
 
@@ -200,6 +204,11 @@ export const updateInteractTimeSchema = z.object({
 export const changeMangaCatSchema = z.object({
   mangaId: z.coerce.string().uuid(),
   newCat: z.coerce.string(),
+});
+
+export const setUserTitleSchema = z.object({
+  mangaId: z.coerce.string().uuid(),
+  newTitle: z.coerce.string().max(192).nullable(),
 });
 
 export const updateUserCategoriesSchema = z.object({
@@ -228,7 +237,8 @@ export const clerkUserSchema = z
   })
   .passthrough();
 
-const friendRecomendationsSchema = z.object({
+const friendRecomendationsSchema = z
+  .object({
     id: z.number(),
     mangaName: z.string().min(1),
     status: z.string(),
@@ -240,18 +250,19 @@ const friendRecomendationsSchema = z.object({
     chapterTextList: z
       .union([z.string(), z.array(z.string())])
       .transform((val) => (typeof val === 'string' ? val.split(',') : val)),
-  }).array()
+  })
+  .array();
 
 export const friendDetailsSchema = z.object({
   recomendations: z.object({
     received: friendRecomendationsSchema,
-    sent: friendRecomendationsSchema
+    sent: friendRecomendationsSchema,
   }),
   stats: z.object({
     readChapters: z.number(),
     trackedChapters: z.number(),
     readThisMonth: z.number(),
     averagePerDay: z.number(),
-  })
+  }),
 });
 // .array();
