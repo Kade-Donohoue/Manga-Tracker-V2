@@ -28,9 +28,9 @@ const SetUserTitleModal: React.FC<SetUserTitleModalProps> = ({ open, onClose, ma
     try {
       setIsLoading(true);
       const titleBox = document.getElementById('titleInput') as HTMLInputElement | null;
-      let title: string | null = titleBox?.value || null;
+      let title: string | null = titleBox?.value.trim() || null;
 
-      if (title?.length ? title.length > 192 : true) {
+      if (title?.length ? title.length > 192 : false) {
         toast.update(notif, {
           render: 'Title is To Long, max length of 192',
           type: 'error',

@@ -23,7 +23,7 @@ export default function FriendIncommingCard(userData: {
   const queryClient = useQueryClient();
 
   async function updateRequest(requestId: number, newStatus: string) {
-    const notif = toast.loading('Sending Request!', { closeOnClick: true, draggable: true });
+    const notif = toast.loading('Accepting Request!', { closeOnClick: true, draggable: true });
 
     const results = await fetch(`${fetchPath}/api/friends/updateStatus`, {
       method: 'POST',

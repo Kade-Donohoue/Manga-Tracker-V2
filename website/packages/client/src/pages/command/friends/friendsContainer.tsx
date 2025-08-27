@@ -73,7 +73,8 @@ export default function friends() {
       >
         <Tab
           icon={
-            <Badge badgeContent={data?.data.friendCount} color="primary">
+            <Badge badgeContent={0} color="primary">
+              {/*data?.data.friendCount*/}
               <GroupIcon />
             </Badge>
           }
