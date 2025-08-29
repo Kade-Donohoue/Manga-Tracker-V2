@@ -81,6 +81,7 @@ export async function updateManga(newData: updateDataType, expiresAt: number, en
         )
       );
 
+      if (newData[i].newChapterCount === 0) continue; //skip it no new manga (ex: slug for chap changed)
       boundStmt.push(
         env.DB.prepare(
           'INSERT INTO mangaStats (type, value, mangaId) VALUES ("chapCount", ?, ?)'
