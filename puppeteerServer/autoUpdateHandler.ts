@@ -225,7 +225,7 @@ async function mangaFailedEvent(job: Job) {
   }
 
   if (config.notif.mangaFailureNotif) {
-    await sendNotif(`Manga Failed!`, `A Job Has Failed!, jobId: ${job.id}`);
+    await sendNotif(`${job.data.type} Failed!`, `A Job Has Failed!, jobId: ${job.id}`);
   }
 
   const batch = dataCollector.get(job.data.batchId);
