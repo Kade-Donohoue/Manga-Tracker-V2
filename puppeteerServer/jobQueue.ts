@@ -32,7 +32,7 @@ export function createWorkers() {
 
   comickGetWorker = new Worker('Comick Manga Queue', mangaGetProc, {
     connection,
-    concurrency: 1,
+    concurrency: config.queue.comickInstances,
     limiter: { max: 100, duration: 950 },
     name: 'comick',
   });

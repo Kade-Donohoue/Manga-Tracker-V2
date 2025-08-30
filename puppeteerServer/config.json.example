@@ -16,6 +16,7 @@
   "queue": {
     "redisIp": "127.0.0.1",
     "instances": 3,
+    "comickInstances": 3,
     "clearQueuesAtStart": true,
     "instantClearJob": false,
     "removeCompleted": 1000,
