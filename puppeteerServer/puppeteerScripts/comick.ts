@@ -1,9 +1,8 @@
-import { match } from '../util';
 import config from '../config.json';
 import sharp from 'sharp';
-import { getBrowser } from '../jobQueue';
 import { Job } from 'bullmq';
 import { fetchData } from '../types';
+import { createTimestampLogger } from '../util';
 
 /**
  * Gets the chapter list from Comick
@@ -26,70 +25,109 @@ export async function getManga(
   job: Job
 ): Promise<fetchData> {
   if (config.logging.verboseLogging) console.log('comick');
-  let lastTimestamp: number = Date.now();
+  const logWithTimestamp = createTimestampLogger();
 
   try {
-    const slug = extractSlug(url);
+    const slug = await resolveSlug(url, job);
     if (config.logging.verboseLogging) console.log('slug: ', slug);
     job.log(logWithTimestamp('Fetching Comic Data with following slug: ' + slug));
-    const comicReq = await fetch(
-      `https://api.comick.fun/comic/${specialFetchData ? specialFetchData : slug}?tachiyomi=true`,
-      {
-        headers: {
-          'User-Agent': 'ComickProxy/1.0',
-        },
+
+    let comickHid: string | null = specialFetchData;
+    let mangaTitle: string = job.data.mangaName;
+    let resizedImage: Buffer | null = null;
+
+    if (config.logging.verboseLogging) console.log(comickHid, mangaTitle);
+
+    //Determine if refetching cover image
+    const inputDate = maxSavedAt ? new Date(maxSavedAt.replace(' ', 'T') + 'Z') : new Date();
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+    const pullCoverImages = icon || inputDate < oneMonthAgo;
+
+    if (!specialFetchData || !job.data.update || pullCoverImages) {
+      const comicResult = await fetch(
+        `https://api.comick.fun/comic/${specialFetchData ? specialFetchData : slug}?tachiyomi=true`,
+        {
+          headers: {
+            'User-Agent': 'ComickProxy/1.0',
+          },
+        }
+      );
+      if (config.logging.verboseLogging) console.log(comicResult);
+
+      if (!comicResult.ok) throw new Error('Manga: Unable to fetch Comick Data!');
+
+      const comicData: comicData = await comicResult.json();
+      if (config.logging.verboseLogging) console.log('comic Data: ', comicData);
+
+      await job.updateProgress(20);
+      job.log(logWithTimestamp('comic Data Retrieved!'));
+
+      comickHid = comicData.comic.hid;
+      mangaTitle = getEnglishTitle(comicData.comic.md_titles, comicData.comic.title);
+
+      //Logic to pull cover images
+      if (pullCoverImages) {
+        // find some way to get full list of covers to pull auto when new one
+        job.log(logWithTimestamp('Fetching image!'));
+
+        const iconBuffer = await (
+          await fetch(`https://meo.comick.pictures/${comicData.comic.md_covers[0].b2key}`)
+        ).arrayBuffer();
+
+        // job.updateProgress(80);
+        job.log(logWithTimestamp('image fetched resizing!'));
+
+        resizedImage = await sharp(iconBuffer).resize(480, 720).toBuffer();
+
+        // job.updateProgress(90);
+        job.log(logWithTimestamp('image resized!'));
       }
-    );
-
-    if (config.logging.verboseLogging) console.log(comicReq);
-    if (!comicReq.ok) throw new Error('Manga: Unable to fetch Comick Data!');
-    const comicData: comicData = await comicReq.json();
-
-    if (config.logging.verboseLogging) console.log('comic Data: ', comicData);
-    await job.updateProgress(20);
-    job.log(logWithTimestamp('comic Data Retrieved!'));
-    await new Promise((r) => setTimeout(r, 500));
+    }
 
     job.log(logWithTimestamp('Fetching Chapter Data'));
     const chapterReq = await fetch(
-      `https://api.comick.fun/comic/${comicData.comic.hid}/chapters?tachiyomi=truelang=en&limit=${
-        comicData.comic.chapter_count > 60 ? comicData.comic.chapter_count : 60
-      }&chap-order=1`,
+      `https://api.comick.fun/comic/${comickHid}/chapters?tachiyomi=true&lang=en&limit=10000000000000&chap-order=1`,
       {
         headers: {
           'User-Agent': 'ComickProxy/1.0',
         },
       }
     );
+    if (config.logging.verboseLogging) console.log(chapterReq);
     if (!chapterReq.ok) throw new Error('Manga: Unable to fetch chapter Data!');
     const chapterData: chapterData = await chapterReq.json();
 
     if (config.logging.verboseLogging) console.log('Chapter Data: ', chapterData);
     await job.updateProgress(40);
-    job.log(logWithTimestamp('chapter Data Retrieved!'));
-
-    job.log(logWithTimestamp('begining to parse data'));
+    job.log(logWithTimestamp('chapter Data Retrieved! Parsing Data Now.'));
 
     let userHid = url.split('/').at(-1).toLowerCase();
     userHid = userHid.replace(/-chapter-\d+.?\d*-[a-z]+/gi, '');
-    // const hidMatch = url.match(/\/([^/]+)-chapter-[\d.]+(?:-[^/]+)?$/)
     if (config.logging.verboseLogging) console.log('userHid: ', userHid);
+
     const chapterMap: ChapterMap = {};
     let userChap = null;
-    chapterData.chapters.forEach((item, i) => {
-      const { hid, chap, up_count } = item;
+
+    //find most liked version of chapter and puts it in map. and finds users chapter
+    for (let i = 0; i < chapterData.chapters.length; i++) {
+      const { hid, chap, up_count } = chapterData.chapters[i];
+      const chapNum = parseFloat(chap);
 
       if (!chapterMap[chap] || chapterMap[chap].up_count < up_count) {
         chapterMap[chap] = {
-          chapter: Number.isNaN(parseFloat(chap)) ? i + 1 : parseFloat(chap),
-          hid: hid,
+          chapter: Number.isNaN(chapNum) ? i + 1 : chapNum,
+          hid,
           up_count,
         };
       }
 
-      if (!hid) return;
-      if (hid.toLowerCase() === userHid) userChap = chapterMap[chap].chapter;
-    });
+      if (hid?.toLowerCase() === userHid) {
+        userChap = chapterMap[chap].chapter;
+      }
+    }
+
     if (config.logging.verboseLogging) console.log('userChap: ', userChap);
 
     const chapters: number[] = [];
@@ -115,38 +153,17 @@ export async function getManga(
       throw new Error('Manga: unable to find current chapter. Please retry or contact Admin!');
     }
 
-    let inputDate = new Date();
-    const oneMonthAgo = new Date();
-    if (maxSavedAt) {
-      inputDate = new Date(maxSavedAt.replace(' ', 'T') + 'Z');
-      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-    }
-
-    let resizedImage: Buffer | null = null;
-    if (icon || inputDate < oneMonthAgo) {
-      // find some way to get full list of covers to pull auto when new one
-      job.log(logWithTimestamp('Fetching image!'));
-      const iconBuffer = await (
-        await fetch(`https://meo.comick.pictures/${comicData.comic.md_covers[0].b2key}`)
-      ).arrayBuffer();
-      job.updateProgress(80);
-      job.log(logWithTimestamp('image fetched resizing!'));
-      resizedImage = await sharp(iconBuffer).resize(480, 720).toBuffer();
-      job.updateProgress(90);
-      job.log(logWithTimestamp('image resized!'));
-    }
-
     job.updateProgress(100);
     job.log(logWithTimestamp('All data fetched!'));
     return {
-      mangaName: getEnglishTitle(comicData.comic.md_titles, comicData.comic.title),
+      mangaName: mangaTitle,
       urlBase: `https://comick.io/comic/${slug}/`,
       slugList: hidList.join(','),
       chapterTextList: chapters.join(','),
       currentIndex: currIndex,
       iconBuffer: resizedImage,
       newCoverImageIndex: 0,
-      specialFetchData: comicData.comic.hid,
+      specialFetchData: comickHid,
     };
   } catch (err) {
     job.log(logWithTimestamp(`Error: ${err}`));
@@ -158,32 +175,6 @@ export async function getManga(
     throw new Error('Unable to fetch Data! maybe invalid Url?');
   }
 
-  function logWithTimestamp(message: string): string {
-    const currentTimestamp = Date.now();
-    let timeDiffMessage = '';
-
-    if (lastTimestamp !== null) {
-      const diff = currentTimestamp - lastTimestamp;
-      timeDiffMessage = formatTimeDifference(diff);
-    }
-
-    lastTimestamp = currentTimestamp;
-    const timestamp = new Date(currentTimestamp).toISOString();
-    return `[${timestamp}] ${message}${timeDiffMessage}`;
-  }
-
-  function formatTimeDifference(diff: number): string {
-    if (diff >= 60000) {
-      const minutes = (diff / 60000).toFixed(2);
-      return ` (Took ${minutes} min)`;
-    } else if (diff >= 1000) {
-      const seconds = (diff / 1000).toFixed(2);
-      return ` (Took ${seconds} sec)`;
-    } else {
-      return ` (Took ${diff} ms)`;
-    }
-  }
-
   function extractSlug(url: string): string | null {
     const match = url.match(/comick\.io\/comic\/([^/]+)/);
     return match ? match[1] : null;
@@ -191,14 +182,38 @@ export async function getManga(
 
   function getEnglishTitle(
     titles: { title: string; lang: string }[],
-    defaultTitle: string = 'unknown'
-  ) {
-    for (let i = 0; i < titles.length; i++) {
-      if (!titles[i].lang) continue;
-      if (titles[i].lang.toLowerCase() === 'en') return titles[i].title;
+    defaultTitle = 'unknown'
+  ): string {
+    const enTitle = titles.find((t) => t.lang?.toLowerCase() === 'en');
+    return enTitle ? enTitle.title : defaultTitle;
+  }
+
+  async function resolveSlug(url: string, job: Job): Promise<string> {
+    const res = await fetch(url + '?tachiyomi=true', {
+      method: 'HEAD',
+      redirect: 'manual',
+      headers: {
+        'User-Agent': 'ComickProxy/1.0',
+        Accept: 'text/html,application/xhtml+xml',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Cache-Control': 'no-cache',
+      },
+    });
+
+    job.log(logWithTimestamp('Slug Test Status: ' + res.status));
+
+    if (
+      (res.status === 301 || res.status === 302 || res.status === 308) &&
+      res.headers.get('location')
+    ) {
+      const location = res.headers.get('location')!;
+      const match = location.match(/\/comic\/([^/]+)/);
+      if (match) {
+        return match[1]; // return the updated slug
+      }
     }
 
-    return defaultTitle;
+    return extractSlug(url);
   }
 }
 

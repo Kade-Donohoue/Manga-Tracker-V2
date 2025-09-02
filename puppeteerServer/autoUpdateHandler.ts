@@ -117,6 +117,7 @@ async function updateAllManga() {
           maxSavedAt: returnData[i].maxSavedAt,
           batchId: batchId,
           specialFetchData: returnData[i].specialFetchData,
+          mangaName: returnData[i].mangaName
         },
         opts: {
           priority: 2,
