@@ -32,8 +32,16 @@ export async function getManga(
     const slug = extractSlug(url);
     if (config.logging.verboseLogging) console.log('slug: ', slug);
     job.log(logWithTimestamp('Fetching Comic Data with following slug: ' + slug));
-    const comicReq = await fetch(`https://api.comick.fun/comic/${specialFetchData?specialFetchData:slug}?tachiyomi=true`);
+    const comicReq = await fetch(
+      `https://api.comick.fun/comic/${specialFetchData ? specialFetchData : slug}?tachiyomi=true`,
+      {
+        headers: {
+          'User-Agent': 'ComickProxy/1.0',
+        },
+      }
+    );
 
+    if (config.logging.verboseLogging) console.log(comicReq);
     if (!comicReq.ok) throw new Error('Manga: Unable to fetch Comick Data!');
     const comicData: comicData = await comicReq.json();
 
@@ -44,9 +52,14 @@ export async function getManga(
 
     job.log(logWithTimestamp('Fetching Chapter Data'));
     const chapterReq = await fetch(
-      `https://api.comick.fun/comic/${comicData.comic.hid}/chapters?lang=en&limit=${
+      `https://api.comick.fun/comic/${comicData.comic.hid}/chapters?tachiyomi=truelang=en&limit=${
         comicData.comic.chapter_count > 60 ? comicData.comic.chapter_count : 60
-      }&chap-order=1&tachiyomi=true`
+      }&chap-order=1`,
+      {
+        headers: {
+          'User-Agent': 'ComickProxy/1.0',
+        },
+      }
     );
     if (!chapterReq.ok) throw new Error('Manga: Unable to fetch chapter Data!');
     const chapterData: chapterData = await chapterReq.json();
@@ -133,7 +146,7 @@ export async function getManga(
       currentIndex: currIndex,
       iconBuffer: resizedImage,
       newCoverImageIndex: 0,
-      specialFetchData: comicData.comic.hid
+      specialFetchData: comicData.comic.hid,
     };
   } catch (err) {
     job.log(logWithTimestamp(`Error: ${err}`));

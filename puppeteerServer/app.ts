@@ -22,7 +22,7 @@ app.listen({ port: port, host: host }, async function (err, address) {
   }
   await getBrowser(); //called to initiate browser otherwise if multiple jobs run at same time multiple browsers can be opened
 
-  await createWorkers();
+  createWorkers();
 
   startAutoUpdate();
 

@@ -33,9 +33,37 @@ export function createWorkers() {
   comickGetWorker = new Worker('Comick Manga Queue', mangaGetProc, {
     connection,
     concurrency: config.queue.comickInstances,
-    limiter: { max: 100, duration: 950 },
+    limiter: { max: 99, duration: 60*1000 },
     name: 'comick',
   });
+
+  if (config.logging.verboseLogging) {
+    mainGetWorker.on('ready', () => {
+      console.log('Main worker ready');
+    });
+    mainGetWorker.on('error', (err) => {
+      console.error('Main worker error:', err);
+    });
+    mainGetWorker.on('failed', (job, err) => {
+      console.error(`Main worker job ${job.id} failed:`, err);
+    });
+    mainGetWorker.on('completed', (job) => {
+      console.log(`Main worker job ${job.id} completed`);
+    });
+
+    comickGetWorker.on('ready', () => {
+      console.log('Comick worker ready');
+    });
+    comickGetWorker.on('error', (err) => {
+      console.error('Comick worker error:', err);
+    });
+    comickGetWorker.on('failed', (job, err) => {
+      console.error(`Comick job ${job.id} failed:`, err);
+    });
+    comickGetWorker.on('completed', (job) => {
+      console.log(`Comick job ${job.id} completed`);
+    });
+  }
 
   return { mainGetWorker, comickGetWorker };
 }
@@ -92,32 +120,4 @@ async function shutdown() {
   console.info('Shutdown Complete!');
 
   process.exit(0);
-}
-
-if (config.logging.verboseLogging) {
-  mainGetWorker.on('ready', () => {
-    console.log('Main worker ready');
-  });
-  mainGetWorker.on('error', (err) => {
-    console.error('Main worker error:', err);
-  });
-  mainGetWorker.on('failed', (job, err) => {
-    console.error(`Main worker job ${job.id} failed:`, err);
-  });
-  mainGetWorker.on('completed', (job) => {
-    console.log(`Main worker job ${job.id} completed`);
-  });
-
-  comickGetWorker.on('ready', () => {
-    console.log('Comick worker ready');
-  });
-  comickGetWorker.on('error', (err) => {
-    console.error('Comick worker error:', err);
-  });
-  comickGetWorker.on('failed', (job, err) => {
-    console.error(`Comick job ${job.id} failed:`, err);
-  });
-  comickGetWorker.on('completed', (job) => {
-    console.log(`Comick job ${job.id} completed`);
-  });
 }
