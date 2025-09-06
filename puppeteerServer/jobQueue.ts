@@ -33,7 +33,7 @@ export function createWorkers() {
   comickGetWorker = new Worker('Comick Manga Queue', mangaGetProc, {
     connection,
     concurrency: config.queue.comickInstances,
-    limiter: { max: 2, duration: 1000 },
+    limiter: { max: 2, duration: 750 }, // comick has rate limit off 200/min. this will be 160 fetch attemts a min allowing some to do a full fetch(2 req) instead of just chapter data(1 req)
     name: 'comick',
   });
 
