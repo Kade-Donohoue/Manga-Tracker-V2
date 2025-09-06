@@ -1,5 +1,5 @@
 import config from '../config.json';
-import { match } from '../util';
+import { createTimestampLogger, match } from '../util';
 import sharp from 'sharp';
 import { getBrowser } from '../jobQueue';
 import { Job } from 'bullmq';
@@ -27,7 +27,7 @@ export async function getManga(
 ): Promise<fetchData> {
   // throw new Error('Manga: MANGANATO CURRENTLY DISABLED!')
 
-  let lastTimestamp: number = Date.now();
+  const logWithTimestamp = createTimestampLogger();
   const browser = await getBrowser();
   const page = await browser.newPage();
 
@@ -213,31 +213,5 @@ export async function getManga(
     //ensure only custom error messages gets sent to user
     if (err.message.startsWith('Manga:')) throw new Error(err.message);
     throw new Error('Unable to fetch Data! maybe invalid Url?');
-  }
-
-  function logWithTimestamp(message: string): string {
-    const currentTimestamp = Date.now();
-    let timeDiffMessage = '';
-
-    if (lastTimestamp !== null) {
-      const diff = currentTimestamp - lastTimestamp;
-      timeDiffMessage = formatTimeDifference(diff);
-    }
-
-    lastTimestamp = currentTimestamp;
-    const timestamp = new Date(currentTimestamp).toISOString();
-    return `[${timestamp}] ${message}${timeDiffMessage}`;
-  }
-
-  function formatTimeDifference(diff: number): string {
-    if (diff >= 60000) {
-      const minutes = (diff / 60000).toFixed(2);
-      return ` (Took ${minutes} min)`;
-    } else if (diff >= 1000) {
-      const seconds = (diff / 1000).toFixed(2);
-      return ` (Took ${seconds} sec)`;
-    } else {
-      return ` (Took ${diff} ms)`;
-    }
   }
 }

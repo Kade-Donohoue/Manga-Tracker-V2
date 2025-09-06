@@ -53,3 +53,22 @@ export async function sendNotif(title: string, message: string): Promise<void> {
     )
   );
 }
+
+export function createTimestampLogger() {
+  let lastTimestamp = Date.now();
+
+  return (message: string): string => {
+    const currentTimestamp = Date.now();
+    const diff = currentTimestamp - lastTimestamp;
+    lastTimestamp = currentTimestamp;
+
+    const timestamp = new Date(currentTimestamp).toISOString();
+    return `[${timestamp}] ${message}${formatTimeDifference(diff)}`;
+  };
+}
+
+function formatTimeDifference(diff: number): string {
+  if (diff >= 60000) return ` (Took ${(diff / 60000).toFixed(2)} min)`;
+  if (diff >= 1000) return ` (Took ${(diff / 1000).toFixed(2)} sec)`;
+  return ` (Took ${diff} ms)`;
+}
