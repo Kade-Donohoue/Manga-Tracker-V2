@@ -2,7 +2,8 @@ import config from '../config.json';
 import sharp from 'sharp';
 import { Job } from 'bullmq';
 import { fetchData } from '../types';
-import { createTimestampLogger } from '../util';
+import { createTimestampLogger, match } from '../util';
+import { getBrowser } from '../jobQueue';
 
 /**
  * Gets the chapter list from Comick
@@ -35,6 +36,7 @@ export async function getManga(
     let comickHid: string | null = specialFetchData;
     let mangaTitle: string = job.data.mangaName;
     let resizedImage: Buffer | null = null;
+    let newCoverIndex: number = 0;
 
     if (config.logging.verboseLogging) console.log(comickHid, mangaTitle);
 
@@ -69,20 +71,26 @@ export async function getManga(
 
       //Logic to pull cover images
       if (pullCoverImages) {
-        // find some way to get full list of covers to pull auto when new one
-        job.log(logWithTimestamp('Fetching image!'));
+        const coverImageUrls = await getCoverImageList(slug);
 
-        const iconBuffer = await (
-          await fetch(`https://meo.comick.pictures/${comicData.comic.md_covers[0].b2key}`)
-        ).arrayBuffer();
+        if (currentImageIndex < coverImageUrls.length - 1) {
+          job.log(logWithTimestamp('Fetching image!'));
 
-        // job.updateProgress(80);
-        job.log(logWithTimestamp('image fetched resizing!'));
+          let selectedCoverImage = coverImageUrls[0];
+          if (job.data.update) {
+            selectedCoverImage = coverImageUrls[currentImageIndex + 1];
+            newCoverIndex = currentImageIndex + 1;
+          }
+          const iconBuffer = await (await fetch(selectedCoverImage)).arrayBuffer();
 
-        resizedImage = await sharp(iconBuffer).resize(480, 720).toBuffer();
+          // job.updateProgress(80);
+          job.log(logWithTimestamp('image fetched resizing!'));
 
-        // job.updateProgress(90);
-        job.log(logWithTimestamp('image resized!'));
+          resizedImage = await sharp(iconBuffer).resize(480, 720).toBuffer();
+
+          // job.updateProgress(90);
+          job.log(logWithTimestamp('image resized!'));
+        }
       }
     }
 
@@ -162,7 +170,7 @@ export async function getManga(
       chapterTextList: chapters.join(','),
       currentIndex: currIndex,
       iconBuffer: resizedImage,
-      newCoverImageIndex: 0,
+      newCoverImageIndex: newCoverIndex,
       specialFetchData: comickHid,
     };
   } catch (err) {
@@ -214,6 +222,79 @@ export async function getManga(
     }
 
     return extractSlug(url);
+  }
+
+  async function getCoverImageList(slug: string) {
+    const coverPageUrl = `https://comick.io/comic/${slug}/cover`;
+
+    try {
+      const browser = await getBrowser();
+      const page = await browser.newPage();
+
+      page.setDefaultNavigationTimeout(1000); // timeout nav after 1 sec
+      page.setRequestInterception(true);
+      await page.setUserAgent(
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0'
+      );
+      await page.setExtraHTTPHeaders({ 'accept-language': 'en-US,en;q=0.9' });
+
+      let allowAllRequests: boolean = false;
+      const allowRequests = [coverPageUrl];
+      const forceAllow = [''];
+      const blockRequests = [
+        '.css',
+        '.js',
+        'facebook',
+        'fbcdn.net',
+        'bidgear',
+        '.png',
+        '.jpg',
+        '.svg',
+        '.webp',
+      ];
+      page.on('request', (request) => {
+        if (allowAllRequests) {
+          request.continue();
+          return;
+        }
+
+        const u = request.url();
+
+        if (match(u, forceAllow)) {
+          request.continue();
+          return;
+        }
+
+        if (!match(u, allowRequests)) {
+          request.abort();
+          return;
+        }
+
+        if (request.resourceType() == 'image') {
+          request.abort();
+          return;
+        }
+
+        if (match(u, blockRequests)) {
+          request.abort();
+          return;
+        }
+        request.continue();
+      });
+
+      job.log(logWithTimestamp('Loading Cover Image List Page'));
+      await page.goto(coverPageUrl, { waitUntil: 'load', timeout: 10 * 1000 });
+      await job.updateProgress(20);
+      job.log(logWithTimestamp('Cover Image List Page Loaded. Fetching Data'));
+
+      const coverImageUrls = await page.$$eval('img.select-none', (imgs) =>
+        imgs.map((img) => img.src)
+      );
+
+      return coverImageUrls.reverse();
+    } catch {
+      return [];
+    }
   }
 }
 
