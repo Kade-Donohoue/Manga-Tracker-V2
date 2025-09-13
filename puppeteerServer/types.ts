@@ -25,6 +25,7 @@ export type updateCollector = {
   batchId: number;
   batchData: {
     completedCount: number;
+    failedCount: number;
     newChapterCount: number;
     batchLength: number;
     newData: {

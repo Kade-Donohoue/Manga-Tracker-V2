@@ -117,7 +117,7 @@ async function updateAllManga() {
           maxSavedAt: returnData[i].maxSavedAt,
           batchId: batchId,
           specialFetchData: returnData[i].specialFetchData,
-          mangaName: returnData[i].mangaName
+          mangaName: returnData[i].mangaName,
         },
         opts: {
           priority: 2,
@@ -237,6 +237,7 @@ async function mangaFailedEvent(job: Job) {
 
   console.log(`Adding Failed to complete Count`, batch.batchData.completedCount);
   batch.batchData.completedCount += 1;
+  batch.batchData.failedCount += 1;
 
   if (config.queue.instantClearJob) await job.remove();
 
@@ -272,12 +273,15 @@ async function sendUpdate(batch: updateCollector) {
       }
       console.warn(resp);
     } else {
-      const successMessage = `${batch.batchData.newData.length} / ${batch.batchData.completedCount} Manga Update Saved With ${batch.batchData.newChapterCount} New Chapters!`;
+      const successMessage = `${batch.batchData.newData.length} / ${batch.batchData.completedCount} Manga Update Saved With ${batch.batchData.newChapterCount} New Chapters! ${batch.batchData.failedCount} Faild.`;
       if (config.notif.batchSuccessNotif) {
         await sendNotif(`Puppeteer: Successfully sent update Data!`, successMessage);
       }
       console.log(successMessage);
     }
+
+    let savedImageCount = 0;
+    let failedImageCount = 0;
 
     for (let i = 0; i < batch.batchData.newData.length; i++) {
       if (!batch.batchData.newData[i].iconBuffer) continue;
@@ -296,8 +300,21 @@ async function sendUpdate(batch: updateCollector) {
       });
 
       if (config.logging.verboseLogging) console.log(resp);
-      if (!resp.ok) console.warn(`Failed to save!; ${batch.batchData.newData[i].mangaId}`);
+      if (!resp.ok) {
+        console.warn(`Failed to save!; ${batch.batchData.newData[i].mangaId}`);
+        failedImageCount++;
+        continue;
+      }
+      savedImageCount;
     }
+
+    const successMessage = `${savedImageCount} / ${
+      savedImageCount + failedImageCount
+    } Cover Images Saved!`;
+    if (config.notif.batchSuccessNotif) {
+      await sendNotif(`Puppeteer: Cover Images Saved!`, successMessage);
+    }
+    console.log(successMessage);
     // console.log('done, Its recomended to turn of auto update images now!');
   } else if (config.updateSettings.autoUpdateInfo)
     console.log('Update Complete! No New Chapters Found!');
