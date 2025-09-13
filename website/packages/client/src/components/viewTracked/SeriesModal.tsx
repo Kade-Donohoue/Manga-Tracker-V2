@@ -29,6 +29,7 @@ interface SeriesModalProps {
   onRemove: () => void;
   onChangeCategory: () => void;
   onChangeChap: () => void;
+  onChangeCover: () => void
 }
 
 const fetchFriendsData = async (
@@ -72,6 +73,7 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
   onRemove,
   onChangeCategory,
   onChangeChap,
+  onChangeCover,
 }) => {
   const listRef = useRef<HTMLUListElement | null>(null);
   const [tooltipOpen, setTooltipOpen] = useState(false);
@@ -259,7 +261,9 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
           <Box>
             <img
               src={
-                `${import.meta.env.VITE_IMG_URL}/${manga.mangaId}/${manga.imageIndexes?.at(-1) || 0}` ||
+                `${
+                  import.meta.env.VITE_IMG_URL
+                }/${manga.mangaId}/${manga.imageIndexes.includes(manga.userCoverIndex) ? manga.userCoverIndex : manga.imageIndexes.at(-1) || 0}` ||
                 'mangaNotFoundImage.png'
               }
               alt={manga.mangaName}
@@ -270,6 +274,7 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
                 borderRadius: 16,
                 objectFit: 'cover',
               }}
+              onClick={onChangeCover}
             />
           </Box>
 

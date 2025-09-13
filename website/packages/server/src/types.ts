@@ -68,6 +68,7 @@ export const mangaDetailsSchema = mangaDataRow.merge(
     userCat: z.string(),
     interactTime: z.coerce.number().int().min(0),
     userTitle: z.string().nullable(),
+    userCoverIndex: z.number(),
     imageIndexes: imageIndexes,
     sharedFriends: z
       .string()
@@ -209,6 +210,11 @@ export const changeMangaCatSchema = z.object({
 export const setUserTitleSchema = z.object({
   mangaId: z.coerce.string().uuid(),
   newTitle: z.coerce.string().max(192).nullable(),
+});
+
+export const setUserCoverSchema = z.object({
+  mangaId: z.coerce.string().uuid(),
+  index: z.coerce.number().min(-1).default(-1),
 });
 
 export const updateUserCategoriesSchema = z.object({

@@ -8,6 +8,7 @@ import ChangeCategoryModal from '../changeCategoryModal';
 import { mangaDetails } from '../../types';
 import RecommendModal from '../recommendModal';
 import SetUserTitleModal from '../SetUserTitleModal';
+import SelectCoverModal from './SelectCoverModal';
 
 interface ModalManagerProps {
   modalOpen: boolean;
@@ -30,6 +31,9 @@ interface ModalManagerProps {
   handleCatOpen: () => void;
   handleChapterOpen: () => void;
   handleModalClose: () => Promise<void>;
+
+  coverSelectionOpen: boolean;
+  setCoverSelectionOpen: (open: boolean) => void;
 }
 
 const ModalManager: React.FC<ModalManagerProps> = ({
@@ -53,6 +57,8 @@ const ModalManager: React.FC<ModalManagerProps> = ({
   handleCatOpen,
   handleChapterOpen,
   handleModalClose,
+  coverSelectionOpen,
+  setCoverSelectionOpen,
 }) => {
   return (
     <div className="mangaOverviewModal" id="overviewModal">
@@ -63,6 +69,7 @@ const ModalManager: React.FC<ModalManagerProps> = ({
         onRemove={handleRemoveOpen}
         onChangeCategory={handleCatOpen}
         onChangeChap={handleChapterOpen}
+        onChangeCover={() => setCoverSelectionOpen(true)}
       />
       <ChangeCategoryModal
         open={catOpen}
@@ -91,6 +98,12 @@ const ModalManager: React.FC<ModalManagerProps> = ({
         mangaId={currentMangaId || ''}
       />
       <AddMangaModal open={addOpen} onClose={() => setAddOpen(false)} />
+      <SelectCoverModal
+        open={coverSelectionOpen}
+        onClose={() => setCoverSelectionOpen(false)}
+        mangaInfo={mangaInfo}
+        mangaId={currentMangaId || ''}
+      />
     </div>
   );
 };

@@ -73,7 +73,7 @@ export default function SeriesCard({
           height="200"
           image={`${
             fetchPath === '/.proxy' ? '/.proxy/image' : import.meta.env.VITE_IMG_URL
-          }/${data.mangaId}/${data.imageIndexes?.at(-1) || 0}`}
+          }/${data.mangaId}/${data.imageIndexes.includes(data.userCoverIndex)?data.userCoverIndex:data.imageIndexes.at(-1)||0}`}
           alt={`Cover for ${data.mangaName}`}
           style={{ objectPosition: 'top' }}
           loading="lazy"
