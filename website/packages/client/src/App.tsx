@@ -130,7 +130,7 @@ export default function App(): React.ReactElement {
                   </DesignSystemProvider>
                 </SignedIn>
                 <SignedOut>
-                  <RedirectToSignIn signInFallbackRedirectUrl={'/home'} />
+                  <RedirectToSignIn signInFallbackRedirectUrl={'/tracked'} />
                 </SignedOut>
               </div>
             }
