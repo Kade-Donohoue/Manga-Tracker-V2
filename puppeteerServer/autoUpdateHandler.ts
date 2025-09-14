@@ -60,6 +60,7 @@ async function updateAllManga() {
       batchData: {
         completedCount: 0,
         newChapterCount: 0,
+        failedCount: 0,
         batchLength: returnData.length,
         newData: [],
       },
@@ -251,6 +252,7 @@ async function sendUpdate(batch: updateCollector) {
 
   if (batch.batchData.newData.length > 0) {
     // returns all manga together if images not fetched
+    const updateData = batch.batchData.newData.map(({ iconBuffer, ...rest }) => rest);
     const resp = await fetch(`${config.serverCom.serverUrl}/serverReq/data/updateManga`, {
       method: 'POST',
       headers: {
@@ -258,7 +260,7 @@ async function sendUpdate(batch: updateCollector) {
         pass: config.serverCom.serverPassWord,
       },
       body: JSON.stringify({
-        newData: batch.batchData.newData,
+        newData: updateData,
         amountNewChapters: 0, //batch.batchData.newChapterCount - some edge case causes this to become NaN.
         expiresAt: Date.now() + config.updateSettings.updateDelay + 50000, //50 extra seconds compared to what this pull took
       }),
@@ -273,7 +275,7 @@ async function sendUpdate(batch: updateCollector) {
       }
       console.warn(resp);
     } else {
-      const successMessage = `${batch.batchData.newData.length} / ${batch.batchData.completedCount} Manga Update Saved With ${batch.batchData.newChapterCount} New Chapters! ${batch.batchData.failedCount} Faild.`;
+      const successMessage = `${batch.batchData.newData.length} / ${batch.batchData.completedCount} Manga Update Saved With ${batch.batchData.newChapterCount} New Chapters! ${batch.batchData.failedCount} Failed.`;
       if (config.notif.batchSuccessNotif) {
         await sendNotif(`Puppeteer: Successfully sent update Data!`, successMessage);
       }
@@ -305,7 +307,7 @@ async function sendUpdate(batch: updateCollector) {
         failedImageCount++;
         continue;
       }
-      savedImageCount;
+      savedImageCount++;
     }
 
     const successMessage = `${savedImageCount} / ${

@@ -126,12 +126,12 @@ export const updateData = z.array(
     newChapterCount: z.coerce.number(),
     currentIndex: z.coerce.string(),
     specialFetchData: z.any().nullable(),
-    iconBuffer: z
-      .object({
-        type: z.literal('Buffer'),
-        data: z.array(z.number().int().min(0).max(255)),
-      })
-      .nullable(),
+    // iconBuffer: z
+    //   .object({
+    //     type: z.literal('Buffer'),
+    //     data: z.array(z.number().int().min(0).max(255)),
+    //   })
+    //   .nullable(),
   })
 );
 

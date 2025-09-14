@@ -45,7 +45,7 @@ export async function getManga(
     const oneMonthAgo = new Date();
     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
-    const pullCoverImages = icon || inputDate < oneMonthAgo;
+    const pullCoverImages = icon || config.updateSettings.refetchImgs || inputDate < oneMonthAgo;
 
     if (!specialFetchData || !job.data.update || pullCoverImages) {
       const comicResult = await fetch(
