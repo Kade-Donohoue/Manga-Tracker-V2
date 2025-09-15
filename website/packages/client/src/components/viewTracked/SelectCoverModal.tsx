@@ -149,6 +149,7 @@ export default function SelectCoverModal({
             direction="row"
             flexWrap="wrap"
             gap={2}
+            margin={2}
             justifyContent="flex-start"
             alignItems="flex-start"
           >
@@ -166,8 +167,7 @@ export default function SelectCoverModal({
                   sx={{
                     borderRadius: 2,
                     overflow: 'hidden',
-                    border: '2px solid transparent', // fixed
-                    boxShadow: selected === index ? '0 0 0 3px #1976d2' : 'none',
+                    outline: isSelected ? '3px solid #1976d2' : 'none',
                     transition: 'all 0.2s ease-in-out',
                     '&:hover': {
                       opacity: 0.85,
