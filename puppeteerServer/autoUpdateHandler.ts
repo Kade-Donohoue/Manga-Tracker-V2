@@ -47,7 +47,7 @@ async function updateAllManga() {
       urlBase: string;
       slugList: string;
       mangaName: string;
-      maxCoverIndex: number;
+      coverIndexes: number[];
       maxSavedAt: string;
       specialFetchData: any;
     }[] = (await resp.json()).data;
@@ -114,7 +114,7 @@ async function updateAllManga() {
           update: true,
           length: returnData.length - invalidCount,
           oldSlugList: returnData[i].slugList,
-          maxCoverIndex: returnData[i].maxCoverIndex,
+          coverIndexes: returnData[i].coverIndexes,
           maxSavedAt: returnData[i].maxSavedAt,
           batchId: batchId,
           specialFetchData: returnData[i].specialFetchData,
@@ -157,7 +157,7 @@ async function mangaCompleteFuction(job: Job<dataType, fetchData>, returnvalue: 
       batch.batchData.completedCount++;
       if (
         config.updateSettings.forceUpdateManga ||
-        returnvalue.iconBuffer ||
+        returnvalue.images.length ||
         (returnvalue.slugList && returnvalue.slugList != job.data.oldSlugList) ||
         job.data.specialFetchData != returnvalue.specialFetchData
       ) {
@@ -252,7 +252,7 @@ async function sendUpdate(batch: updateCollector) {
 
   if (batch.batchData.newData.length > 0) {
     // returns all manga together if images not fetched
-    const updateData = batch.batchData.newData.map(({ iconBuffer, ...rest }) => rest);
+    const updateData = batch.batchData.newData.map(({ images, ...rest }) => rest); //Drops images from updateManga request to be sent seperatly avoiding 503
     const resp = await fetch(`${config.serverCom.serverUrl}/serverReq/data/updateManga`, {
       method: 'POST',
       headers: {
@@ -286,28 +286,32 @@ async function sendUpdate(batch: updateCollector) {
     let failedImageCount = 0;
 
     for (let i = 0; i < batch.batchData.newData.length; i++) {
-      if (!batch.batchData.newData[i].iconBuffer) continue;
-      console.log(`Saving Image for mangaId: ${batch.batchData.newData[i].mangaId}`);
-      const resp = await fetch(`${config.serverCom.serverUrl}/serverReq/data/saveCoverImage`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          pass: config.serverCom.serverPassWord,
-        },
-        body: JSON.stringify({
-          img: batch.batchData.newData[i].iconBuffer,
-          index: batch.batchData.newData[i].newCoverImageIndex,
-          mangaId: batch.batchData.newData[i].mangaId,
-        }),
-      });
+      const manga = batch.batchData.newData[i];
+      if (!manga.images.length) continue;
+      console.log(`Saving ${manga.images.length} Images for mangaId: ${manga.mangaId}`);
 
-      if (config.logging.verboseLogging) console.log(resp);
-      if (!resp.ok) {
-        console.warn(`Failed to save!; ${batch.batchData.newData[i].mangaId}`);
-        failedImageCount++;
-        continue;
+      for (let j = 0; j < manga.images.length; j++) {
+        const resp = await fetch(`${config.serverCom.serverUrl}/serverReq/data/saveCoverImage`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            pass: config.serverCom.serverPassWord,
+          },
+          body: JSON.stringify({
+            img: manga.images[j].image,
+            index: manga.images[j].index,
+            mangaId: manga.mangaId,
+          }),
+        });
+
+        if (config.logging.verboseLogging) console.log(resp);
+        if (!resp.ok) {
+          console.warn(`Failed to save!; ${manga.mangaId}`);
+          failedImageCount++;
+          continue;
+        }
+        savedImageCount++;
       }
-      savedImageCount++;
     }
 
     const successMessage = `${savedImageCount} / ${

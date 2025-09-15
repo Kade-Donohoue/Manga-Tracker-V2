@@ -127,58 +127,85 @@ export default function SelectCoverModal({
 
   return (
     <Modal open={open} onClose={onClose} aria-labelledby="cover-modal-title">
-      <Box sx={{ width: '80vw', ...modalStyle }}>
+      <Box
+        sx={{
+          width: '80vw',
+          ...modalStyle,
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
         <h2 id="cover-modal-title" style={{ color: 'white', marginBottom: 10 }}>
           Select a Cover Image
         </h2>
+        <Box
+          sx={{
+            flex: 1,
+            overflowY: 'auto',
+            pr: 1, // keep scrollbar from overlapping images
+          }}
+        >
+          <Stack
+            direction="row"
+            flexWrap="wrap"
+            gap={2}
+            justifyContent="flex-start"
+            alignItems="flex-start"
+          >
+            {manga.imageIndexes.map((index) => {
+              const imgUrl =
+                `${import.meta.env.VITE_IMG_URL}/${manga.mangaId}/${index}` ||
+                'mangaNotFoundImage.png';
+
+              const isSelected = selected === index;
+
+              return (
+                <ButtonBase
+                  key={index}
+                  onClick={() => setSelected((prev) => (prev === index ? null : index))}
+                  sx={{
+                    borderRadius: 2,
+                    overflow: 'hidden',
+                    border: '2px solid transparent', // fixed
+                    boxShadow: selected === index ? '0 0 0 3px #1976d2' : 'none',
+                    transition: 'all 0.2s ease-in-out',
+                    '&:hover': {
+                      opacity: 0.85,
+                    },
+                  }}
+                >
+                  <img
+                    src={imgUrl}
+                    alt={manga.mangaName}
+                    style={{
+                      width: '180px',
+                      height: 'auto',
+                      display: 'block',
+                      objectFit: 'cover',
+                    }}
+                  />
+                </ButtonBase>
+              );
+            })}
+          </Stack>
+        </Box>
 
         <Stack
           direction="row"
-          flexWrap="wrap"
+          justifyContent="flex-end"
           gap={2}
-          justifyContent="flex-start"
-          alignItems="flex-start"
+          mt={2}
+          sx={{ pt: 2, borderTop: '1px solid #333' }}
         >
-          {manga.imageIndexes.map((index) => {
-            const imgUrl =
-              `${import.meta.env.VITE_IMG_URL}/${manga.mangaId}/${index}` ||
-              'mangaNotFoundImage.png';
-
-            const isSelected = selected === index;
-
-            return (
-              <ButtonBase
-                key={index}
-                onClick={() => setSelected((prev) => (prev === index ? null : index))}
-                sx={{
-                  borderRadius: 2,
-                  overflow: 'hidden',
-                  border: '2px solid transparent', // fixed
-                  boxShadow: selected === index ? '0 0 0 3px #1976d2' : 'none',
-                  transition: 'all 0.2s ease-in-out',
-                  '&:hover': {
-                    opacity: 0.85,
-                  },
-                }}
-              >
-                <img
-                  src={imgUrl}
-                  alt={manga.mangaName}
-                  style={{
-                    width: '180px',
-                    height: 'auto',
-                    display: 'block',
-                    objectFit: 'cover',
-                  }}
-                />
-              </ButtonBase>
-            );
-          })}
-        </Stack>
-
-        <Stack direction="row" justifyContent="flex-end" gap={2} mt={3}>
-          <Button variant="outlined" color="secondary" onClick={onClose}>
-            Cancel
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={() => {
+              submitCover(-1); //set to latest chap
+              onClose();
+            }}
+          >
+            Reset
           </Button>
           <Button
             variant="contained"

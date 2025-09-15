@@ -4,8 +4,7 @@ export type fetchData = {
   slugList: string;
   chapterTextList: string;
   currentIndex: number;
-  iconBuffer: Buffer | null;
-  newCoverImageIndex: number;
+  images: { image: Buffer<ArrayBufferLike>; index: number }[];
   specialFetchData: any;
 };
 
@@ -34,9 +33,8 @@ export type updateCollector = {
       slugList: string;
       chapterTextList: string;
       currentIndex: number;
-      iconBuffer: Buffer;
+      images: { image: Buffer<ArrayBufferLike>; index: number }[];
       mangaId: string;
-      newCoverImageIndex: number;
       newChapterCount: number;
       specialFetchData: any;
     }[];

@@ -20,7 +20,7 @@ export async function getManga(
   url: string,
   icon: boolean = true,
   ignoreIndex = false,
-  currentImageIndex: number,
+  coverIndexes: number[],
   maxSavedAt: string,
   specialFetchData: any,
   job: Job
@@ -35,7 +35,7 @@ export async function getManga(
 
     let comickHid: string | null = specialFetchData;
     let mangaTitle: string = job.data.mangaName;
-    let resizedImage: Buffer | null = null;
+    let images: { image: Buffer<ArrayBufferLike>; index: number }[] = [];
     let newCoverIndex: number = 0;
 
     if (config.logging.verboseLogging) console.log(comickHid, mangaTitle);
@@ -71,26 +71,52 @@ export async function getManga(
 
       //Logic to pull cover images
       if (pullCoverImages) {
+        job.log(logWithTimestamp('Fetching image List!'));
+
         const coverImageUrls = await getCoverImageList(slug);
 
-        if (currentImageIndex < coverImageUrls.length - 1) {
-          job.log(logWithTimestamp('Fetching image!'));
+        let startingPoint = config.updateSettings.refetchImgs
+          ? 0
+          : Math.max(0, coverIndexes.length - 1);
+        job.log(
+          logWithTimestamp(
+            `Image List Fetched. fetching ${
+              coverImageUrls.length - startingPoint
+            } Images starting at ${startingPoint}!`
+          )
+        );
+        for (let i = startingPoint; i < coverImageUrls.length; i++) {
+          try {
+            job.log(
+              logWithTimestamp(
+                `Fetching image ${i + 1}/${coverImageUrls.length} [${coverImageUrls[i]}]`
+              )
+            );
+            const res = await fetch(coverImageUrls[i]);
 
-          let selectedCoverImage = coverImageUrls[0];
-          if (job.data.update) {
-            selectedCoverImage = coverImageUrls[currentImageIndex + 1];
-            newCoverIndex = currentImageIndex + 1;
+            if (!res.ok) {
+              job.log(logWithTimestamp(`Failed to fetch image ${i} (status ${res.status})`));
+              continue;
+            }
+
+            const iconBuffer = await res.arrayBuffer();
+            job.log(logWithTimestamp(`Fetched image ${i}, resizing...`));
+
+            const resizedImage: Buffer<ArrayBufferLike> = await sharp(iconBuffer)
+              .resize(480, 720)
+              .toBuffer();
+
+            images.push({ image: resizedImage, index: i });
+            job.log(logWithTimestamp(`Image ${i} processed successfully`));
+          } catch (err) {
+            job.log(logWithTimestamp(`Error processing image ${i}: ${(err as Error).message}`));
           }
-          const iconBuffer = await (await fetch(selectedCoverImage)).arrayBuffer();
-
-          // job.updateProgress(80);
-          job.log(logWithTimestamp('image fetched resizing!'));
-
-          resizedImage = await sharp(iconBuffer).resize(480, 720).toBuffer();
-
-          // job.updateProgress(90);
-          job.log(logWithTimestamp('image resized!'));
         }
+        job.log(
+          logWithTimestamp(
+            `Finshed Fetching Images. ${images.length} / ${coverImageUrls.length - startingPoint}`
+          )
+        );
       }
     }
 
@@ -169,8 +195,7 @@ export async function getManga(
       slugList: hidList.join(','),
       chapterTextList: chapters.join(','),
       currentIndex: currIndex,
-      iconBuffer: resizedImage,
-      newCoverImageIndex: newCoverIndex,
+      images: images,
       specialFetchData: comickHid,
     };
   } catch (err) {
