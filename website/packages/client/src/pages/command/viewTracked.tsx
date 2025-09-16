@@ -25,6 +25,8 @@ import { useTheme } from '@mui/material/styles';
 import AddCircleOutlinedIcon from '@mui/icons-material/AddCircleOutlined';
 import KeyboardArrowDown from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUp from '@mui/icons-material/KeyboardArrowUp';
+import Typography from '@mui/material/Typography';
+import { useUISetting } from '../../hooks/useUiSetting';
 
 const combinedSortOptions: dropdownOption[] = [
   { value: 'mangaName_asc', label: 'Alphabetical (A → Z)' },
@@ -39,6 +41,8 @@ const combinedSortOptions: dropdownOption[] = [
 ];
 
 export default function Tracked() {
+  const [compactCardsEnabled] = useUISetting('compactCardsEnabled', false);
+
   const { data: mangaInfo, isLoading, error } = useUserManga();
 
   const { data: catOptions, isLoading: isLoadingCats, isError } = useUserCategories();
@@ -80,6 +84,7 @@ export default function Tracked() {
   const [chapterOpen, setChapterOpen] = useState(false);
   const [removeOpen, setRemoveOpen] = useState(false);
   const [recommendOpen, setRecommendOpen] = useState(false);
+  const [coverSelectionOpen, setCoverSelectionOpen] = useState(false);
 
   // Context menu state
   const [anchorPosition, setAnchorPosition] = useState<{ top: number; left: number } | null>(null);
@@ -179,6 +184,8 @@ export default function Tracked() {
         setRemoveOpen={setRemoveOpen}
         recommendOpen={recommendOpen}
         setRecommendOpen={setRecommendOpen}
+        coverSelectionOpen={coverSelectionOpen}
+        setCoverSelectionOpen={setCoverSelectionOpen}
         currentMangaId={currentMangaId}
         mangaInfo={mangaInfo}
         handleRemoveOpen={() => setRemoveOpen(true)}
@@ -239,7 +246,7 @@ export default function Tracked() {
           />
         ))}
 
-        <Card sx={{ width: 320, height: 350, backgroundColor: 'black', color: 'white' }}>
+        {/* <Card sx={{ width: 280, height: '350', backgroundColor: 'black', color: 'white' }}>
           <CardActionArea
             onClick={() => setAddOpen(true)}
             sx={{ height: '100%' }}
@@ -255,6 +262,41 @@ export default function Tracked() {
             >
               <AddCircleOutlinedIcon sx={{ width: 200, height: 200 }} />
             </Box>
+          </CardActionArea>
+        </Card> */}
+        <Card
+          sx={{
+            width: 280,
+            backgroundColor: 'black',
+            color: 'white',
+            border: '2px dashed rgba(255,255,255,0.3)', // subtle border hint
+            transition: 'all 0.2s ease-in-out',
+            '&:hover': {
+              borderColor: 'white',
+              transform: 'scale(1.03)',
+            },
+          }}
+        >
+          <CardActionArea
+            onClick={() => setAddOpen(true)}
+            sx={{
+              width: '100%',
+              height: '100%',
+              minHeight: compactCardsEnabled ? 230 : 'auto',
+              aspectRatio: compactCardsEnabled ? 'auto' : '480 / 720',
+              position: 'relative',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: 1,
+            }}
+          >
+            <AddCircleOutlinedIcon sx={{ fontSize: compactCardsEnabled ? 48 : 72, opacity: 0.6 }} />
+            <Typography variant="h6" sx={{ opacity: 0.8 }}>
+              Add Manga
+            </Typography>
           </CardActionArea>
         </Card>
 
@@ -317,6 +359,10 @@ export default function Tracked() {
           }}
           onRecommend={() => {
             setRecommendOpen(true);
+            setAnchorPosition(null);
+          }}
+          onChangeCover={() => {
+            setCoverSelectionOpen(true);
             setAnchorPosition(null);
           }}
         />

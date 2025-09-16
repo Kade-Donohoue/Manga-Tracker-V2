@@ -20,7 +20,7 @@ export async function getManga(
   url: string,
   icon: boolean = true,
   ignoreIndex = false,
-  currentImageIndex: number,
+  coverIndexes: number[],
   maxSavedAt: string,
   job: Job
 ): Promise<fetchData> {
@@ -145,8 +145,7 @@ export async function getManga(
       slugList: slugList.join(','),
       chapterTextList: chapterTestList.join(','),
       currentIndex: currIndex,
-      iconBuffer: resizedImage,
-      newCoverImageIndex: 0,
+      images: [{ image: resizedImage, index: 0 }],
       specialFetchData: null,
     };
   } catch (err) {

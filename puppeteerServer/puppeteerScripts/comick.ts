@@ -2,7 +2,8 @@ import config from '../config.json';
 import sharp from 'sharp';
 import { Job } from 'bullmq';
 import { fetchData } from '../types';
-import { createTimestampLogger } from '../util';
+import { createTimestampLogger, match } from '../util';
+import { getBrowser } from '../jobQueue';
 
 /**
  * Gets the chapter list from Comick
@@ -19,7 +20,7 @@ export async function getManga(
   url: string,
   icon: boolean = true,
   ignoreIndex = false,
-  currentImageIndex: number,
+  coverIndexes: number[],
   maxSavedAt: string,
   specialFetchData: any,
   job: Job
@@ -34,7 +35,8 @@ export async function getManga(
 
     let comickHid: string | null = specialFetchData;
     let mangaTitle: string = job.data.mangaName;
-    let resizedImage: Buffer | null = null;
+    let images: { image: Buffer<ArrayBufferLike>; index: number }[] = [];
+    let newCoverIndex: number = 0;
 
     if (config.logging.verboseLogging) console.log(comickHid, mangaTitle);
 
@@ -43,7 +45,7 @@ export async function getManga(
     const oneMonthAgo = new Date();
     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
-    const pullCoverImages = icon || inputDate < oneMonthAgo;
+    const pullCoverImages = icon || config.updateSettings.refetchImgs || inputDate < oneMonthAgo;
 
     if (!specialFetchData || !job.data.update || pullCoverImages) {
       const comicResult = await fetch(
@@ -69,20 +71,52 @@ export async function getManga(
 
       //Logic to pull cover images
       if (pullCoverImages) {
-        // find some way to get full list of covers to pull auto when new one
-        job.log(logWithTimestamp('Fetching image!'));
+        job.log(logWithTimestamp('Fetching image List!'));
 
-        const iconBuffer = await (
-          await fetch(`https://meo.comick.pictures/${comicData.comic.md_covers[0].b2key}`)
-        ).arrayBuffer();
+        const coverImageUrls = await getCoverImageList(slug);
 
-        // job.updateProgress(80);
-        job.log(logWithTimestamp('image fetched resizing!'));
+        let startingPoint = config.updateSettings.refetchImgs
+          ? 0
+          : Math.max(0, coverIndexes.length - 1);
+        job.log(
+          logWithTimestamp(
+            `Image List Fetched. fetching ${
+              coverImageUrls.length - startingPoint
+            } Images starting at ${startingPoint}!`
+          )
+        );
+        for (let i = startingPoint; i < coverImageUrls.length; i++) {
+          try {
+            job.log(
+              logWithTimestamp(
+                `Fetching image ${i + 1}/${coverImageUrls.length} [${coverImageUrls[i]}]`
+              )
+            );
+            const res = await fetch(coverImageUrls[i]);
 
-        resizedImage = await sharp(iconBuffer).resize(480, 720).toBuffer();
+            if (!res.ok) {
+              job.log(logWithTimestamp(`Failed to fetch image ${i} (status ${res.status})`));
+              continue;
+            }
 
-        // job.updateProgress(90);
-        job.log(logWithTimestamp('image resized!'));
+            const iconBuffer = await res.arrayBuffer();
+            job.log(logWithTimestamp(`Fetched image ${i}, resizing...`));
+
+            const resizedImage: Buffer<ArrayBufferLike> = await sharp(iconBuffer)
+              .resize(480, 720)
+              .toBuffer();
+
+            images.push({ image: resizedImage, index: i });
+            job.log(logWithTimestamp(`Image ${i} processed successfully`));
+          } catch (err) {
+            job.log(logWithTimestamp(`Error processing image ${i}: ${(err as Error).message}`));
+          }
+        }
+        job.log(
+          logWithTimestamp(
+            `Finshed Fetching Images. ${images.length} / ${coverImageUrls.length - startingPoint}`
+          )
+        );
       }
     }
 
@@ -161,8 +195,7 @@ export async function getManga(
       slugList: hidList.join(','),
       chapterTextList: chapters.join(','),
       currentIndex: currIndex,
-      iconBuffer: resizedImage,
-      newCoverImageIndex: 0,
+      images: images,
       specialFetchData: comickHid,
     };
   } catch (err) {
@@ -214,6 +247,79 @@ export async function getManga(
     }
 
     return extractSlug(url);
+  }
+
+  async function getCoverImageList(slug: string) {
+    const coverPageUrl = `https://comick.io/comic/${slug}/cover`;
+
+    try {
+      const browser = await getBrowser();
+      const page = await browser.newPage();
+
+      page.setDefaultNavigationTimeout(1000); // timeout nav after 1 sec
+      page.setRequestInterception(true);
+      await page.setUserAgent(
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0'
+      );
+      await page.setExtraHTTPHeaders({ 'accept-language': 'en-US,en;q=0.9' });
+
+      let allowAllRequests: boolean = false;
+      const allowRequests = [coverPageUrl];
+      const forceAllow = [''];
+      const blockRequests = [
+        '.css',
+        '.js',
+        'facebook',
+        'fbcdn.net',
+        'bidgear',
+        '.png',
+        '.jpg',
+        '.svg',
+        '.webp',
+      ];
+      page.on('request', (request) => {
+        if (allowAllRequests) {
+          request.continue();
+          return;
+        }
+
+        const u = request.url();
+
+        if (match(u, forceAllow)) {
+          request.continue();
+          return;
+        }
+
+        if (!match(u, allowRequests)) {
+          request.abort();
+          return;
+        }
+
+        if (request.resourceType() == 'image') {
+          request.abort();
+          return;
+        }
+
+        if (match(u, blockRequests)) {
+          request.abort();
+          return;
+        }
+        request.continue();
+      });
+
+      job.log(logWithTimestamp('Loading Cover Image List Page'));
+      await page.goto(coverPageUrl, { waitUntil: 'load', timeout: 10 * 1000 });
+      await job.updateProgress(20);
+      job.log(logWithTimestamp('Cover Image List Page Loaded. Fetching Data'));
+
+      const coverImageUrls = await page.$$eval('img.select-none', (imgs) =>
+        imgs.map((img) => img.src)
+      );
+
+      return coverImageUrls.reverse();
+    } catch {
+      return [];
+    }
   }
 }
 

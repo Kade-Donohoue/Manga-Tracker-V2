@@ -118,6 +118,7 @@ export async function getUserManga(authId: string, env: Env) {
       userData.userCat,
       userData.interactTime,
       userData.userTitle,
+      userData.userCoverIndex,
       (
         SELECT GROUP_CONCAT(coverImages.coverIndex) 
         FROM coverImages 

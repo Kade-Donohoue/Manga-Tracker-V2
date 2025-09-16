@@ -15,7 +15,7 @@ export async function getAllManga(env: Env) {
         slugList: string;
         mangaName: string;
         maxSavedAt: string;
-        maxCoverIndex: number;
+        coverIndexes: string;
         specialFetchData: any;
       }
     ] = (
@@ -26,19 +26,24 @@ export async function getAllManga(env: Env) {
             m.mangaId,
             m.mangaName,
             ci.maxSavedAt,
-            ci.maxCoverIndex,
+            ci.coverIndexes,
             m.specialFetchData
         FROM mangaData m
         LEFT JOIN (
             SELECT 
                 mangaId,
                 MAX(savedAt) AS maxSavedAt,
-                MAX(coverIndex) AS maxCoverIndex
+                json_group_array(coverIndex ORDER BY coverIndex) AS coverIndexes
             FROM coverImages
             GROUP BY mangaId
         ) ci ON m.mangaId = ci.mangaId;`
       ).all()
     ).results as any;
+
+    const parsed = allManga.map((m) => ({
+      ...m,
+      coverIndexes: m.coverIndexes ? (JSON.parse(m.coverIndexes) as number[]) : [],
+    }));
     return new Response(JSON.stringify({ data: allManga }), { status: 200 });
   } catch (err) {
     console.error('Error:', err);

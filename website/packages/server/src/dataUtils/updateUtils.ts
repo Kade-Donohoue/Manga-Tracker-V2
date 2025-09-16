@@ -147,3 +147,21 @@ export async function updateUserCategories(
     });
   }
 }
+
+export async function setUserCover(userId: string, mangaId: string, coverIndex: number, env: Env) {
+  const results = await env.DB.prepare(
+    `UPDATE userData SET userCoverIndex = ? WHERE userID = ? AND mangaId = ?`
+  )
+    .bind(coverIndex, userId, mangaId)
+    .run();
+
+  if (results.success) return new Response(JSON.stringify({ message: 'Success' }), { status: 200 });
+
+  console.error(results.error);
+  return new Response(
+    JSON.stringify({ message: 'Unable to change User Title. Contact an Admin!' }),
+    {
+      status: 500,
+    }
+  );
+}

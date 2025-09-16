@@ -22,7 +22,7 @@ const SetUserTitleModal: React.FC<SetUserTitleModalProps> = ({ open, onClose, ma
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
 
-  async function submitManga() {
+  async function submitTitle() {
     if (isLoading) return toast.error('Already setting!');
     const notif = toast.loading('Setting Title!', { closeOnClick: true, draggable: true });
     try {
@@ -118,7 +118,7 @@ const SetUserTitleModal: React.FC<SetUserTitleModalProps> = ({ open, onClose, ma
         <br />
         <Button
           onClick={() => {
-            submitManga();
+            submitTitle();
             onClose();
           }}
           variant="contained"

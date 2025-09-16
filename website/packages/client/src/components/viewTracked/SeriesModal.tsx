@@ -21,6 +21,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Avatar from '@mui/material/Avatar';
 import AvatarGroup from '@mui/material/AvatarGroup';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ButtonBase from '@mui/material/ButtonBase';
 
 interface SeriesModalProps {
   open: boolean;
@@ -29,6 +30,7 @@ interface SeriesModalProps {
   onRemove: () => void;
   onChangeCategory: () => void;
   onChangeChap: () => void;
+  onChangeCover: () => void;
 }
 
 const fetchFriendsData = async (
@@ -72,6 +74,7 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
   onRemove,
   onChangeCategory,
   onChangeChap,
+  onChangeCover,
 }) => {
   const listRef = useRef<HTMLUListElement | null>(null);
   const [tooltipOpen, setTooltipOpen] = useState(false);
@@ -223,7 +226,17 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onUnsetManga} maxWidth="md" fullWidth>
+    <Dialog
+      open={open}
+      onClose={onUnsetManga}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: {
+          backgroundColor: '#000000',
+        },
+      }}
+    >
       <DialogTitle>
         <Tooltip
           title={manga.mangaName}
@@ -257,20 +270,32 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
       <DialogContent dividers>
         <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={3}>
           <Box>
-            <img
-              src={
-                `${import.meta.env.VITE_IMG_URL}/${manga.mangaId}/${manga.imageIndexes?.at(-1) || 0}` ||
-                'mangaNotFoundImage.png'
-              }
-              alt={manga.mangaName}
-              style={{
-                width: '100%',
-                maxWidth: '360px',
-                height: 'auto',
-                borderRadius: 16,
-                objectFit: 'cover',
+            <ButtonBase
+              sx={{
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': {
+                  opacity: 0.75,
+                },
               }}
-            />
+              onClick={onChangeCover}
+            >
+              <img
+                src={
+                  `${
+                    import.meta.env.VITE_IMG_URL
+                  }/${manga.mangaId}/${manga.imageIndexes.includes(manga.userCoverIndex) ? manga.userCoverIndex : manga.imageIndexes.at(-1) || 0}` ||
+                  'mangaNotFoundImage.png'
+                }
+                alt={manga.mangaName}
+                style={{
+                  width: '100%',
+                  maxWidth: '360px',
+                  height: 'auto',
+                  borderRadius: 16,
+                  objectFit: 'cover',
+                }}
+              />
+            </ButtonBase>
           </Box>
 
           <Box flex={1} sx={{ overflowY: 'auto', maxHeight: '60vh' }}>

@@ -14,7 +14,7 @@ export default async function (job: Job) {
         job.data.url,
         job.data.getIcon,
         job.data.update,
-        job.data.maxCoverIndex,
+        job.data.coverIndexes,
         job.data.maxSavedAt,
         job
       );
@@ -23,7 +23,7 @@ export default async function (job: Job) {
         job.data.url,
         job.data.getIcon,
         job.data.update,
-        job.data.maxCoverIndex,
+        job.data.coverIndexes,
         job.data.maxSavedAt,
         job
       );
@@ -32,7 +32,7 @@ export default async function (job: Job) {
         job.data.url,
         job.data.getIcon,
         job.data.update,
-        job.data.maxCoverIndex,
+        job.data.coverIndexes,
         job.data.maxSavedAt,
         job
       );
@@ -42,7 +42,7 @@ export default async function (job: Job) {
         job.data.getIcon,
         job.data.update,
         job.data.maxCoverIndex,
-        job.data.maxSavedAt,
+        job.data.coverIndexes,
         job.data.specialFetchData,
         job
       );

@@ -15,7 +15,7 @@ async function findCompletedJobByMangaId(mangaId) {
   return job || null;
 }
 
-findCompletedJobByMangaId('520730b5-a418-484a-82ec-1ef5e261d1d9') //enter ID you want to find
+findCompletedJobByMangaId('401f7803-662e-447b-b7b1-76ec499b3e3e') //enter ID you want to find
   .then((job) => {
     if (job) {
       console.log('Found completed job:', job.id);
