@@ -13,6 +13,10 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import Stack from '@mui/material/Stack';
+import Chip from '@mui/material/Chip';
+import LinearProgress from '@mui/material/LinearProgress';
+import { useUISetting } from '../../hooks/useUiSetting';
 
 interface Props {
   data: mangaDetails;
@@ -27,6 +31,9 @@ export default function SeriesCard({
   openMangaOverview,
   catOptions,
 }: Props) {
+  const [progressBarEnabled] = useUISetting('progressBarEnabled', true);
+  const [compactCardsEnabled] = useUISetting('compactCardsEnabled', false);
+
   const findCat = (catVal: string): dropdownOption => {
     return (
       catOptions?.find((cat) => cat.value === catVal) || {
@@ -53,124 +60,234 @@ export default function SeriesCard({
     }
   };
 
+  const currentChapterStr = data.chapterTextList[
+    checkIndexInRange(data.currentIndex, data.chapterTextList.length)
+  ]
+    .match(/[0-9.]+/g)
+    ?.join('.');
+  const totalChaptersStr = data.chapterTextList[data.chapterTextList.length - 1]
+    .match(/[0-9.]+/g)
+    ?.join('.');
+
+  const currentChapter = currentChapterStr ? parseFloat(currentChapterStr) : 0;
+  const totalChapters = totalChaptersStr ? parseFloat(totalChaptersStr) : 0;
+
+  const progress =
+    typeof currentChapter === 'number' && typeof totalChapters === 'number' && totalChapters > 0
+      ? Math.max(0, Math.min(100, (currentChapter / totalChapters) * 100))
+      : 0;
+
+  if (false)
+    return (
+      <Card
+        sx={{
+          width: 320,
+          height: 350,
+          backgroundColor: 'black',
+          color: 'white',
+          position: 'relative',
+        }}
+        onContextMenu={(e) => handleContextMenu(e, data.mangaId)}
+      >
+        <CardActionArea
+          onClick={() => openMangaOverview(data.mangaId)}
+          onAuxClick={(e) => handleAuxClick(e, data.mangaId)}
+        >
+          <CardMedia
+            component="img"
+            height="200"
+            image={`${
+              fetchPath === '/.proxy' ? '/.proxy/image' : import.meta.env.VITE_IMG_URL
+            }/${data.mangaId}/${data.imageIndexes.includes(data.userCoverIndex) ? data.userCoverIndex : data.imageIndexes.at(-1) || 0}`}
+            alt={`Cover for ${data.mangaName}`}
+            style={{ objectPosition: 'top' }}
+            loading="lazy"
+          />
+          <CardContent
+            sx={{
+              height: 150,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              paddingBottom: '8px !important',
+            }}
+          >
+            {/* Title */}
+            <Box sx={{ overflow: 'hidden' }}>
+              <Tooltip title={data.userTitle ? data.userTitle : data.mangaName} enterDelay={700}>
+                <Typography
+                  gutterBottom
+                  variant="h5"
+                  component="div"
+                  sx={{
+                    display: '-webkit-box',
+                    WebkitBoxOrient: 'vertical',
+                    WebkitLineClamp: 1,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    maxHeight: '2.6em',
+                  }}
+                >
+                  {data.userTitle ? data.userTitle : data.mangaName}
+                </Typography>
+              </Tooltip>
+            </Box>
+
+            {/* Bottom content (chapter/category/avatars) */}
+            <Box
+              sx={{
+                fontSize: '0.85rem',
+                color: 'lightgray',
+                height: '100%',
+                marginTop: '10px',
+              }}
+              onContextMenu={(e) => handleContextMenu(e, data.mangaId)}
+            >
+              <table style={{ borderSpacing: '5px' }}>
+                <tbody>
+                  <tr>
+                    <td>Chapter:</td>
+                    <td>
+                      {`${data.chapterTextList[
+                        checkIndexInRange(data.currentIndex, data.chapterTextList.length)
+                      ]
+                        .match(/[0-9.]+/g)
+                        ?.join('.')}/${data.chapterTextList[data.chapterTextList.length - 1]
+                        .match(/[0-9.]+/g)
+                        ?.join('.')}`}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Category:</td>
+                    <td style={{ color: findCat(data.userCat)?.color || 'lightgray' }}>
+                      {findCat(data.userCat)?.label}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <Box sx={{ mt: 1, position: 'absolute', bottom: 0, left: 0, right: 0 }}>
+                <AvatarGroup
+                  max={4}
+                  sx={{ justifyContent: 'flex-start', bottom: 8, right: 40, position: 'absolute' }}
+                >
+                  {data.sharedFriends
+                    .filter((val) => val)
+                    .map((friend) => (
+                      <Tooltip title={friend.userName}>
+                        <Avatar
+                          key={friend.userID}
+                          alt={friend.userName}
+                          src={friend.avatarUrl}
+                          sx={{ width: 24, height: 24 }}
+                        />
+                      </Tooltip>
+                    ))}
+                </AvatarGroup>
+              </Box>
+            </Box>
+          </CardContent>
+        </CardActionArea>
+        <IconButton
+          sx={{ bottom: 0, right: 0, position: 'absolute' }}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleContextMenu(e, data.mangaId);
+          }}
+        >
+          <MoreVertIcon />
+        </IconButton>
+      </Card>
+    );
   return (
     <Card
+      elevation={3}
       sx={{
-        width: 320,
-        height: 350,
-        backgroundColor: 'black',
-        color: 'white',
+        width: 280,
+        borderRadius: 2,
+        overflow: 'visible',
         position: 'relative',
+        bgcolor: 'background.paper',
       }}
       onContextMenu={(e) => handleContextMenu(e, data.mangaId)}
     >
       <CardActionArea
         onClick={() => openMangaOverview(data.mangaId)}
         onAuxClick={(e) => handleAuxClick(e, data.mangaId)}
+        sx={{ display: 'block', textAlign: 'left' }}
       >
-        <CardMedia
-          component="img"
-          height="200"
-          image={`${
-            fetchPath === '/.proxy' ? '/.proxy/image' : import.meta.env.VITE_IMG_URL
-          }/${data.mangaId}/${data.imageIndexes.includes(data.userCoverIndex)?data.userCoverIndex:data.imageIndexes.at(-1)||0}`}
-          alt={`Cover for ${data.mangaName}`}
-          style={{ objectPosition: 'top' }}
-          loading="lazy"
-        />
-        <CardContent
+        {/* Card Media Container*/}
+        <Box
           sx={{
-            height: 150,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            paddingBottom: '8px !important',
+            width: '100%',
+            height: compactCardsEnabled ? 150 : 0,
+            paddingTop: compactCardsEnabled ? 0 : `${(720 / 480) * 100}%`, // maintain 480:720 (2:3) aspect ratio
+            position: 'relative',
+            overflow: 'hidden',
+            borderTopLeftRadius: 8,
+            borderTopRightRadius: 8,
+            backgroundColor: 'grey.200',
           }}
         >
-          {/* Title */}
-          <Box sx={{ overflow: 'hidden' }}>
-            <Tooltip title={data.userTitle ? data.userTitle : data.mangaName} enterDelay={700}>
-              <Typography
-                gutterBottom
-                variant="h5"
-                component="div"
-                sx={{
-                  display: '-webkit-box',
-                  WebkitBoxOrient: 'vertical',
-                  WebkitLineClamp: 1,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  maxHeight: '2.6em',
-                }}
-              >
-                {data.userTitle ? data.userTitle : data.mangaName}
-              </Typography>
-            </Tooltip>
-          </Box>
-
-          {/* Bottom content (chapter/category/avatars) */}
-          <Box
+          <CardMedia
+            component="img"
+            image={`${
+              fetchPath === '/.proxy' ? '/.proxy/image' : import.meta.env.VITE_IMG_URL
+            }/${data.mangaId}/${data.imageIndexes.includes(data.userCoverIndex) ? data.userCoverIndex : data.imageIndexes.at(-1) || 0}`}
+            alt={`Cover for ${data.mangaName}`}
             sx={{
-              fontSize: '0.85rem',
-              color: 'lightgray',
-              height: '100%',
-              marginTop: '10px',
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: compactCardsEnabled ? 350 : '100%',
+              objectFit: 'cover',
+              display: 'block',
             }}
-            onContextMenu={(e) => handleContextMenu(e, data.mangaId)}
-          >
-            <table style={{ borderSpacing: '5px' }}>
-              <tbody>
-                <tr>
-                  <td>Chapter:</td>
-                  <td>
-                    {`${data.chapterTextList[
-                      checkIndexInRange(data.currentIndex, data.chapterTextList.length)
-                    ]
-                      .match(/[0-9.]+/g)
-                      ?.join('.')}/${data.chapterTextList[data.chapterTextList.length - 1]
-                      .match(/[0-9.]+/g)
-                      ?.join('.')}`}
-                  </td>
-                </tr>
-                <tr>
-                  <td>Category:</td>
-                  <td style={{ color: findCat(data.userCat)?.color || 'lightgray' }}>
-                    {findCat(data.userCat)?.label}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            <Box sx={{ mt: 1, position: 'absolute', bottom: 0, left: 0, right: 0 }}>
-              <AvatarGroup
-                max={4}
-                sx={{ justifyContent: 'flex-start', bottom: 8, right: 40, position: 'absolute' }}
-              >
-                {data.sharedFriends
-                  .filter((val) => val)
-                  .map((friend) => (
-                    <Tooltip title={friend.userName}>
-                      <Avatar
-                        key={friend.userID}
-                        alt={friend.userName}
-                        src={friend.avatarUrl}
-                        sx={{ width: 24, height: 24 }}
-                      />
-                    </Tooltip>
-                  ))}
-              </AvatarGroup>
-            </Box>
-          </Box>
+            loading="lazy"
+          />
+          {/* Category chip on top-left */}
+          {data.userCat && (
+            <Chip
+              label={findCat(data.userCat)?.label}
+              size="small"
+              sx={{
+                position: 'absolute',
+                top: 8,
+                left: 8,
+                bgcolor: 'rgba(0,0,0,0.65)',
+                color: findCat(data.userCat)?.color || 'common.white',
+                fontWeight: 600,
+                borderRadius: 1,
+              }}
+            />
+          )}
+        </Box>
+
+        <CardContent sx={{ pt: 1, pb: 2 }}>
+          <Stack spacing={0.5}>
+            <Typography
+              variant="subtitle1"
+              component="h3"
+              noWrap
+              title={data.userTitle ? data.userTitle : data.mangaName}
+              sx={{ fontWeight: 700 }}
+            >
+              {data.userTitle ? data.userTitle : data.mangaName}
+            </Typography>
+
+            <Typography variant="body2" color="text.secondary">
+              Chapter: {currentChapter ?? '—'} / {totalChapters ?? '—'}
+            </Typography>
+
+            {progressBarEnabled ? (
+              <Box sx={{ width: '100%', mt: 1 }}>
+                <LinearProgress variant="determinate" value={progress} />
+              </Box>
+            ) : (
+              <div />
+            )}
+          </Stack>
         </CardContent>
       </CardActionArea>
-      <IconButton
-        sx={{ bottom: 0, right: 0, position: 'absolute' }}
-        onClick={(e) => {
-          e.stopPropagation();
-          handleContextMenu(e, data.mangaId);
-        }}
-      >
-        <MoreVertIcon />
-      </IconButton>
     </Card>
   );
 }

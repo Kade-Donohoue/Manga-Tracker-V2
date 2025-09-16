@@ -226,7 +226,17 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onUnsetManga} maxWidth="md" fullWidth>
+    <Dialog
+      open={open}
+      onClose={onUnsetManga}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: {
+          backgroundColor: '#000000',
+        },
+      }}
+    >
       <DialogTitle>
         <Tooltip
           title={manga.mangaName}

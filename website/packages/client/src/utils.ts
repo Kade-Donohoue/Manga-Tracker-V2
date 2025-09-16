@@ -1,18 +1,4 @@
-import { categoryOption, dropdownOption, mangaDetails } from './types';
-
-/**
- * Fetches item from cookies
- * @param key Key for value stored in cookies
- * @returns Json of item in cookies or null
- */
-export const getStoredValue = (key: string) => {
-  try {
-    const item = localStorage.getItem(key);
-    return item ? JSON.parse(item) : null;
-  } catch {
-    return null;
-  }
-};
+import { dropdownOption, mangaDetails } from './types';
 
 /**
  * calculates how long ago a event happened and returns it in a human readable form
