@@ -43,7 +43,7 @@ export default function Home() {
           {[
             { name: 'Manganato', url: 'https://www.manganato.gg/' },
             { name: 'Asura Scans', url: 'https://asuracomic.net/' },
-            { name: 'Comick', url: 'https://comick.io/home2' },
+            // { name: 'Comick', url: 'https://comick.io/home2' }, Depricated
             { name: 'Mangadex', url: 'https://mangadex.org/' },
           ].map(({ name, url }) => (
             <a

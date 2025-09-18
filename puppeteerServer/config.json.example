@@ -11,7 +11,7 @@
     "allowMangaDex": true,
     "allowReaperScans": false,
     "allowAsura": true,
-    "allowComick": true
+    "allowComick": false
   },
   "queue": {
     "redisIp": "127.0.0.1",
