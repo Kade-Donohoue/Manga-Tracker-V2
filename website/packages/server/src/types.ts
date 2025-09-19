@@ -144,10 +144,17 @@ export const newData = z.object({
   chapterTextList: z.string().transform((val) => val.replace(/-/g, '.')),
   currentIndex: z.coerce.number(),
   specialFetchData: z.any().nullable(),
-  iconBuffer: z.object({
-    type: z.literal('Buffer'),
-    data: z.array(z.number().int().min(0).max(255)),
-  }),
+  images: z.object({
+    image: z.object({
+      type: z.literal('Buffer'),
+      data: z.array(z.number().int().min(0).max(255)),
+    }),
+    index: z.coerce.number(),
+  }).array(),
+  // iconBuffer: z.object({
+  //   type: z.literal('Buffer'),
+  //   data: z.array(z.number().int().min(0).max(255)),
+  // }),
 });
 
 export type newDataType = z.infer<typeof newData>;

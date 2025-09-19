@@ -3,7 +3,7 @@
   "version": "3.0.1",
   "scripts": {
     "deploy": "wrangler secret bulk ../../.env.production -e production && wrangler deploy src/index.ts --env production",
-    "dev": "cp ../../.env.dev .dev.vars && wrangler dev src/index.ts --env dev --remote --test-scheduled",
+    "dev": "cp ../../.env.dev .dev.vars && wrangler dev src/index.ts --env dev --test-scheduled",
     "staging": "wrangler secret bulk --env staging ../../.env.staging && wrangler deploy src/index.ts --env staging",
     "test": "uvu -r tsm test",
     "resetDbLocal": "npx wrangler d1 execute dev-manga-bot --local --file=./src/schemaBlank.sql",
@@ -13,14 +13,14 @@
     "changeKey": "npx wrangler d1 execute dev-manga-bot --remote --file=./src/schemaChangeKey.sql"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250823.0",
+    "@cloudflare/workers-types": "^4.20250918.0",
     "@types/jest": "^30.0.0",
     "@types/service-worker-mock": "^2.0.4",
     "@types/uuid": "^10.0.0",
     "service-worker-mock": "^2.0.5",
     "tsm": "^2.2.1",
     "uvu": "^0.5.3",
-    "wrangler": "^4.32.0"
+    "wrangler": "^4.38.0"
   },
   "dependencies": {
     "@clerk/backend": "^2.9.4",

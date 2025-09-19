@@ -1,6 +1,6 @@
 {
   "notif": {
-    "webhookUrl": "https://example.com/api/webhook/example_key",
+    "webhookUrls": ["https://example.com/api/webhook/example_key"],
     "batchSuccessNotif": false,
     "batchFailureNotif": true,
     "mangaFailureNotif": false,
