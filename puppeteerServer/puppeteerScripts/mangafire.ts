@@ -87,9 +87,9 @@ export async function getManga(
     job.log(logWithTimestamp('Chapter Page Loaded. Fetching Data'));
 
     // const mangaName = (await page.title()).split(/\s*chapter\s+[\w\d\.\!]+(\s*(-|\|)\s*Read)?/i)[0];
-    const overviewUrl = url.split(/\/[a-z]{2}\/chapter/i)[0];
+    const urlBase = url.split(/\/[a-z]{2}\/chapter/i)[0];
 
-    const mangaId = overviewUrl.split('.').at(-1);
+    const mangaId = urlBase.split('.').at(-1);
 
     const chapterResp = await fetch(`https://mangafire.to/ajax/read/${mangaId}/chapter/en`);
 
@@ -141,12 +141,24 @@ export async function getManga(
         await page.setContent(volumeData.result, { waitUntil: 'domcontentloaded' });
 
         const photoUrls = await page.evaluate(() => {
-          return Array.from(document.querySelectorAll('.poster img')).map((img) =>
-            img.getAttribute('src')
-          );
+          return Array.from(document.querySelectorAll('.poster img'))
+            .map((img) => img.getAttribute('src'))
+            .filter((src) => src && !src.includes('no-image')); //Prevents Thier Fallback Image From showing up
         });
 
         photoUrls.reverse();
+
+        if (photoUrls.length <= 0) {
+          job.log(logWithTimestamp('Using Alternate Cover Image Fetch'));
+          await page.goto(urlBase.replace('read', 'manga'));
+
+          const imgElement = await page.waitForSelector('div.poster > div > img');
+
+          const imgSrc = await imgElement.evaluate((el) => el.getAttribute('src'));
+          if (imgSrc) {
+            photoUrls.push(imgSrc);
+          }
+        }
 
         console.log(photoUrls);
 
@@ -211,7 +223,7 @@ export async function getManga(
     await job.updateProgress(100);
     return {
       mangaName: mangaName,
-      urlBase: overviewUrl + '/en/chapter-',
+      urlBase: urlBase + '/en/chapter-',
       slugList: chapterNumbers.join(','),
       chapterTextList: chapterNumbers.join(','),
       currentIndex: currIndex,

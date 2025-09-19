@@ -180,6 +180,7 @@ export async function getManga(
 
     //ensure only custom error messages gets sent to user
     if (err.message.startsWith('Manga:')) throw new Error(err.message);
+    
     throw new Error('Unable to fetch Data! maybe invalid Url?');
   }
 }
