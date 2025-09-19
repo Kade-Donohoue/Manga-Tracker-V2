@@ -125,22 +125,18 @@ export async function saveManga(
     //check if manga already in DB if so update otherwise insert new magna
     const mangaUrlBases = newMangaInfo.map((m) => m.urlBase);
 
-    const selectQuery = `SELECT m.mangaId, m.mangaName, max(c.coverIndex) as maxCoverIndex 
-      FROM mangaData m 
-      JOIN coverImages c 
-        ON m.mangaId = c.mangaId 
+    const selectQuery = `
+      SELECT m.mangaId, m.mangaName, m.urlBase
+      FROM mangaData m
       WHERE m.urlBase IN (${mangaUrlBases.map(() => '?').join(', ')})
-      GROUP BY m.mangaId, m.urlBase`;
+    `;
 
     const existingMangaRows = (await env.DB.prepare(selectQuery)
       .bind(...mangaUrlBases)
-      .all()) as { results: { mangaId: string; urlBase: string; maxCoverIndex: number }[] };
+      .all()) as { results: { mangaId: string; urlBase: string }[] };
 
     const existingMangaMap = new Map(
-      existingMangaRows.results.map((row) => [
-        row.urlBase,
-        { mangaId: row.mangaId, maxCoverIndex: row.maxCoverIndex },
-      ])
+      existingMangaRows.results.map((row) => [row.urlBase, { mangaId: row.mangaId }])
     );
 
     const currentTime = new Date().toLocaleDateString('en-US', {
@@ -197,21 +193,18 @@ export async function saveManga(
           )
         );
 
-        const coverIndex = (existingMangaMap.get(manga.mangaName)?.maxCoverIndex ?? -1) + 1;
+        await Promise.all(
+          manga.images.map(async (img) => {
+            await env.IMG.put(`${mangaId}/${img.index}`, new Uint8Array(img.image.data).buffer, {
+              httpMetadata: { contentType: 'image/jpeg' },
+            });
 
-        newBoundStmt.push(
-          env.DB.prepare('INSERT INTO coverImages (mangaId, coverIndex) VALUES (?,?)').bind(
-            mangaId,
-            coverIndex
-          )
-        );
-
-        await env.IMG.put(
-          `${mangaId}/${coverIndex}`,
-          new Uint8Array(manga.iconBuffer.data).buffer,
-          {
-            httpMetadata: { contentType: 'image/jpeg' },
-          }
+            newBoundStmt.push(
+              env.DB.prepare(
+                'INSERT INTO coverImages (mangaId, coverIndex) VALUES (?,?) ON CONFLICT(mangaId, coverIndex) DO NOTHING'
+              ).bind(mangaId, img.index)
+            );
+          })
         );
 
         return newBoundStmt;

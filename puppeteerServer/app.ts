@@ -116,9 +116,9 @@ app.get('/checkStatus/get', checkOpts, async function (req, res) {
       continue;
     }
 
-    if (await job.isCompleted())
+    if (await job.isCompleted()) {
       data.push({ fetchId: fetchId, status: 'Completed', statusCode: 200, data: job.returnvalue });
-    else if (await job.isFailed())
+    } else if (await job.isFailed())
       data.push({ fetchId: fetchId, status: 'Failed', statusCode: 500, data: job.failedReason });
     else {
       data.push({ fetchId: fetchId, status: 'Still Processing', statusCode: 202, data: null });
