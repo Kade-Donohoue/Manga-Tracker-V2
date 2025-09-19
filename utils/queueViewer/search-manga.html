@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Search Jobs by Manga ID</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #121212;
+      color: #e0e0e0;
+    }
+    a {
+      color: #90caf9;
+    }
+    input, button {
+      padding: 8px;
+      font-size: 14px;
+      border: 1px solid #333;
+      border-radius: 4px;
+      background-color: #1e1e1e;
+      color: #e0e0e0;
+    }
+    button {
+      cursor: pointer;
+      background-color: #2c2c2c;
+    }
+    button:hover {
+      background-color: #3c3c3c;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background-color: #1e1e1e;
+    }
+    table, th, td {
+      border: 1px solid #333;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background-color: #2c2c2c;
+    }
+    pre {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      margin: 0;
+      font-size: 12px;
+      color: #b0bec5;
+    }
+    .error {
+      color: #ef5350;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Search Jobs by Manga ID</h1>
+  <a href="/admin/queues">Dashboard</a>
+  <div style="margin-top: 20px;">
+    <input type="text" id="mangaIdInput" placeholder="Enter mangaId" />
+    <button onclick="searchJobs()">Search</button>
+  </div>
+  <div id="error" class="error"></div>
+
+  <!-- Jobs Table -->
+  <table id="resultsTable" style="display:none;">
+    <thead>
+      <tr>
+        <th>Job ID</th>
+        <th>Job Name</th>
+        <th>Status</th>
+        <th>Processed On</th>
+        <th>Finished On</th>
+        <th>Data</th>
+        <th>Link</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    async function searchJobs() {
+      const mangaId = document.getElementById('mangaIdInput').value.trim();
+      const errorDiv = document.getElementById('error');
+      const table = document.getElementById('resultsTable');
+      const tbody = table.querySelector('tbody');
+
+      errorDiv.textContent = '';
+      tbody.innerHTML = '';
+      table.style.display = 'none';
+
+      if (!mangaId) {
+        errorDiv.textContent = 'Please enter a mangaId';
+        return;
+      }
+
+      try {
+        const res = await fetch(`/admin/api/jobs-by-mangaId?mangaId=${encodeURIComponent(mangaId)}`);
+        if (!res.ok) throw new Error('API request failed');
+        const jobs = await res.json();
+
+        if (jobs.length === 0) {
+          errorDiv.textContent = 'No jobs found for this mangaId.';
+          return;
+        }
+
+        jobs.forEach(job => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${job.id}</td>
+            <td>${job.name}</td>
+            <td>${job.status}</td>
+            <td>${job.processedOn || ''}</td>
+            <td>${job.finishedOn || ''}</td>
+            <td><pre>${JSON.stringify(job.data, null, 2)}</pre></td>
+            <td><a href="/admin/queues/queue/Get Manga Queue/${job.id}" target="_blank">View</a></td>
+          `;
+          tbody.appendChild(row);
+        });
+
+        table.style.display = 'table';
+      } catch (err) {
+        errorDiv.textContent = 'Error fetching jobs: ' + err.message;
+      }
+    }
+  </script>
+</body>
+</html>

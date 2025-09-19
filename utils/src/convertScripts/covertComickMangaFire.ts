@@ -1,5 +1,6 @@
 import { getManga } from './mangafire';
 import config from '../../config.json';
+import { appendFile } from 'fs';
 
 async function convert() {
   const resp = await fetch(`${config.serverUrl}/serverReq/data/getAllManga`, {
@@ -54,16 +55,21 @@ async function convert() {
     const match = searchReturn.result.html.match(/<a[^>]+href="([^"]+)"/);
     const bestMatch = match ? match[1] : null;
 
-    newManga.push({
-      ...(await getManga(
-        `https://mangafire.to/read${bestMatch.replace('manga/', '')}/en/chapter-1`,
-        true,
-        true,
-        [],
-        ''
-      )),
-      mangaId: manga.mangaId,
-    });
+    try {
+      newManga.push({
+        ...(await getManga(
+          `https://mangafire.to/read${bestMatch.replace('manga/', '')}/en/chapter-1`,
+          true,
+          true,
+          [],
+          ''
+        )),
+        mangaId: manga.mangaId,
+      });
+    } catch (err) {
+      logError({ name: manga.mangaName, url: manga.urlBase, err: err });
+    }
+
     console.log(newManga, manga.mangaName);
   }
 
@@ -140,6 +146,17 @@ async function sendUpdate(newManga: mangaData[]) {
     console.log(successMessage);
     // console.log('done, Its recomended to turn of auto update images now!');
   }
+}
+
+function logError({ name, url, err }) {
+  const message =
+    `Name: ${name} URL: ${url}\n` + `Error: ${err instanceof Error ? err.stack : String(err)}\n\n`;
+
+  appendFile('error.log', message, (writeErr) => {
+    if (writeErr) {
+      console.error('Failed to write log:', writeErr);
+    }
+  });
 }
 
 type mangaFireSearchRes = {
