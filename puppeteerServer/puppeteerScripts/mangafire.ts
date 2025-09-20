@@ -140,15 +140,14 @@ export async function getManga(
         console.log(volumeData);
         await page.setContent(volumeData.result, { waitUntil: 'domcontentloaded' });
 
-        const photoUrls = await page.evaluate(() => {
-          return Array.from(document.querySelectorAll('.poster img'))
-            .map((img) => img.getAttribute('src'))
-            .filter((src) => src && !src.includes('no-image')); //Prevents Thier Fallback Image From showing up
-        });
+        const photoUrls =
+          (await page.evaluate(() => {
+            return Array.from(document.querySelectorAll('.poster img'))
+              .map((img) => img.getAttribute('src'))
+              .filter((src) => src && !src.includes('no-image')); //Prevents Thier Fallback Image From showing up
+          })) ?? [];
 
-        photoUrls.reverse();
-
-        if (photoUrls.length <= 0) {
+        if (photoUrls?.length <= 0) {
           job.log(logWithTimestamp('Using Alternate Cover Image Fetch'));
           await page.goto(urlBase.replace('read', 'manga'));
 
@@ -160,11 +159,13 @@ export async function getManga(
           }
         }
 
+        photoUrls.reverse();
+
         console.log(photoUrls);
 
         let startingPoint = config.updateSettings.refetchImgs
           ? 0
-          : Math.max(0, coverIndexes.length - 1);
+          : Math.max(0, coverIndexes?.length - 1);
         job.log(
           logWithTimestamp(
             `Image List Fetched. fetching ${
