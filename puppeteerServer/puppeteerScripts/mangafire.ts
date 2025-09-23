@@ -140,7 +140,7 @@ export async function getManga(
         console.log(volumeData);
         await page.setContent(volumeData.result, { waitUntil: 'domcontentloaded' });
 
-        const photoUrls =
+        let photoUrls =
           (await page.evaluate(() => {
             return Array.from(document.querySelectorAll('.poster img'))
               .map((img) => img.getAttribute('src'))
@@ -163,9 +163,8 @@ export async function getManga(
 
         console.log(photoUrls);
 
-        let startingPoint = config.updateSettings.refetchImgs
-          ? 0
-          : Math.max(0, coverIndexes?.length - 1);
+        let startingPoint =
+          config.updateSettings.refetchImgs || icon ? 0 : Math.max(0, coverIndexes?.length - 1);
         job.log(
           logWithTimestamp(
             `Image List Fetched. fetching ${

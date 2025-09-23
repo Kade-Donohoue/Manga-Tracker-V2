@@ -123,20 +123,47 @@ export async function saveManga(
       return new Response(JSON.stringify({ results: userReturn }), { status: 200 });
 
     //check if manga already in DB if so update otherwise insert new magna
-    const mangaUrlBases = newMangaInfo.map((m) => m.urlBase);
+    // Split input into with/without specialFetchData
+    const withSpecial = newMangaInfo.filter((m) => m.specialFetchData != null);
+    const withoutSpecial = newMangaInfo.filter((m) => m.specialFetchData == null);
+
+    let conditions: string[] = [];
+    let params: any[] = [];
+
+    if (withSpecial.length > 0) {
+      conditions.push(
+        `(m.urlBase, m.specialFetchData) IN (${withSpecial.map(() => '(?, ?)').join(', ')})`
+      );
+      params.push(...withSpecial.flatMap((m) => [m.urlBase, m.specialFetchData]));
+    }
+
+    if (withoutSpecial.length > 0) {
+      conditions.push(
+        `(m.urlBase IN (${withoutSpecial
+          .map(() => '?')
+          .join(', ')}) AND m.specialFetchData IS NULL)`
+      );
+      params.push(...withoutSpecial.map((m) => m.urlBase));
+    }
 
     const selectQuery = `
-      SELECT m.mangaId, m.mangaName, m.urlBase
-      FROM mangaData m
-      WHERE m.urlBase IN (${mangaUrlBases.map(() => '?').join(', ')})
-    `;
+  SELECT m.mangaId, m.mangaName, m.urlBase, m.specialFetchData
+  FROM mangaData m
+  ${conditions.length > 0 ? `WHERE ${conditions.join(' OR ')}` : ''}
+`;
 
     const existingMangaRows = (await env.DB.prepare(selectQuery)
-      .bind(...mangaUrlBases)
-      .all()) as { results: { mangaId: string; urlBase: string }[] };
+      .bind(...params)
+      .all()) as {
+      results: { mangaId: string; urlBase: string; specialFetchData: string | null }[];
+    };
 
+    // Map by both urlBase + specialFetchData so keys are unique
     const existingMangaMap = new Map(
-      existingMangaRows.results.map((row) => [row.urlBase, { mangaId: row.mangaId }])
+      existingMangaRows.results.map((row) => [
+        `${row.urlBase}::${row.specialFetchData ?? 'NULL'}`,
+        { mangaId: row.mangaId },
+      ])
     );
 
     const currentTime = new Date().toLocaleDateString('en-US', {
@@ -154,7 +181,8 @@ export async function saveManga(
       newMangaInfo.map(async (manga) => {
         const newBoundStmt: D1PreparedStatement[] = [];
 
-        const mangaId = existingMangaMap.get(manga.urlBase)?.mangaId || crypto.randomUUID();
+        const key = `${manga.urlBase}::${manga.specialFetchData ?? 'NULL'}`;
+        const mangaId = existingMangaMap.get(key)?.mangaId || crypto.randomUUID();
 
         console.log('Binding values:', {
           mangaId,
