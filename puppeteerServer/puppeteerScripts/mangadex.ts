@@ -42,17 +42,30 @@ export async function getManga(
     const currChapData: {
       result: string;
       response: string;
-      data: { id: string; type: string; relationships: { id: string; type: string }[] };
+      data: {
+        id: string;
+        type: string;
+        relationships: { id: string; type: string }[];
+        attributes: {
+          volume: string;
+          chapter: string;
+          version: number;
+          translatedLanguage: string;
+          isUnavailable: boolean;
+        };
+      };
     } = await chapterRequest.json();
 
     let mangaId =
       currChapData.data.relationships.find((relation) => relation.type === 'manga').id || '';
 
+    let language = currChapData.data.attributes.translatedLanguage;
+
     if (!mangaId) throw new Error('Manga: Unable to get Mangadex mangaId ensure url is valid!');
 
     const [feedRequest, mangaRequest] = await Promise.all([
       fetch(
-        `https://api.mangadex.org/manga/${mangaId}/feed?translatedLanguage[]=en&limit=500&order[chapter]=asc`
+        `https://api.mangadex.org/manga/${mangaId}/feed?translatedLanguage[]=${language}&limit=500&order[chapter]=asc`
       ),
       fetch(`https://api.mangadex.org/manga/${mangaId}`),
     ]);
@@ -65,7 +78,12 @@ export async function getManga(
     const chapterData: mangaDexFeed = await feedRequest.json();
     const overViewData: overViewData = await mangaRequest.json();
 
-    const title = getEnglishTitle(overViewData.data);
+    let title = getEnglishTitle(overViewData.data);
+
+    if (language !== 'en') {
+      job.log(logWithTimestamp('Not English Appending language'));
+      title = ` (${language}) ${title}`;
+    }
 
     if (!title) throw new Error('Manga: Unable to get title!');
 
@@ -131,7 +149,9 @@ export async function getManga(
     await job.updateProgress(90);
 
     let urlParts = url.split('chapter/').at(-1).split('/');
-    const currIndex = slugList.indexOf(chapterId);
+    let currIndex = slugList.indexOf(chapterId);
+
+    if (currIndex == -1) currIndex = chapterTestList.indexOf(currChapData.data.attributes.chapter);
 
     if (currIndex == -1 && !ignoreIndex) {
       throw new Error('Manga: unable to find current chapter. Please retry or contact Admin!');
@@ -146,7 +166,7 @@ export async function getManga(
       chapterTextList: chapterTestList.join(','),
       currentIndex: currIndex,
       images: [{ image: resizedImage, index: 0 }],
-      specialFetchData: null,
+      specialFetchData: mangaId + `(${language})`,
     };
   } catch (err) {
     job.log(logWithTimestamp(`Error: ${err}`));
