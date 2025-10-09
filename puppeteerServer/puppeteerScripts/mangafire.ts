@@ -84,30 +84,41 @@ export async function getManga(
     job.log(logWithTimestamp('Loading Chapter Page'));
     // await page.goto(url, { waitUntil: 'load', timeout: 10 * 1000 });
     await job.updateProgress(20);
-    job.log(logWithTimestamp('Chapter Page Loaded. Fetching Data'));
+    job.log(logWithTimestamp('Fetching Data'));
+
+    const urlBase = url.split(/\/[a-z]{2}\/chapter/i)[0];
+
+    // const overviewResp = await fetch(urlBase.replace('read', 'manga'));
+    // const overviewHtml = await overviewResp.text();
+
+    // console.log(overviewHtml);
+
+    // await page.setContent(overviewHtml, { waitUntil: 'domcontentloaded' });
+
+    // const mangaName = await page.$eval('div.info > h1', (el) => el.textContent.trim());
+
+    const mangaName = url.split('/').at(-1).split('.')[0].replace('-', ' ');
 
     // const mangaName = (await page.title()).split(/\s*chapter\s+[\w\d\.\!]+(\s*(-|\|)\s*Read)?/i)[0];
-    const urlBase = url.split(/\/[a-z]{2}\/chapter/i)[0];
 
     const mangaId = urlBase.split('.').at(-1);
 
-    const chapterResp = await fetch(`https://mangafire.to/ajax/read/${mangaId}/chapter/en`);
+    const chapterResp = await fetch(`https://mangafire.to/ajax/manga/${mangaId}/chapter/en`);
 
     if (!chapterResp.ok) throw new Error('Manga: Unable to fetch Chapter List!');
 
     const chapterData = await chapterResp.json();
 
-    const mangaName = chapterData.result.title_format.split('TYPE_NUM')[0].trim();
+    // const mangaName = chapterData.result.title_format.split('TYPE_NUM')[0].trim();
+    const chapterDataHTML = chapterData.result;
 
-    console.log(mangaName);
+    // console.log(mangaName);
 
-    await page.setContent(chapterData.result.html, { waitUntil: 'domcontentloaded' });
+    await page.setContent(chapterDataHTML, { waitUntil: 'domcontentloaded' });
 
     const chapterNumbers = (
       await page.evaluate(() => {
-        // Select all <a> elements inside the <ul>
-        const links = Array.from(document.querySelectorAll('ul > li > a'));
-        // Return the data-number attribute for each
+        const links = Array.from(document.querySelectorAll('ul.scroll-sm > li.item'));
         return links.map((link) => link.getAttribute('data-number'));
       })
     ).reverse();
