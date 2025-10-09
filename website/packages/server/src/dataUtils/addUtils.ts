@@ -221,6 +221,13 @@ export async function saveManga(
           )
         );
 
+        //Counts Chapters as Read for manga for stats.
+        newBoundStmt.push(
+          env.DB.prepare(
+            'INSERT INTO userStats (userId, mangaId, type, value) VALUES (?, ?, "chapsRead", ?)'
+          ).bind(authId, mangaId, parseInt(manga.chapterTextList.split(',')[manga.currentIndex]))
+        );
+
         await Promise.all(
           manga.images.map(async (img) => {
             await env.IMG.put(`${mangaId}/${img.index}`, new Uint8Array(img.image.data).buffer, {
@@ -252,11 +259,9 @@ export async function saveManga(
       }
     }
 
-    let statMetric = await env.DB.prepare(
+    let mangaStats = env.DB.prepare(
       'INSERT INTO mangaStats (type, value) VALUES ("mangaCount", ?)'
-    )
-      .bind(newMangaCount)
-      .run();
+    ).bind(newMangaCount);
 
     //If environment isn't prod send collected metrics for debugging
     if (env.ENVIRONMENT != 'production')
@@ -264,7 +269,7 @@ export async function saveManga(
         JSON.stringify({
           results: userReturn,
           dataMetric: dbMetrics,
-          statMetric: statMetric,
+          statMetric: mangaStats,
           newManga: newMangaCount,
         })
       );

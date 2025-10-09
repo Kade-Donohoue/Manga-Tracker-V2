@@ -88,7 +88,7 @@ export async function getManga(
 
     const chapterData: { chapterMapData: [{ label: string; value: number }] } = await page.evaluate(
       () => {
-        let str: string;
+        let str: string = '';
 
         (window as any).__next_f.forEach((bigArray: any[]) => {
           if (bigArray[0] != 1) return false;
@@ -209,7 +209,7 @@ export async function getManga(
       slugList: chapeterList.join(','),
       chapterTextList: chapeterList.join(','),
       currentIndex: currIndex,
-      images: [{image: resizedImage, index: 0}],
+      images: [{ image: resizedImage, index: 0 }],
       specialFetchData: null,
     };
   } catch (err) {
