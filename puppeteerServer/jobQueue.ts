@@ -30,12 +30,17 @@ export function createWorkers() {
     name: 'universal',
   });
 
-  comickGetWorker = new Worker('Comick Manga Queue', mangaGetProc, {
+  let baseComickOptions = {
     connection,
-    concurrency: config.queue.comickInstances,
-    limiter: { max: 2, duration: 750 }, // comick has rate limit off 200/min. this will be 160 fetch attemts a min allowing some to do a full fetch(2 req) instead of just chapter data(1 req)
+    concurrency: 1,
     name: 'comick',
-  });
+    limiter: null,
+  };
+
+  if (config.updateSettings.intitalMangaFire)
+    baseComickOptions.limiter = { max: 1, duration: 1_000 };
+
+  comickGetWorker = new Worker('Comick Manga Queue', mangaGetProc, baseComickOptions);
 
   if (config.logging.verboseLogging) {
     mainGetWorker.on('ready', () => {
@@ -72,7 +77,7 @@ let browser: Browser | null = null;
 export async function getBrowser() {
   if (!browser) {
     browser = await puppeteer.launch({
-      headless: true,
+      headless: false,
       devtools: false,
       acceptInsecureCerts: true,
       args: [

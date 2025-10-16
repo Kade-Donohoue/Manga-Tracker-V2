@@ -54,6 +54,7 @@ export default async function (job: Job) {
         job.data.update,
         job.data.coverIndexes,
         job.data.maxSavedAt,
+        job.data.specialFetchData,
         job
       );
     default:
