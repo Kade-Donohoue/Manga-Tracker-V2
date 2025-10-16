@@ -22,6 +22,7 @@ export async function getManga(
   ignoreIndex = false,
   coverIndexes: number[],
   maxSavedAt: string,
+  specialFetchData: string,
   job: Job
 ): Promise<fetchData> {
   const logWithTimestamp = createTimestampLogger();
@@ -32,13 +33,13 @@ export async function getManga(
     page.setDefaultNavigationTimeout(1000); // timeout nav after 1 sec
     page.setRequestInterception(true);
     await page.setUserAgent(
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0'
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36'
     );
     await page.setExtraHTTPHeaders({ 'accept-language': 'en-US,en;q=0.9' });
 
     let allowAllRequests: boolean = false;
     const allowRequests = ['mangafire'];
-    const forceAllow = ['ajax'];
+    const forceAllow = ['ajax', 'mfcdn.cc/assets/t2/min/scripts.js'];
     const blockRequests = [
       '.css',
       '.js',
@@ -49,7 +50,6 @@ export async function getManga(
       '.jpg',
       '.svg',
       '.webp',
-      '/ajax/read/chapter',
     ];
     page.on('request', (request) => {
       if (allowAllRequests) {
@@ -64,6 +64,11 @@ export async function getManga(
         return;
       }
 
+      if (match(u, blockRequests)) {
+        request.abort();
+        return;
+      }
+
       if (!match(u, allowRequests)) {
         request.abort();
         return;
@@ -74,43 +79,76 @@ export async function getManga(
         return;
       }
 
-      if (match(u, blockRequests)) {
-        request.abort();
-        return;
-      }
       request.continue();
     });
 
-    job.log(logWithTimestamp('Loading Chapter Page'));
-    // await page.goto(url, { waitUntil: 'load', timeout: 10 * 1000 });
-    await job.updateProgress(20);
-    job.log(logWithTimestamp('Fetching Data'));
+    // await page.evaluateOnNewDocument(() => {
+    //   // Freeze the current URL
+    //   const current = window.location.href;
+
+    //   // Redefine window.location so scripts can't redirect
+    //   Object.defineProperty(window, 'location', {
+    //     configurable: false,
+    //     enumerable: true,
+    //     value: Object.freeze({
+    //       ...window.location,
+    //       assign: () => {},
+    //       replace: () => {},
+    //       reload: () => {},
+    //       get href() {
+    //         return current;
+    //       },
+    //       set href(_) {
+    //         // ignore attempts to navigate
+    //       },
+    //     }),
+    //   });
+
+    //   // Prevent history-based navigation
+    //   history.pushState = () => {};
+    //   history.replaceState = () => {};
+    //   history.back = () => {};
+    //   history.forward = () => {};
+    //   history.go = () => {};
+    // });
 
     const urlBase = url.split(/\/[a-z]{2}\/chapter/i)[0];
-
-    // const overviewResp = await fetch(urlBase.replace('read', 'manga'));
-    // const overviewHtml = await overviewResp.text();
-
-    // console.log(overviewHtml);
-
-    // await page.setContent(overviewHtml, { waitUntil: 'domcontentloaded' });
-
-    // const mangaName = await page.$eval('div.info > h1', (el) => el.textContent.trim());
-
-    const mangaName = url.split('/').at(-1).split('.')[0].replace('-', ' ');
-
-    // const mangaName = (await page.title()).split(/\s*chapter\s+[\w\d\.\!]+(\s*(-|\|)\s*Read)?/i)[0];
-
     const mangaId = urlBase.split('.').at(-1);
 
-    const chapterResp = await fetch(`https://mangafire.to/ajax/manga/${mangaId}/chapter/en`);
+    let chapterData: any;
+    if (!specialFetchData) {
+      // await new Promise((r) => setTimeout(r, 60_000));
+      const [response] = await Promise.all([
+        page.waitForRequest((req) => req.url().includes('/ajax/read/'), { timeout: 12_000 }),
+        page.goto(url, { waitUntil: 'networkidle2', timeout: 12_000 }),
+      ]);
+
+      const chapterApiUrl = new URL(response.url());
+      const vrf = chapterApiUrl.searchParams.get('vrf');
+      job.log(logWithTimestamp(`Found vrf: ${vrf}`));
+
+      specialFetchData = vrf;
+
+      await page.goto('about:blank');
+    }
+
+    if (!specialFetchData) throw new Error('Manga: Unable to get VFR!');
+    job.log(logWithTimestamp('Loading Chapter Data'));
+    const chapterResp = await fetch(
+      `https://mangafire.to/ajax/read/${mangaId}/chapter/en?vrf=${specialFetchData}`
+    );
 
     if (!chapterResp.ok) throw new Error('Manga: Unable to fetch Chapter List!');
 
-    const chapterData = await chapterResp.json();
+    chapterData = await chapterResp.json();
 
-    // const mangaName = chapterData.result.title_format.split('TYPE_NUM')[0].trim();
-    const chapterDataHTML = chapterData.result;
+    console.log(chapterData);
+
+    await job.log(logWithTimestamp('Finished Fetching Chapter Data. Proccessing!'));
+    await job.updateProgress(20);
+
+    const mangaName = chapterData.result.title_format.split('TYPE_NUM')[0].trim();
+    const chapterDataHTML = chapterData.result.html;
 
     // console.log(mangaName);
 
@@ -118,7 +156,7 @@ export async function getManga(
 
     const chapterNumbers = (
       await page.evaluate(() => {
-        const links = Array.from(document.querySelectorAll('ul.scroll-sm > li.item'));
+        const links = Array.from(document.querySelectorAll('ul > li > a'));
         return links.map((link) => link.getAttribute('data-number'));
       })
     ).reverse();
@@ -239,7 +277,7 @@ export async function getManga(
       chapterTextList: chapterNumbers.join(','),
       currentIndex: currIndex,
       images: images,
-      specialFetchData: null,
+      specialFetchData: specialFetchData,
     };
   } catch (err) {
     job.log(logWithTimestamp(`Error: ${err}`));

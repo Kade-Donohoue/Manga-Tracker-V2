@@ -133,7 +133,7 @@ async function updateAllManga() {
         },
       };
 
-      if (webSite.value === 'comick') {
+      if (webSite.value === 'mangafire') {
         comickJobs.push(job);
       } else {
         universalJobs.push(job);
