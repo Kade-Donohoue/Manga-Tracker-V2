@@ -1,13 +1,13 @@
 import { Job } from 'bullmq';
 import config from './config.json';
-import { comickGetWorker, comickQueue, getQueue, mainGetWorker } from './jobQueue';
+import { mangaFireGetWorker, mangaFireQueue, getQueue, mainGetWorker } from './jobQueue';
 import { dataType, fetchData, updateCollector } from './types';
 import { validMangaCheck, sendNotif } from './util';
 
 export function startAutoUpdate() {
-  comickGetWorker.on('completed', mangaCompleteFuction);
+  mangaFireGetWorker.on('completed', mangaCompleteFuction);
   mainGetWorker.on('completed', mangaCompleteFuction);
-  comickGetWorker.on('failed', mangaFailedEvent);
+  mangaFireGetWorker.on('failed', mangaFailedEvent);
   mainGetWorker.on('failed', mangaFailedEvent);
 
   if (config.updateSettings.updateAtStart) updateAllManga();
@@ -68,7 +68,7 @@ async function updateAllManga() {
 
     // let batchedJobs:{data:any,name:string,opts:any}[] = []
     const universalJobs: { data: any; name: string; opts: any }[] = [];
-    const comickJobs: { data: any; name: string; opts: any }[] = [];
+    const mangafireJobs: { data: any; name: string; opts: any }[] = [];
     let invalidCount = 0;
     for (var i = 0; i < returnData.length; i++) {
       let firstChapUrl = '';
@@ -134,13 +134,13 @@ async function updateAllManga() {
       };
 
       if (webSite.value === 'mangafire') {
-        comickJobs.push(job);
+        mangafireJobs.push(job);
       } else {
         universalJobs.push(job);
       }
     }
     await getQueue.addBulk(universalJobs);
-    await comickQueue.addBulk(comickJobs);
+    await mangaFireQueue.addBulk(mangafireJobs);
 
     if (config.logging.verboseLogging) console.log('Jobs Added to Queue');
   } catch (err) {

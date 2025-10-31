@@ -336,7 +336,6 @@ export default function addManga() {
         let currentUrl = (child.url || child.uri!).toLowerCase();
         if (currentUrl.includes('manga')) return true;
         if (currentUrl.includes('asura')) return true;
-        if (currentUrl.includes('comick')) return true;
         // console.log(currentUrl)
       }
     }
@@ -353,13 +352,7 @@ export default function addManga() {
       // console.log(child.name)
       if (child.type == 'url' || child.type == 'text/x-moz-place') {
         let currentUrl = (child.url || child.uri!).toLowerCase();
-        if (
-          currentUrl.includes('manga') ||
-          currentUrl.includes('reaper') ||
-          currentUrl.includes('asura') ||
-          currentUrl.includes('comick')
-        )
-          urls.push(currentUrl);
+        if (currentUrl.includes('manga') || currentUrl.includes('asura')) urls.push(currentUrl);
       }
     }
   }

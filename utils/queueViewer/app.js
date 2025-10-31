@@ -8,7 +8,7 @@ const path = require('path');
 const connection = { host: '127.0.0.1', port: 6379 };
 
 const getQueue = new Queue('Get Manga Queue', { connection });
-const getComickQueue = new Queue('Comick Manga Queue', { connection });
+const getComickQueue = new Queue('MangaFire Manga Queue', { connection });
 
 
 const serverAdapter = new ExpressAdapter();

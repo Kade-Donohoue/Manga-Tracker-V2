@@ -25,8 +25,6 @@ export function validMangaCheck(url: string): mangaUrlCheck {
     return { success: true, value: 'mangadex' };
   else if (url.includes('asura') && config.sites.allowAsura)
     return { success: true, value: 'asura' };
-  else if (url.includes('comick') && config.sites.allowComick)
-    return { success: true, value: 'comick' };
   else if (url.includes('mangafire') && config.sites.allowMangafire)
     return { success: true, value: 'mangafire' };
   else return { success: false, value: 'Unsupported WebPage!', statusCode: 422 };
@@ -34,10 +32,6 @@ export function validMangaCheck(url: string): mangaUrlCheck {
 
 function checkChapterUrl(url: string): boolean {
   url = url.toLowerCase();
-  if (url.includes('comick.io/comic/')) {
-    url.replace('https://comick.io/comic/', '');
-    if (url.includes('/')) return true;
-  }
   return url.includes('chapter') || url.includes('ch-');
 }
 

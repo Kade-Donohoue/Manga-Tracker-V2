@@ -9,14 +9,14 @@
   "sites": {
     "allowManganatoScans": true,
     "allowMangaDex": true,
-    "allowReaperScans": false,
     "allowAsura": true,
-    "allowComick": false
+    "allowComick": false,
+    "allowMangafire": true
   },
   "queue": {
     "redisIp": "127.0.0.1",
+    "mangaFireInstances": 1,
     "instances": 3,
-    "comickInstances": 3,
     "clearQueuesAtStart": true,
     "instantClearJob": false,
     "removeCompleted": 1000,
@@ -27,13 +27,15 @@
   },
   "serverCom": {
     "serverUrl": "enter_url_here",
-    "serverPassWord": "secret_Password_Change_Me"
+    "serverPassWord": "secret_Password_Change_Me",
+    "localPort": 80
   },
   "updateSettings": {
     "autoUpdateInfo": true,
     "updateDelay": 7200000,
     "updateAtStart": true,
     "refetchImgs": false,
-    "forceUpdateManga": false
+    "forceUpdateManga": false,
+    "intitalMangaFire": false
   }
 }
