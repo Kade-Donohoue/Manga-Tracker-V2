@@ -1,11 +1,11 @@
 import { Queue } from 'bullmq';
 
-const queue = new Queue('Comick Manga Queue', {
+const queue = new Queue('MangaFire Manga Queue', {
   connection: {
     host: '127.0.0.1',
     port: 6379,
   },
-}); // Comick Manga Queue or Get Manga Queue
+}); // MangaFire Manga Queue or Get Manga Queue
 
 async function findCompletedJobByMangaId(mangaId) {
   const completedJobs = await queue.getJobs(['completed'], 0, 1000); // default stored limit

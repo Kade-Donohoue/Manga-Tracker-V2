@@ -245,25 +245,6 @@ export default function Tracked() {
             catOptions={catOptions}
           />
         ))}
-
-        {/* <Card sx={{ width: 280, height: '350', backgroundColor: 'black', color: 'white' }}>
-          <CardActionArea
-            onClick={() => setAddOpen(true)}
-            sx={{ height: '100%' }}
-            className="addManga viewTracked"
-          >
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                height: '100%',
-              }}
-            >
-              <AddCircleOutlinedIcon sx={{ width: 200, height: 200 }} />
-            </Box>
-          </CardActionArea>
-        </Card> */}
         <Card
           sx={{
             width: 280,

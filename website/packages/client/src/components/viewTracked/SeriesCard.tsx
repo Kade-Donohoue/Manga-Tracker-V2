@@ -274,9 +274,27 @@ export default function SeriesCard({
               {data.userTitle ? data.userTitle : data.mangaName}
             </Typography>
 
-            <Typography variant="body2" color="text.secondary">
-              Chapter: {currentChapter ?? '—'} / {totalChapters ?? '—'}
-            </Typography>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <Typography variant="body2" color="text.secondary">
+                Chapter: {currentChapter ?? '—'} / {totalChapters ?? '—'}
+              </Typography>
+
+              <AvatarGroup max={4} sx={{ '& .MuiAvatar-root': { width: 16, height: 16 } }}>
+                {data.sharedFriends
+                  .filter((val) => val)
+                  .map((friend) => (
+                    <Tooltip key={friend.userID} title={friend.userName}>
+                      <Avatar alt={friend.userName} src={friend.avatarUrl} />
+                    </Tooltip>
+                  ))}
+              </AvatarGroup>
+            </Box>
 
             {progressBarEnabled ? (
               <Box sx={{ width: '100%', mt: 1 }}>

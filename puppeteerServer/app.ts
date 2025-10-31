@@ -1,4 +1,4 @@
-import { getQueue, comickQueue, getBrowser, createWorkers } from './jobQueue';
+import { getQueue, mangaFireQueue, getBrowser, createWorkers } from './jobQueue';
 import { checkOpts, getOpts } from './types';
 import { validMangaCheck } from './util';
 import './mangaGetProc';
@@ -7,7 +7,7 @@ import config from './config.json';
 import { startAutoUpdate } from './autoUpdateHandler';
 
 const app = fastify();
-const port = 80;
+const port = config.serverCom.localPort;
 const host = '0.0.0.0'; //1.1.1.1 for local host only 0.0.0.0 for any interface
 app.listen({ port: port, host: host }, async function (err, address) {
   if (err) {
@@ -16,9 +16,9 @@ app.listen({ port: port, host: host }, async function (err, address) {
   }
 
   if (config.queue.clearQueuesAtStart) {
-    console.log("Clearing Queue! If this isn't the behavior you want change it in config.json");
+    console.log("Clearing Queue! If this isn't the behavior you want mangaFireQueuechange it in config.json");
     await getQueue.obliterate({ force: true });
-    await comickQueue.obliterate({ force: true });
+    await mangaFireQueue.obliterate({ force: true });
   }
   await getBrowser(); //called to initiate browser otherwise if multiple jobs run at same time multiple browsers can be opened
 
@@ -40,7 +40,7 @@ app.get('/getManga', getOpts, async function (req, res) {
 
   let errors: { message: string; url: string }[] = [];
   const universalJobs: { data: any; name: string; opts: any }[] = [];
-  const comickJobs: { data: any; name: string; opts: any }[] = [];
+  const mangafireJobs: { data: any; name: string; opts: any }[] = [];
   for (const url of urls) {
     const webSite = validMangaCheck(url);
     if (webSite.success === false) {
@@ -63,22 +63,23 @@ app.get('/getManga', getOpts, async function (req, res) {
         removeOnComplete: config.queue.removeCompleted,
         removeOnFail: config.queue.removeFailed,
         name: webSite.value,
+        timeout: 30_000,
       },
     };
 
     if (webSite.value === 'mangafire') {
-      comickJobs.push(job);
+      mangafireJobs.push(job);
     } else {
       universalJobs.push(job);
     }
   }
 
-  const [universalAdded, comickAdded] = await Promise.all([
+  const [universalAdded, mangafireAdded] = await Promise.all([
     getQueue.addBulk(universalJobs),
-    comickQueue.addBulk(comickJobs),
+    mangaFireQueue.addBulk(mangafireJobs),
   ]);
 
-  const jobs = [...universalAdded, ...comickAdded];
+  const jobs = [...universalAdded, ...mangafireAdded];
 
   const response = {
     addedManga: jobs.map((job) => {
@@ -102,7 +103,7 @@ app.get('/checkStatus/get', checkOpts, async function (req, res) {
     let job = await getQueue.getJob(fetchId);
 
     if (!job) {
-      job = await comickQueue.getJob(fetchId);
+      job = await mangaFireQueue.getJob(fetchId);
     }
 
     if (config.logging.verboseLogging) {

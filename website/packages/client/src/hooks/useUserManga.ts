@@ -29,6 +29,6 @@ export function useUserManga() {
       errorMessage: 'Failed to get tracked Manga!',
     },
     staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
   });
 }

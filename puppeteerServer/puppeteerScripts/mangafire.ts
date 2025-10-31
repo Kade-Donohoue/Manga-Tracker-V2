@@ -117,13 +117,17 @@ export async function getManga(
 
     let chapterData: any;
     if (!specialFetchData) {
-      // await new Promise((r) => setTimeout(r, 60_000));
-      const [response] = await Promise.all([
-        page.waitForRequest((req) => req.url().includes('/ajax/read/'), { timeout: 12_000 }),
-        page.goto(url, { waitUntil: 'networkidle2', timeout: 12_000 }),
-      ]);
+      const ajaxRequestPromise = page.waitForRequest(
+        (req) => req.url().includes('/ajax/read/'),
+        { timeout: 10_000 } // fail fast if not triggered
+      );
 
-      const chapterApiUrl = new URL(response.url());
+      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 10_000 }).catch(() => null);
+
+      const ajaxRequest = await ajaxRequestPromise.catch(() => null);
+      if (!ajaxRequest) throw new Error('Manga: No ajax/read/ request detected!');
+
+      const chapterApiUrl = new URL(ajaxRequest.url());
       const vrf = chapterApiUrl.searchParams.get('vrf');
       job.log(logWithTimestamp(`Found vrf: ${vrf}`));
 
@@ -135,7 +139,10 @@ export async function getManga(
     if (!specialFetchData) throw new Error('Manga: Unable to get VFR!');
     job.log(logWithTimestamp('Loading Chapter Data'));
     const chapterResp = await fetch(
-      `https://mangafire.to/ajax/read/${mangaId}/chapter/en?vrf=${specialFetchData}`
+      `https://mangafire.to/ajax/read/${mangaId}/chapter/en?vrf=${specialFetchData}`,
+      {
+        signal: AbortSignal.timeout(2000),
+      }
     );
 
     if (!chapterResp.ok) throw new Error('Manga: Unable to fetch Chapter List!');
@@ -182,7 +189,9 @@ export async function getManga(
       job.log(logWithTimestamp('Loading Volume html'));
       await page.setJavaScriptEnabled(false);
 
-      const volumeResp = await fetch(`https://mangafire.to/ajax/manga/${mangaId}/volume/en`);
+      const volumeResp = await fetch(`https://mangafire.to/ajax/manga/${mangaId}/volume/en`, {
+        signal: AbortSignal.timeout(2000),
+      });
 
       if (volumeResp.ok) {
         const volumeData = await volumeResp.json();
@@ -226,7 +235,7 @@ export async function getManga(
             job.log(
               logWithTimestamp(`Fetching image ${i + 1}/${photoUrls.length} [${photoUrls[i]}]`)
             );
-            const res = await fetch(photoUrls[i]);
+            const res = await fetch(photoUrls[i], { signal: AbortSignal.timeout(2000) });
 
             if (!res.ok) {
               job.log(logWithTimestamp(`Failed to fetch image ${i} (status ${res.status})`));

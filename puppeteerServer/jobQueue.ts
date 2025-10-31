@@ -16,12 +16,12 @@ export const getQueue = new Queue('Get Manga Queue', {
   connection,
 });
 
-export const comickQueue = new Queue('Comick Manga Queue', {
+export const mangaFireQueue = new Queue('MangaFire Manga Queue', {
   connection,
 });
 
 export let mainGetWorker: Worker | null = null;
-export let comickGetWorker: Worker | null = null;
+export let mangaFireGetWorker: Worker | null = null;
 
 export function createWorkers() {
   mainGetWorker = new Worker('Get Manga Queue', mangaGetProc, {
@@ -30,17 +30,17 @@ export function createWorkers() {
     name: 'universal',
   });
 
-  let baseComickOptions = {
+  let baseMangaFireOptions = {
     connection,
-    concurrency: 1,
-    name: 'comick',
+    concurrency: config.queue.mangaFireInstances,
+    name: 'mangafire',
     limiter: null,
   };
 
   if (config.updateSettings.intitalMangaFire)
-    baseComickOptions.limiter = { max: 1, duration: 1_000 };
+    baseMangaFireOptions.limiter = { max: 1, duration: 1_000 };
 
-  comickGetWorker = new Worker('Comick Manga Queue', mangaGetProc, baseComickOptions);
+  mangaFireGetWorker = new Worker('MangaFire Manga Queue', mangaGetProc, baseMangaFireOptions);
 
   if (config.logging.verboseLogging) {
     mainGetWorker.on('ready', () => {
@@ -56,21 +56,21 @@ export function createWorkers() {
       console.log(`Main worker job ${job.id} completed`);
     });
 
-    comickGetWorker.on('ready', () => {
+    mangaFireGetWorker.on('ready', () => {
       console.log('Comick worker ready');
     });
-    comickGetWorker.on('error', (err) => {
+    mangaFireGetWorker.on('error', (err) => {
       console.error('Comick worker error:', err);
     });
-    comickGetWorker.on('failed', (job, err) => {
+    mangaFireGetWorker.on('failed', (job, err) => {
       console.error(`Comick job ${job.id} failed:`, err);
     });
-    comickGetWorker.on('completed', (job) => {
+    mangaFireGetWorker.on('completed', (job) => {
       console.log(`Comick job ${job.id} completed`);
     });
   }
 
-  return { mainGetWorker, comickGetWorker };
+  return { mainGetWorker, mangaFireGetWorker };
 }
 
 let browser: Browser | null = null;
@@ -111,7 +111,7 @@ async function shutdown() {
   console.info('Shutting Down!');
   try {
     await mainGetWorker.close();
-    await comickGetWorker.close();
+    await mangaFireGetWorker.close();
 
     await getQueue.close();
 
