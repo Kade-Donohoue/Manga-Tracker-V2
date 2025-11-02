@@ -38,7 +38,7 @@ export function createWorkers() {
   };
 
   if (config.updateSettings.intitalMangaFire)
-    baseMangaFireOptions.limiter = { max: 1, duration: 1_000 };
+    baseMangaFireOptions.limiter = { max: 1, duration: 1_500 };
 
   mangaFireGetWorker = new Worker('MangaFire Manga Queue', mangaGetProc, baseMangaFireOptions);
 
@@ -77,7 +77,7 @@ let browser: Browser | null = null;
 export async function getBrowser() {
   if (!browser) {
     browser = await puppeteer.launch({
-      headless: false,
+      headless: true,
       devtools: false,
       acceptInsecureCerts: true,
       args: [
