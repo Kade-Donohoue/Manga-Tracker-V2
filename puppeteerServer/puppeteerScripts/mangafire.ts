@@ -115,8 +115,20 @@ export async function getManga(
     const urlBase = url.split(/\/[a-z]{2}\/chapter/i)[0];
     const mangaId = urlBase.split('.').at(-1);
 
+    job.log(logWithTimestamp('Starting Optimistic Fetch!'));
+    let chapterResp = await fetch(
+      `https://mangafire.to/ajax/read/${mangaId}/chapter/en?vrf=${specialFetchData}`,
+      {
+        signal: AbortSignal.timeout(2000),
+      }
+    );
+
+    job.log(logWithTimestamp('Optimistic fetch finished with code: ' + chapterResp.status));
+
     let chapterData: any;
-    if (!specialFetchData) {
+    if (chapterResp.status === 403 || !specialFetchData) {
+      job.log(logWithTimestamp('Optomistic fetch failed. Refteching VFR'));
+
       const ajaxRequestPromise = page.waitForRequest(
         (req) => req.url().includes('/ajax/read/'),
         { timeout: 10_000 } // fail fast if not triggered
@@ -133,17 +145,19 @@ export async function getManga(
 
       specialFetchData = vrf;
 
-      await page.goto('about:blank');
-    }
+      await page
+        .goto('about:blank', { waitUntil: 'domcontentloaded', timeout: 1000 })
+        .catch(() => null);
 
-    if (!specialFetchData) throw new Error('Manga: Unable to get VFR!');
-    job.log(logWithTimestamp('Loading Chapter Data'));
-    const chapterResp = await fetch(
-      `https://mangafire.to/ajax/read/${mangaId}/chapter/en?vrf=${specialFetchData}`,
-      {
-        signal: AbortSignal.timeout(2000),
-      }
-    );
+      if (!specialFetchData) throw new Error('Manga: Unable to get VFR!');
+      job.log(logWithTimestamp('Loading Chapter Data'));
+      chapterResp = await fetch(
+        `https://mangafire.to/ajax/read/${mangaId}/chapter/en?vrf=${specialFetchData}`,
+        {
+          signal: AbortSignal.timeout(2000),
+        }
+      );
+    }
 
     if (!chapterResp.ok) throw new Error('Manga: Unable to fetch Chapter List!');
 
