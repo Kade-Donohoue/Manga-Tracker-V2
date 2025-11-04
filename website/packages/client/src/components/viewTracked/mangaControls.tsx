@@ -162,6 +162,8 @@ const MangaControls: React.FC<MangaControlsProps> = ({
               { value: 'interactTime_asc', label: 'Last Interacted (Oldest)' },
               { value: 'currentChap_desc', label: 'Chapters Read (Most)' },
               { value: 'currentChap_asc', label: 'Chapters Read (Least)' },
+              {value: 'chapsUnread_desc', label: 'Chapters Remaining(Most)'},
+              {value: 'chapsUnread_asc', label: 'Chapters Remaining(Least)'},
               { value: 'updateTime_desc', label: 'Last Updated (Recent)' },
               { value: 'updateTime_asc', label: 'Last Updated (Oldest)' },
               { value: 'search', label: 'Title Search' },

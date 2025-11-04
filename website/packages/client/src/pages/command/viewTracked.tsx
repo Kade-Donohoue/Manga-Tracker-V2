@@ -117,6 +117,13 @@ export default function Tracked() {
       if (!key || !direction) return 0;
 
       const orderVal = direction === 'desc' ? -1 : 1;
+
+      if (key === 'chapsUnread') {
+        const unreadA = a.chapterTextList.length - a.currentIndex - 1;
+        const unreadB = b.chapterTextList.length - b.currentIndex - 1;
+        return (unreadA - unreadB) * orderVal;
+      }
+
       const valA = a[key as keyof mangaDetails];
       const valB = b[key as keyof mangaDetails];
 

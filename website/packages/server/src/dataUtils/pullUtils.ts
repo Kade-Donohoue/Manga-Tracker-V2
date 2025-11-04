@@ -332,10 +332,17 @@ export async function userStats(userId: string, env: Env) {
       global: env.DB.prepare(`
         SELECT
         (SELECT COUNT(*) FROM mangaData) AS mangaCount,
-        (SELECT SUM(value) FROM mangaStats WHERE type = 'chapCount' AND timestamp > datetime('now', '-30 days')) AS newChapters,
-        (SELECT SUM(value) FROM mangaStats WHERE type = 'mangaCount' AND timestamp > datetime('now', '-30 days')) AS newManga,
-        (SELECT SUM(CASE WHEN useAltStatCalc = 1 THEN LENGTH(latestChapterText) - LENGTH(REPLACE(latestChapterText, ',', '')) + 1 ELSE FLOOR(latestChapterText) END) FROM mangaData) AS trackedChapters,
-        (SELECT SUM(value) FROM userStats WHERE type = 'chapsRead' AND timestamp > datetime('now', '-30 days')) AS readThisMonth
+        (SELECT COALESCE(SUM(value), 0) FROM mangaStats WHERE type = 'chapCount' AND timestamp > datetime('now', '-30 days')) AS newChapters,
+        (SELECT COALESCE(SUM(value), 0) FROM mangaStats WHERE type = 'mangaCount' AND timestamp > datetime('now', '-30 days')) AS newManga,
+        (SELECT COALESCE(SUM(
+            CASE 
+              WHEN useAltStatCalc = 1 THEN LENGTH(latestChapterText) - LENGTH(REPLACE(latestChapterText, ',', '')) + 1
+              ELSE FLOOR(latestChapterText)
+            END
+          ), 0) 
+          FROM mangaData
+        ) AS trackedChapters,
+        (SELECT COALESCE(SUM(value), 0) FROM userStats WHERE type = 'chapsRead' AND timestamp > datetime('now', '-30 days')) AS readThisMonth
       `),
       user: env.DB.prepare(
         `
@@ -362,15 +369,20 @@ export async function userStats(userId: string, env: Env) {
           JOIN userCategories c ON u.userCat = c.value AND u.userId = c.userId
           WHERE u.userId = ? AND c.stats = 1) AS trackedChapters,
 
-          (SELECT SUM(value)
+          -- Chapters read this month
+          (SELECT COALESCE(SUM(value), 0)
           FROM userStats
           WHERE type = 'chapsRead' AND timestamp > datetime('now', '-30 days') AND userID = ?) AS readThisMonth,
 
-          (SELECT AVG(totalPerDay) FROM dailySums WHERE day >= DATE('now','-30 days')) AS averagePerDay,
+          -- Average per day for the last 30 days
+          (SELECT COALESCE(AVG(totalPerDay), 0)
+          FROM dailySums
+          WHERE day >= DATE('now','-30 days')) AS averagePerDay,
 
-          (SELECT AVG(totalPerDay)
-            FROM dailySums
-            WHERE day >= DATE('now','-31 days') AND day < DATE('now')) AS priorAveragePerDay
+          -- Average per day for the prior 30-day period
+          (SELECT COALESCE(AVG(totalPerDay), 0)
+          FROM dailySums
+          WHERE day >= DATE('now','-31 days') AND day < DATE('now')) AS priorAveragePerDay
       `
       ).bind(userId, userId, userId, userId),
       userManga: env.DB.prepare(
