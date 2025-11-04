@@ -1,8 +1,8 @@
 import config from '../config.json';
 import { createTimestampLogger, match } from '../util';
 import sharp from 'sharp';
-import { getBrowser } from '../jobQueue';
-import { Job } from 'bullmq';
+import { getBrowser, mangaFireQueue } from '../jobQueue';
+import { Job, Worker } from 'bullmq';
 import { fetchData } from '../types';
 
 /**
@@ -123,6 +123,17 @@ export async function getManga(
       }
     );
 
+    if (chapterResp.status === 429) {
+      let retryDelay = (parseInt(chapterResp.headers.get('retry-after')) || 5) * 1000;
+      console.warn(
+        'MangaFire Rate Limit Hit, consider adjusting base delay if this appears frequently!'
+      );
+      job.log(logWithTimestamp(`Rate Limit Hit. setting rate limit to ${retryDelay}ms`));
+      await mangaFireQueue.rateLimit(retryDelay);
+
+      throw Worker.RateLimitError();
+    }
+
     job.log(logWithTimestamp('Optimistic fetch finished with code: ' + chapterResp.status));
 
     let chapterData: any;
@@ -163,7 +174,7 @@ export async function getManga(
 
     chapterData = await chapterResp.json();
 
-    console.log(chapterData);
+    if (config.logging.verboseLogging) console.log(chapterData);
 
     await job.log(logWithTimestamp('Finished Fetching Chapter Data. Proccessing!'));
     await job.updateProgress(20);
@@ -182,7 +193,7 @@ export async function getManga(
       })
     ).reverse();
 
-    console.log(chapterNumbers);
+    if (config.logging.verboseLogging) console.log(chapterNumbers);
 
     if (chapterNumbers.length <= 0)
       throw new Error('Manga: Issue fetching chapters! Please Contact and Admin!');
@@ -209,7 +220,7 @@ export async function getManga(
 
       if (volumeResp.ok) {
         const volumeData = await volumeResp.json();
-        console.log(volumeData);
+        if (config.logging.verboseLogging) console.log(volumeData);
         await page.setContent(volumeData.result, { waitUntil: 'domcontentloaded' });
 
         let photoUrls =
@@ -233,7 +244,7 @@ export async function getManga(
 
         photoUrls.reverse();
 
-        console.log(photoUrls);
+        if (config.logging.verboseLogging) console.log(photoUrls);
 
         let startingPoint =
           config.updateSettings.refetchImgs || icon ? 0 : Math.max(0, coverIndexes?.length - 1);

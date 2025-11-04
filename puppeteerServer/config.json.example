@@ -28,7 +28,8 @@
   "serverCom": {
     "serverUrl": "enter_url_here",
     "serverPassWord": "secret_Password_Change_Me",
-    "localPort": 80
+    "localPort": 80,
+    "testMode": false
   },
   "updateSettings": {
     "autoUpdateInfo": true,
@@ -37,5 +38,9 @@
     "refetchImgs": false,
     "forceUpdateManga": false,
     "intitalMangaFire": false
+  },
+  "rateLimits": {
+      "mangaFireDuration": 1500,
+      "mangaFireMax": 2
   }
 }
