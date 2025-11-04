@@ -294,6 +294,10 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
                   borderRadius: 16,
                   objectFit: 'cover',
                 }}
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src =
+                    `${import.meta.env.VITE_IMG_URL}/mangaNotFoundImage.png`;
+                }}
               />
             </ButtonBase>
           </Box>

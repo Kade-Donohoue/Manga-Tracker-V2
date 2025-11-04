@@ -107,9 +107,7 @@ export default function SeriesCard({
         >
           <CardMedia
             component="img"
-            image={`${
-              fetchPath === '/.proxy' ? '/.proxy/image' : import.meta.env.VITE_IMG_URL
-            }/${data.mangaId}/${data.imageIndexes.includes(data.userCoverIndex) ? data.userCoverIndex : data.imageIndexes.at(-1) || 0}`}
+            image={`${import.meta.env.VITE_IMG_URL}/${data.mangaId}/${data.imageIndexes.includes(data.userCoverIndex) ? data.userCoverIndex : data.imageIndexes.at(-1) || 0}`}
             alt={`Cover for ${data.mangaName}`}
             sx={{
               position: 'absolute',
@@ -120,6 +118,10 @@ export default function SeriesCard({
               display: 'block',
             }}
             loading="lazy"
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).src =
+                `${import.meta.env.VITE_IMG_URL}/mangaNotFoundImage.png`;
+            }}
           />
           {/* Category chip on top-left */}
           {data.userCat && (
