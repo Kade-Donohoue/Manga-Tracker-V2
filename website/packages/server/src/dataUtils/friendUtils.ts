@@ -229,56 +229,80 @@ export async function getFriendDetails(userId: string, friendId: string, env: En
     `
       SELECT r.id, r.mangaId, r.status, m.mangaName, m.urlBase, m.slugList, m.chapterTextList from recommendations r JOIN mangaData m ON m.mangaId = r.mangaId WHERE receiverId = ? AND r.recommenderId = ? AND r.status = 'pending'
     `
-  ).bind(userId, friendId)
+  ).bind(userId, friendId);
 
   const sentStmt = env.DB.prepare(
     `
       SELECT r.id, r.mangaId, r.status, m.mangaName, m.urlBase, m.slugList, m.chapterTextList from recommendations r JOIN mangaData m ON m.mangaId = r.mangaId WHERE receiverId = ? AND r.recommenderId = ? AND NOT status = 'canceled' 
     `
-  ).bind(friendId, userId)
+  ).bind(friendId, userId);
 
   const friendStmt = env.DB.prepare(
-        `
-        WITH dailySums AS (
-          SELECT DATE(timestamp) AS day, SUM(value) AS totalPerDay
-          FROM userStats 
-          WHERE userID = ? AND timestamp > datetime("now", "-30 days")
-          GROUP BY day
-        )
-        SELECT
-          (SELECT SUM(
+    `
+      WITH dailySums AS (
+        SELECT DATE(timestamp) AS day, SUM(value) AS totalPerDay
+        FROM userStats 
+        WHERE userID = ? AND timestamp > datetime('now', '-31 days')
+        GROUP BY day
+      )
+
+      SELECT
+
+        -- Total chapters read
+        (SELECT SUM(
             CASE WHEN m.useAltStatCalc = 1 THEN FLOOR(u.currentIndex) + 1 ELSE FLOOR(u.currentChap) END
-          )
-          FROM userData u
-          JOIN mangaData m ON u.mangaId = m.mangaId
-          JOIN userCategories c ON u.userCat = c.value AND u.userId = c.userId
-          WHERE u.userId = ? AND c.stats = 1) AS readChapters,
+        )
+        FROM userData u
+        JOIN mangaData m ON u.mangaId = m.mangaId
+        JOIN userCategories c ON u.userCat = c.value AND u.userId = c.userId
+        WHERE u.userId = ? AND c.stats = 1) AS readChapters,
 
-          (SELECT SUM(
+        -- Total chapters tracked
+        (SELECT SUM(
             CASE WHEN m.useAltStatCalc = 1 THEN LENGTH(m.latestChapterText) - LENGTH(REPLACE(m.latestChapterText, ',', '')) + 1 ELSE FLOOR(m.latestChapterText) END
-          )
-          FROM userData u
-          JOIN mangaData m ON u.mangaId = m.mangaId
-          JOIN userCategories c ON u.userCat = c.value AND u.userId = c.userId
-          WHERE u.userId = ?) AS trackedChapters,
+        )
+        FROM userData u
+        JOIN mangaData m ON u.mangaId = m.mangaId
+        JOIN userCategories c ON u.userCat = c.value AND u.userId = c.userId
+        WHERE u.userId = ?) AS trackedChapters,
 
-          (SELECT SUM(value)
-          FROM userStats
-          WHERE type = 'chapsRead' AND timestamp > datetime('now', '-30 days') AND userID = ?) AS readThisMonth,
+        -- Chapters read this month
+        (SELECT COALESCE(SUM(value), 0)
+        FROM userStats
+        WHERE type = 'chapsRead' AND timestamp > datetime('now', '-30 days') AND userID = ?) AS readThisMonth,
 
-          (SELECT AVG(totalPerDay) FROM dailySums) AS averagePerDay
+        -- Average per day for the last 30 days
+        (SELECT COALESCE(AVG(totalPerDay), 0)
+        FROM dailySums
+        WHERE day >= DATE('now','-30 days')) AS averagePerDay,
+
+        -- Average per day for the prior 30-day period
+        (SELECT COALESCE(AVG(totalPerDay), 0)
+        FROM dailySums
+        WHERE day >= DATE('now','-31 days') AND day < DATE('now')) AS priorAveragePerDay
+
       `
-      ).bind(friendId, friendId, friendId, friendId)
+  ).bind(friendId, friendId, friendId, friendId);
 
-    const [receivedRes, sentRes, friendRes] = await env.DB.batch([receivedStmt, sentStmt, friendStmt])
+  const [receivedRes, sentRes, friendRes] = await env.DB.batch([
+    receivedStmt,
+    sentStmt,
+    friendStmt,
+  ]);
 
   if (!receivedRes.success || !friendRes.success || !sentRes.success)
     return new Response(
       JSON.stringify({ message: 'DataBase Error, Try Again Later or contact admin!.' }),
       { status: 500 }
     );
-console.log({recomendations: {received: receivedRes.results, sent: sentRes.results}, stats: friendRes.results[0]})
-  let friendDetails = friendDetailsSchema.safeParse({recomendations: {received: receivedRes.results, sent: sentRes.results}, stats: friendRes.results[0]});
+  console.log({
+    recomendations: { received: receivedRes.results, sent: sentRes.results },
+    stats: friendRes.results[0],
+  });
+  let friendDetails = friendDetailsSchema.safeParse({
+    recomendations: { received: receivedRes.results, sent: sentRes.results },
+    stats: friendRes.results[0],
+  });
 
   if (!friendDetails.success) {
     return new Response(
@@ -295,9 +319,17 @@ console.log({recomendations: {received: receivedRes.results, sent: sentRes.resul
   });
 }
 
-export async function updateRecomendedStatus(userId:string, recId: number, newStatus: string, env: Env) {
-
-  await env.DB.prepare(`UPDATE recommendations SET status = ? WHERE (receiverId = ? OR recommenderId = ?) AND id = ?`).bind(newStatus, userId, userId, recId).run()
+export async function updateRecomendedStatus(
+  userId: string,
+  recId: number,
+  newStatus: string,
+  env: Env
+) {
+  await env.DB.prepare(
+    `UPDATE recommendations SET status = ? WHERE (receiverId = ? OR recommenderId = ?) AND id = ?`
+  )
+    .bind(newStatus, userId, userId, recId)
+    .run();
 
   return new Response(JSON.stringify({ message: 'Success!' }), {
     status: 200,

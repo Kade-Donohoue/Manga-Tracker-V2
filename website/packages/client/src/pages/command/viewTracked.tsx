@@ -117,6 +117,13 @@ export default function Tracked() {
       if (!key || !direction) return 0;
 
       const orderVal = direction === 'desc' ? -1 : 1;
+
+      if (key === 'chapsUnread') {
+        const unreadA = a.chapterTextList.length - a.currentIndex - 1;
+        const unreadB = b.chapterTextList.length - b.currentIndex - 1;
+        return (unreadA - unreadB) * orderVal;
+      }
+
       const valA = a[key as keyof mangaDetails];
       const valB = b[key as keyof mangaDetails];
 
@@ -144,23 +151,39 @@ export default function Tracked() {
 
   if (isLoading || error || !mangaInfo) {
     return (
-      <Box
-        className="cardContainer"
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          justifyItems: 'center',
-          overflowY: 'scroll',
-          minHeight: 0,
-          flexWrap: 'wrap',
-          gap: '12px',
-          padding: '12px',
-        }}
+      <div
+        className="viewTrackerContainer"
+        style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}
       >
-        {Array.from({ length: 24 }).map((_, i) => (
-          <SkeletonCard key={`skeleton-${i}`} />
-        ))}
-      </Box>
+        <MangaControls
+          currentSearch={currentSearch}
+          setSearch={setSearch}
+          filterOptions={filterOptions}
+          setFilterOptions={setFilterOptions}
+          sortSelection={sortSelection}
+          setSortSelection={setSortSelection}
+          unreadChecked={unreadChecked}
+          setUnreadChecked={setUnreadChecked}
+          catOptions={catOptions}
+        />
+        <Box
+          className="cardContainer"
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            justifyItems: 'center',
+            overflowY: 'scroll',
+            minHeight: 0,
+            flexWrap: 'wrap',
+            gap: '12px',
+            padding: '12px',
+          }}
+        >
+          {Array.from({ length: 24 }).map((_, i) => (
+            <SkeletonCard key={`skeleton-${i}`} />
+          ))}
+        </Box>
+      </div>
     );
   }
 

@@ -11,8 +11,6 @@ import CardContent from '@mui/material/CardContent';
 import CardMedia from '@mui/material/CardMedia';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import IconButton from '@mui/material/IconButton';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
 import Stack from '@mui/material/Stack';
 import Chip from '@mui/material/Chip';
 import LinearProgress from '@mui/material/LinearProgress';
@@ -77,127 +75,6 @@ export default function SeriesCard({
       ? Math.max(0, Math.min(100, (currentChapter / totalChapters) * 100))
       : 0;
 
-  if (false)
-    return (
-      <Card
-        sx={{
-          width: 320,
-          height: 350,
-          backgroundColor: 'black',
-          color: 'white',
-          position: 'relative',
-        }}
-        onContextMenu={(e) => handleContextMenu(e, data.mangaId)}
-      >
-        <CardActionArea
-          onClick={() => openMangaOverview(data.mangaId)}
-          onAuxClick={(e) => handleAuxClick(e, data.mangaId)}
-        >
-          <CardMedia
-            component="img"
-            height="200"
-            image={`${
-              fetchPath === '/.proxy' ? '/.proxy/image' : import.meta.env.VITE_IMG_URL
-            }/${data.mangaId}/${data.imageIndexes.includes(data.userCoverIndex) ? data.userCoverIndex : data.imageIndexes.at(-1) || 0}`}
-            alt={`Cover for ${data.mangaName}`}
-            style={{ objectPosition: 'top' }}
-            loading="lazy"
-          />
-          <CardContent
-            sx={{
-              height: 150,
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              paddingBottom: '8px !important',
-            }}
-          >
-            {/* Title */}
-            <Box sx={{ overflow: 'hidden' }}>
-              <Tooltip title={data.userTitle ? data.userTitle : data.mangaName} enterDelay={700}>
-                <Typography
-                  gutterBottom
-                  variant="h5"
-                  component="div"
-                  sx={{
-                    display: '-webkit-box',
-                    WebkitBoxOrient: 'vertical',
-                    WebkitLineClamp: 1,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    maxHeight: '2.6em',
-                  }}
-                >
-                  {data.userTitle ? data.userTitle : data.mangaName}
-                </Typography>
-              </Tooltip>
-            </Box>
-
-            {/* Bottom content (chapter/category/avatars) */}
-            <Box
-              sx={{
-                fontSize: '0.85rem',
-                color: 'lightgray',
-                height: '100%',
-                marginTop: '10px',
-              }}
-              onContextMenu={(e) => handleContextMenu(e, data.mangaId)}
-            >
-              <table style={{ borderSpacing: '5px' }}>
-                <tbody>
-                  <tr>
-                    <td>Chapter:</td>
-                    <td>
-                      {`${data.chapterTextList[
-                        checkIndexInRange(data.currentIndex, data.chapterTextList.length)
-                      ]
-                        .match(/[0-9.]+/g)
-                        ?.join('.')}/${data.chapterTextList[data.chapterTextList.length - 1]
-                        .match(/[0-9.]+/g)
-                        ?.join('.')}`}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>Category:</td>
-                    <td style={{ color: findCat(data.userCat)?.color || 'lightgray' }}>
-                      {findCat(data.userCat)?.label}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-              <Box sx={{ mt: 1, position: 'absolute', bottom: 0, left: 0, right: 0 }}>
-                <AvatarGroup
-                  max={4}
-                  sx={{ justifyContent: 'flex-start', bottom: 8, right: 40, position: 'absolute' }}
-                >
-                  {data.sharedFriends
-                    .filter((val) => val)
-                    .map((friend) => (
-                      <Tooltip title={friend.userName}>
-                        <Avatar
-                          key={friend.userID}
-                          alt={friend.userName}
-                          src={friend.avatarUrl}
-                          sx={{ width: 24, height: 24 }}
-                        />
-                      </Tooltip>
-                    ))}
-                </AvatarGroup>
-              </Box>
-            </Box>
-          </CardContent>
-        </CardActionArea>
-        <IconButton
-          sx={{ bottom: 0, right: 0, position: 'absolute' }}
-          onClick={(e) => {
-            e.stopPropagation();
-            handleContextMenu(e, data.mangaId);
-          }}
-        >
-          <MoreVertIcon />
-        </IconButton>
-      </Card>
-    );
   return (
     <Card
       elevation={3}
@@ -230,9 +107,7 @@ export default function SeriesCard({
         >
           <CardMedia
             component="img"
-            image={`${
-              fetchPath === '/.proxy' ? '/.proxy/image' : import.meta.env.VITE_IMG_URL
-            }/${data.mangaId}/${data.imageIndexes.includes(data.userCoverIndex) ? data.userCoverIndex : data.imageIndexes.at(-1) || 0}`}
+            image={`${import.meta.env.VITE_IMG_URL}/${data.mangaId}/${data.imageIndexes.includes(data.userCoverIndex) ? data.userCoverIndex : data.imageIndexes.at(-1) || 0}`}
             alt={`Cover for ${data.mangaName}`}
             sx={{
               position: 'absolute',
@@ -243,6 +118,10 @@ export default function SeriesCard({
               display: 'block',
             }}
             loading="lazy"
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).src =
+                `${import.meta.env.VITE_IMG_URL}/mangaNotFoundImage.png`;
+            }}
           />
           {/* Category chip on top-left */}
           {data.userCat && (

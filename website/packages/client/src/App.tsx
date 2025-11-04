@@ -37,6 +37,7 @@ import { queryClient } from './queryClient';
 import Box from '@mui/material/Box';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
+import addContainer from './pages/command/addManga/addContainer';
 
 interface CenteredPageProps {
   children: React.ReactNode;
@@ -187,7 +188,7 @@ const routes: Record<string, AppRoute> = {
     path: '/addManga',
     name: 'Add Manga',
     icon: AddCircleIcon,
-    component: addManga,
+    component: addContainer,
   },
   // addBookmarks: {
   //   path: '/addBookmarks',
