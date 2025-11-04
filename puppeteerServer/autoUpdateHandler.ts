@@ -226,7 +226,7 @@ async function mangaFailedEvent(job: Job) {
     return;
   }
 
-  if (config.notif.mangaFailureNotif) {
+  if (config.notif.mangaFailureNotif && job.attemptsMade >= job.opts.attempts) {
     await sendNotif(`${job.data.type} Failed!`, `A Job Has Failed!, jobId: ${job.id}`);
   }
 
@@ -248,6 +248,10 @@ async function mangaFailedEvent(job: Job) {
 }
 
 async function sendUpdate(batch: updateCollector) {
+  if (config.serverCom.testMode) {
+    console.warn('Test Mode Is enables Not Sending Update Data!!!');
+    return;
+  }
   console.log('Sending Manga Update!');
 
   if (batch.batchData.newData.length > 0) {

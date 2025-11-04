@@ -23,6 +23,10 @@ export const mangaFireQueue = new Queue('MangaFire Manga Queue', {
 export let mainGetWorker: Worker | null = null;
 export let mangaFireGetWorker: Worker | null = null;
 
+let mangaFireLimiter = config.updateSettings.intitalMangaFire
+  ? { max: 1, duration: 2000 }
+  : { max: config.rateLimits.mangaFireMax, duration: config.rateLimits.mangaFireDuration };
+
 export function createWorkers() {
   mainGetWorker = new Worker('Get Manga Queue', mangaGetProc, {
     connection,
@@ -30,17 +34,12 @@ export function createWorkers() {
     name: 'universal',
   });
 
-  let baseMangaFireOptions = {
+  mangaFireGetWorker = new Worker('MangaFire Manga Queue', mangaGetProc, {
     connection,
     concurrency: config.queue.mangaFireInstances,
     name: 'mangafire',
-    limiter: null,
-  };
-
-  if (config.updateSettings.intitalMangaFire)
-    baseMangaFireOptions.limiter = { max: 1, duration: 1_500 };
-
-  mangaFireGetWorker = new Worker('MangaFire Manga Queue', mangaGetProc, baseMangaFireOptions);
+    limiter: mangaFireLimiter,
+  });
 
   if (config.logging.verboseLogging) {
     mainGetWorker.on('ready', () => {
