@@ -12,6 +12,9 @@ There are two supported options for using **MangaTracker**:
    Prefer running it yourself? You can deploy the app on your own infrastructure.  
    Instructions for self-hosting are available below.
 
+## Support / Help
+
+Have a question, suggestion, or need a hand? Come hang out in our [**Discord Server**](https://discord.gg/WzuRuHzMGq)!
 
 ## Self Hosting Instructions
 
