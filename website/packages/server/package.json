@@ -1,6 +1,6 @@
 {
   "name": "server",
-  "version": "3.0.1",
+  "version": "3.1.7",
   "scripts": {
     "deploy": "wrangler secret bulk ../../.env.production -e production && wrangler deploy src/index.ts --env production",
     "dev": "cp ../../.env.dev .dev.vars && wrangler dev src/index.ts --env dev --test-scheduled",

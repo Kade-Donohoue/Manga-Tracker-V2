@@ -154,6 +154,13 @@ const AddMangaModal: React.FC<AddMangaModalProps> = ({ open, onClose }) => {
           id="chapURL"
           name="chapURL"
           placeholder="https://mangaURL1.com/manga/chapter,https://mangaURL2.com/manga/chapter"
+          style={{
+            width: '100%',
+            padding: '12px 20px',
+            marginBottom: '8px',
+            borderRadius: '4px',
+            boxSizing: 'border-box',
+          }}
         />
         <br />
         <label htmlFor="cat-select">Choose a Category:</label>

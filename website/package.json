@@ -2,7 +2,7 @@
   "name": "manga-activity",
   "description": "Discord Activity for the manga tracking. This is also where the Database is managed. ",
   "private": true,
-  "version": "3.0.0",
+  "version": "3.1.7",
   "author": "",
   "license": "ISC",
   "scripts": {

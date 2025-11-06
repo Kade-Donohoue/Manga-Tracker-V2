@@ -1,0 +1,131 @@
+[
+  { 
+    "version": "v3.1.7", 
+    "date": "2025-11-05", 
+    "features": ["Built In Change Log"], 
+    "fixes": ["Add Manga Modal text box now has correct style"], 
+    "improvements": ["Added Links for discord server!"] 
+  },
+  {
+    "version": "v3.1.6",
+    "date": "2025-11-04",
+    "features": [],
+    "fixes": [
+      "Fixed MangaFire VFR expiration",
+      "Improved MangaFire rate limit"
+    ],
+    "improvements": [
+      "Main working branch updates"
+    ]
+  },
+  {
+    "version": "v3.1.5",
+    "date": "2025-10-09",
+    "features": [
+      "New Manga Chapter Stats",
+      "Multi-language MangaDex support"
+    ],
+    "fixes": [
+      "Fixed MangaFire image edge cases",
+      "Fixed bug preventing MangaFire from pulling data",
+      "MangaFire hotfixes"
+    ],
+    "improvements": []
+  },
+  {
+    "version": "v3.1.4",
+    "date": "2025-09-16",
+    "features": [],
+    "fixes": [],
+    "improvements": [
+      "Major improvements to View Tracked",
+      "Major reworks on fetch logic"
+    ]
+  },
+  {
+    "version": "v3.1.3",
+    "date": "2025-08-30",
+    "features": [],
+    "fixes": [
+      "MangaNato fixes applied multiple times",
+      "Stopped adding 0 entries into mangaStats",
+      "Improved failed notifications handling"
+    ],
+    "improvements": []
+  },
+  {
+    "version": "v3.1.2",
+    "date": "2025-08-12",
+    "features": [],
+    "fixes": [
+      "Fixed workers not being created"
+    ],
+    "improvements": []
+  },
+  {
+    "version": "v3.1.1",
+    "date": "2025-07-25",
+    "features": [],
+    "fixes": [
+      "Adjusted stale time on friends",
+      "Fixed incoming request bug",
+      "Fixed uncaught regression",
+      "Fixed no stat categories counting towards unread",
+      "Fixed type check on stat card"
+    ],
+    "improvements": []
+  },
+  {
+    "version": "v3.1.0",
+    "date": "2025-06-25",
+    "features": [],
+    "fixes": [
+      "Fixed type issues"
+    ],
+    "improvements": [
+      "Improved Friends system",
+      "Simplified UI and Landing Page",
+      "Improved Manga fetching"
+    ]
+  },
+  {
+    "version": "v3.0.0 Friends Update",
+    "date": "2025-05-23",
+    "features": [
+      "Friends System"
+    ],
+    "fixes": [],
+    "improvements": []
+  },
+  {
+    "version": "v2.0.0",
+    "date": "2025-05-06",
+    "features": [
+      "Endpoint to update users' current chapter"
+    ],
+    "fixes": [
+      "Fixed bug preventing updating first chapter",
+      "Fixed view tracked order",
+      "Fixed MangaDex current chapter formatting"
+    ],
+    "improvements": [
+      "Reduced number of API calls when updating chapters",
+      "Improved stats calculation",
+      "Saved filter states"
+    ]
+  },
+  {
+    "version": "v1.9.0",
+    "date": "2025-05-04",
+    "features": [
+      "TanStack Query integration"
+    ],
+    "fixes": [
+      "MangaNato fixes applied"
+    ],
+    "improvements": [
+      "Split comic queue",
+      "View tracked changes enhancements"
+    ]
+  }
+]

@@ -1,21 +1,11 @@
 import * as React from 'react';
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Link,
-  useLocation,
-  Navigate,
-} from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-import * as Scrollable from './components/Scrollable';
 import DesignSystemProvider from './components/DesignSystemProvider';
-import { setFetchPath } from './vars';
 
 import Home from './pages/Home';
-import addManga from './pages/command/addManga';
 import stats from './pages/command/stats';
 import tracked from './pages/command/viewTracked';
 import settings from './pages/settings';
@@ -38,6 +28,9 @@ import Box from '@mui/material/Box';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import addContainer from './pages/command/addManga/addContainer';
+import ChangelogModal from './components/ChangelogModal';
+
+import changelogs from './changelog.json';
 
 interface CenteredPageProps {
   children: React.ReactNode;
@@ -236,6 +229,7 @@ export function RootedApp() {
 
   return (
     <S.SiteWrapper>
+      <ChangelogModal changelogs={changelogs}/>
       {/* Sidebar / Bottom Nav */}
       {!isMobile ? (
         // Desktop / Tablet Sidebar

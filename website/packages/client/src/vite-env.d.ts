@@ -7,6 +7,7 @@ interface ImportMetaEnv {
   readonly VITE_SERVER_URL: string;
   readonly VITE_CLIENT_URL: string;
   readonly VITE_CLERK_PUBLISHABLE_KEY: string;
+  readonly VITE_DISCORD_INVITE
   // add env variables here
 }
 
