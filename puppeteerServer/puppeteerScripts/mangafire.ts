@@ -125,6 +125,8 @@ export async function getManga(
 
     if (chapterResp.status === 429) {
       let retryDelay = (parseInt(chapterResp.headers.get('retry-after')) || 5) * 1000;
+      await page.close();
+
       console.warn(
         'MangaFire Rate Limit Hit, consider adjusting base delay if this appears frequently!'
       );
