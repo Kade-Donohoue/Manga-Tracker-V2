@@ -1,5 +1,8 @@
 # **Change Logs**
 
+## Change Log 3.1.8
+ - MangaPark Support
+
 ## Change Log 2.0.3
  - upgraded puppeteer server packages
  - adjusted comick timing

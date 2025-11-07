@@ -16,7 +16,7 @@ app.listen({ port: port, host: host }, async function (err, address) {
   }
 
   if (config.queue.clearQueuesAtStart) {
-    console.log("Clearing Queue! If this isn't the behavior you want mangaFireQueuechange it in config.json");
+    console.log("Clearing Queue! If this isn't the behavior you want mangaFireQueuemangafirechange it in config.json");
     await getQueue.obliterate({ force: true });
     await mangaFireQueue.obliterate({ force: true });
   }
