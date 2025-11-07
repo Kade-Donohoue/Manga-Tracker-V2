@@ -45,6 +45,7 @@ export default function Home() {
             { name: 'Asura Scans', url: 'https://asuracomic.net/' },
             { name: 'MangaFire', url: 'https://mangafire.to/home' },
             { name: 'Mangadex', url: 'https://mangadex.org/' },
+            { name: 'MangaPark', url: 'https://mangapark.org/' },
           ].map(({ name, url }) => (
             <a
               key={name}
