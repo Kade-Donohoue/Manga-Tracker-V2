@@ -27,6 +27,8 @@ export function validMangaCheck(url: string): mangaUrlCheck {
     return { success: true, value: 'asura' };
   else if (url.includes('mangafire') && config.sites.allowMangafire)
     return { success: true, value: 'mangafire' };
+  else if (url.includes('mangapark') && config.sites.allowMangafire)
+    return { success: true, value: 'mangapark' };
   else return { success: false, value: 'Unsupported WebPage!', statusCode: 422 };
 }
 
