@@ -7,6 +7,7 @@
  - Updated all website Server packages
  - Updated Some Client Page Packages
  - Fixed mangapark base url
+ - Styled Change User Title Text Box
 
 ## Change Log 3.1.8
  - MangaPark Support

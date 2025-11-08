@@ -114,6 +114,13 @@ const SetUserTitleModal: React.FC<SetUserTitleModalProps> = ({ open, onClose, ma
           id="titleInput"
           name="titleInput"
           placeholder="Best Manga in The World! Leave Blank to reset"
+          style={{
+            width: '100%',
+            padding: '12px 20px',
+            marginBottom: '8px',
+            borderRadius: '4px',
+            boxSizing: 'border-box',
+          }}
         />
         <br />
         <Button
