@@ -3,8 +3,8 @@
     "version": "v3.1.8", 
     "date": "2025-11-06", 
     "features": ["MangaPark Support!"], 
-    "fixes": ["Puppeteer Memory Leak Resolved"], 
-    "improvements": [] 
+    "fixes": ["Puppeteer Memory Leak Resolved", "Fixed Mangapark Urls"], 
+    "improvements": ["Various Dependencies Updates!"] 
   },
   { 
     "version": "v3.1.7", 

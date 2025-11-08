@@ -6,6 +6,7 @@
  - Updated queue viewer packages
  - Updated all website Server packages
  - Updated Some Client Page Packages
+ - Fixed mangapark base url
 
 ## Change Log 3.1.8
  - MangaPark Support
