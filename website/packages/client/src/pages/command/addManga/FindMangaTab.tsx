@@ -8,6 +8,7 @@ export default function FindMangaTab() {
     { name: 'MangaFire', url: 'https://mangafire.to/home' },
     { name: 'Mangadex', url: 'https://mangadex.org/' },
     { name: 'MangaPark', url: 'https://mangapark.org/' },
+    { name: 'Bato', url: 'https://bato.to/' },
   ];
 
   return (
