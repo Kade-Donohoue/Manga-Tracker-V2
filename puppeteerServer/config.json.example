@@ -10,8 +10,9 @@
     "allowManganatoScans": true,
     "allowMangaDex": true,
     "allowAsura": true,
-    "allowComick": false,
-    "allowMangafire": true
+    "allowMangafire": true,
+    "allowBato": true,
+    "allowMangaPark": true
   },
   "queue": {
     "redisIp": "127.0.0.1",

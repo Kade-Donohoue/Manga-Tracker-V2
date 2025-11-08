@@ -1,9 +1,9 @@
-import config from '../config.json';
+import config from '../../config.json';
 import sharp from 'sharp';
 import { Job } from 'bullmq';
-import { fetchData } from '../types';
-import { createTimestampLogger, match } from '../util';
-import { getBrowser } from '../jobQueue';
+import { fetchData } from '../../types';
+import { createTimestampLogger, match } from '../../util';
+import { getBrowser } from '../../jobQueue';
 
 /**
  * Gets the chapter list from Comick
