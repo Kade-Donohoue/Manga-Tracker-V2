@@ -76,11 +76,13 @@ let browser: Browser | null = null;
 export async function getBrowser() {
   if (!browser) {
     browser = await puppeteer.launch({
+      executablePath: config.browserPath,
       headless: true,
       devtools: false,
       acceptInsecureCerts: true,
       args: [
-        '--disable-gpu, --enable-features=NetworkService',
+        '--disable-gpu',
+        '--enable-features=NetworkService',
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--mute-audio',

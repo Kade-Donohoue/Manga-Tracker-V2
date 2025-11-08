@@ -42,5 +42,6 @@
   "rateLimits": {
       "mangaFireDuration": 1500,
       "mangaFireMax": 2
-  }
+  },
+  "browserPath": "/usr/bin/chromium"
 }

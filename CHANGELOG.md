@@ -1,6 +1,13 @@
 # **Change Logs**
 
 ## Change Log 3.1.8
+ - Updated all puppeteer server packages.
+ - config option for browser path
+ - Updated queue viewer packages
+ - Updated all website Server packages
+ - Updated Some Client Page Packages
+
+## Change Log 3.1.8
  - MangaPark Support
 
 ## Change Log 2.0.3

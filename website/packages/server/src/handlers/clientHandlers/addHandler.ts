@@ -4,7 +4,7 @@ import { zodParse } from '../../utils';
 import { z } from 'zod';
 
 const addExistingSchema = z.object({
-  mangaId: z.string().uuid(),
+  mangaId: z.uuid(),
   index: z.number(),
   currentChap: z.string(),
   userCat: z.string(),
