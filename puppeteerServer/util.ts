@@ -35,7 +35,7 @@ export function validMangaCheck(url: string): mangaUrlCheck {
 
 function checkChapterUrl(url: string): boolean {
   url = url.toLowerCase();
-  return url.includes('chapter') || url.includes('ch-') || url.includes('vol');
+  return url.includes('chapter') || url.includes('ch-') || url.includes('mangapark.org/title');
 }
 
 export async function sendNotif(title: string, message: string): Promise<void> {

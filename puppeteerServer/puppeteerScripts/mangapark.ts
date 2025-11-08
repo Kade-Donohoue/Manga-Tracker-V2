@@ -37,7 +37,7 @@ export async function getManga(
 
     let title: string = job.data.mangaName;
 
-    const match = url.match(/title\/(\d+)[^/]*\/(\d+)-/);
+    const match = url.match(/title\/(\d+)[^/]*\/(\d+)/);
     const [, comicId, currentChapterId] = match;
 
     const response = await fetch('https://mangapark.org/apo/', {
