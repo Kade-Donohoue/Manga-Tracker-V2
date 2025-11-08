@@ -13,17 +13,16 @@
     "changeKey": "npx wrangler d1 execute dev-manga-bot --remote --file=./src/schemaChangeKey.sql"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250918.0",
+    "@cloudflare/workers-types": "^4.20251106.1",
     "@types/jest": "^30.0.0",
     "@types/service-worker-mock": "^2.0.4",
-    "@types/uuid": "^10.0.0",
     "service-worker-mock": "^2.0.5",
-    "tsm": "^2.2.1",
-    "uvu": "^0.5.3",
-    "wrangler": "^4.38.0"
+    "tsm": "^2.3.0",
+    "uvu": "^0.5.6",
+    "wrangler": "^4.46.0"
   },
   "dependencies": {
-    "@clerk/backend": "^2.9.4",
-    "zod": "^3.24.2"
+    "@clerk/backend": "^2.20.0",
+    "zod": "^4.1.12"
   }
 }

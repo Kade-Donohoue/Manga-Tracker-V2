@@ -1,6 +1,6 @@
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
-import Grid from '@mui/material/Grid';
+import Grid from '@mui/material/GridLegacy';
 import Skeleton from '@mui/material/Skeleton';
 import Typography from '@mui/material/Typography';
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
@@ -61,9 +61,9 @@ export const StatCard = ({
                   sx={{
                     position: 'absolute',
                     top: '35%',
-                    left: '100%', 
+                    left: '100%',
                     transform: 'translateY(-50%)',
-                    ml: 1, 
+                    ml: 1,
                     textAlign: 'center',
                   }}
                 >
@@ -81,7 +81,7 @@ export const StatCard = ({
                       fontSize="small"
                       sx={{
                         position: 'absolute',
-                        bottom: '100%', 
+                        bottom: '100%',
                         left: '50%',
                         transform: 'translateX(-50%)',
                         mb: -1.5,

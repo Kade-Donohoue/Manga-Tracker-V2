@@ -37,7 +37,7 @@ export async function getManga(
 
     let title: string = job.data.mangaName;
 
-    const match = url.match(/title\/(\d+)[^/]*\/(\d+)-/);
+    const match = url.match(/title\/(\d+)[^/]*\/(\d+)/);
     const [, comicId, currentChapterId] = match;
 
     const response = await fetch('https://mangapark.org/apo/', {
@@ -94,7 +94,7 @@ export async function getManga(
       oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
     }
 
-    let baseUrl = url.split('/').slice(0, 5).join('/');
+    let baseUrl = url.split('/').slice(0, 5).join('/') + '/';
     var resizedImage: Buffer | null = null;
     if (icon || inputDate < oneMonthAgo) {
       await page.goto(baseUrl, { timeout: 5000 });

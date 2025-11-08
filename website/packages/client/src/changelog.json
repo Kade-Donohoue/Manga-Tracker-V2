@@ -2,9 +2,9 @@
   { 
     "version": "v3.1.8", 
     "date": "2025-11-06", 
-    "features": ["MangaPark Support!"], 
-    "fixes": ["Puppeteer Memory Leak Resolved"], 
-    "improvements": [] 
+    "features": ["MangaPark Support!", "Bato Support!"], 
+    "fixes": ["Puppeteer Memory Leak Resolved", "Fixed Mangapark Urls"], 
+    "improvements": ["Various Dependencies Updates!", "Styled Change User Title Text Box"] 
   },
   { 
     "version": "v3.1.7", 

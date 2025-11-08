@@ -27,14 +27,15 @@ export function validMangaCheck(url: string): mangaUrlCheck {
     return { success: true, value: 'asura' };
   else if (url.includes('mangafire') && config.sites.allowMangafire)
     return { success: true, value: 'mangafire' };
-  else if (url.includes('mangapark') && config.sites.allowMangafire)
+  else if (url.includes('mangapark') && config.sites.allowMangaPark)
     return { success: true, value: 'mangapark' };
+  else if (url.includes('bato') && config.sites.allowBato) return { success: true, value: 'bato' };
   else return { success: false, value: 'Unsupported WebPage!', statusCode: 422 };
 }
 
 function checkChapterUrl(url: string): boolean {
   url = url.toLowerCase();
-  return url.includes('chapter') || url.includes('ch-');
+  return url.includes('chapter') || url.includes('ch-') || url.includes('mangapark.org/title');
 }
 
 export async function sendNotif(title: string, message: string): Promise<void> {

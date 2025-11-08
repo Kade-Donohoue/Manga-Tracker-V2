@@ -1,4 +1,4 @@
-import { z, ZodSchema } from 'zod';
+import { z } from 'zod';
 import { Env } from './types';
 import { createClerkClient } from '@clerk/backend';
 
@@ -82,7 +82,7 @@ export function verifyIndexRange(index: number, listLength: number) {
  * @param schema Zod Schema to parse request with
  * @returns parsed body based on provided schema
  */
-export async function zodParse<T extends ZodSchema<any>>(
+export async function zodParse<T extends z.ZodType<unknown, any, any>>(
   request: Request,
   schema: T
 ): Promise<z.infer<T> | Response> {
@@ -93,7 +93,8 @@ export async function zodParse<T extends ZodSchema<any>>(
     if (result.success) {
       return result.data;
     } else {
-      console.error('Zod validation failed:', result.error.format());
+      const tree = z.treeifyError(result.error);
+      console.error({ 'Error Message': 'Zod validation failed', error: tree });
       return new Response(
         JSON.stringify({
           message: 'Validation error',

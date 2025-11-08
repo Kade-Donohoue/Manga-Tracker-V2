@@ -31,7 +31,7 @@ const cancelRequestStatusSchema = z.object({
 });
 
 const recomendMangaSchema = z.object({
-  mangaId: z.string().uuid(),
+  mangaId: z.uuid(),
   friendId: z.string(),
 });
 const getFriendDetailsSchema = z.object({
@@ -44,8 +44,8 @@ const getUserIdSchema = z.object({
 
 const updateRecomendedStatusSchema = z.object({
   recId: z.number(),
-  newStatus: z.enum(['pending', 'ignored', 'canceled'])
-})
+  newStatus: z.enum(['pending', 'ignored', 'canceled']),
+});
 
 export default async function friendHandler(
   path: string[],

@@ -1,4 +1,4 @@
-import { boolean, number, object, z } from 'zod';
+import { z } from 'zod';
 
 export interface Env {
   ENVIRONMENT: 'dev' | 'staging' | 'production';
@@ -22,7 +22,7 @@ export interface Env {
 
 export const mangaDataRow = z.object({
   mangaName: z.string().min(1),
-  mangaId: z.string().uuid(),
+  mangaId: z.uuid(),
   urlBase: z.string(),
   slugList: z
     .union([z.string(), z.array(z.string())])
@@ -35,7 +35,7 @@ export const mangaDataRow = z.object({
 
 export const userDataRow = z.object({
   userId: z.string(),
-  mangaId: z.string().uuid(),
+  mangaId: z.uuid(),
   currentIndex: z.coerce.number().int().min(0),
   currentChap: z.coerce.number(),
   userCat: z.string(),
@@ -144,17 +144,15 @@ export const newData = z.object({
   chapterTextList: z.string().transform((val) => val.replace(/-/g, '.')),
   currentIndex: z.coerce.number(),
   specialFetchData: z.any().nullable(),
-  images: z.object({
-    image: z.object({
-      type: z.literal('Buffer'),
-      data: z.array(z.number().int().min(0).max(255)),
-    }),
-    index: z.coerce.number(),
-  }).array(),
-  // iconBuffer: z.object({
-  //   type: z.literal('Buffer'),
-  //   data: z.array(z.number().int().min(0).max(255)),
-  // }),
+  images: z
+    .object({
+      image: z.object({
+        type: z.literal('Buffer'),
+        data: z.array(z.number().int().min(0).max(255)),
+      }),
+      index: z.coerce.number(),
+    })
+    .array(),
 });
 
 export type newDataType = z.infer<typeof newData>;
@@ -189,7 +187,7 @@ export const getUnreadSchema = z.object({
 export type getUnreadType = z.infer<typeof getUnreadSchema>;
 
 export const mangaIdSchema = z.object({
-  mangaId: z.coerce.string().uuid(),
+  mangaId: z.uuid(),
 });
 var body = { userCat: '', urls: [] };
 export type getMangaType = z.infer<typeof mangaIdSchema>;
@@ -201,26 +199,26 @@ export const addMangaSchema = z.object({
 
 export const updateCurrentIndexSchema = z.object({
   newIndex: z.coerce.number().min(0),
-  mangaId: z.coerce.string().uuid(),
+  mangaId: z.uuid(),
 });
 
 export const updateInteractTimeSchema = z.object({
-  mangaId: z.coerce.string().uuid(),
+  mangaId: z.uuid(),
   interactionTime: z.coerce.number().default(Date.now()),
 });
 
 export const changeMangaCatSchema = z.object({
-  mangaId: z.coerce.string().uuid(),
+  mangaId: z.uuid(),
   newCat: z.coerce.string(),
 });
 
 export const setUserTitleSchema = z.object({
-  mangaId: z.coerce.string().uuid(),
+  mangaId: z.uuid(),
   newTitle: z.coerce.string().max(192).nullable(),
 });
 
 export const setUserCoverSchema = z.object({
-  mangaId: z.coerce.string().uuid(),
+  mangaId: z.uuid(),
   index: z.coerce.number().min(-1).default(-1),
 });
 

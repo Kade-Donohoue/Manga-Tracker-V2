@@ -19,7 +19,7 @@ const updateMangaSchema = z.object({
 const saveImageSchema = z.object({
   img: z.any(),
   index: z.number(),
-  mangaId: z.string().uuid(),
+  mangaId: z.uuid(),
 });
 
 export default async function dataHandler(
