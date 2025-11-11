@@ -175,7 +175,7 @@ export async function getManga(
 
     chapterData = await chapterResp.json();
 
-    if (config.logging.verboseLogging) console.log(chapterData);
+    if (config.debug.verboseLogging) console.log(chapterData);
 
     await job.log(logWithTimestamp('Finished Fetching Chapter Data. Proccessing!'));
     await job.updateProgress(20);
@@ -194,7 +194,7 @@ export async function getManga(
       })
     ).reverse();
 
-    if (config.logging.verboseLogging) console.log(chapterNumbers);
+    if (config.debug.verboseLogging) console.log(chapterNumbers);
 
     if (chapterNumbers.length <= 0)
       throw new Error('Manga: Issue fetching chapters! Please Contact and Admin!');
@@ -221,7 +221,7 @@ export async function getManga(
 
       if (volumeResp.ok) {
         const volumeData = await volumeResp.json();
-        if (config.logging.verboseLogging) console.log(volumeData);
+        if (config.debug.verboseLogging) console.log(volumeData);
         await page.setContent(volumeData.result, { waitUntil: 'domcontentloaded' });
 
         let photoUrls =
@@ -245,7 +245,7 @@ export async function getManga(
 
         photoUrls.reverse();
 
-        if (config.logging.verboseLogging) console.log(photoUrls);
+        if (config.debug.verboseLogging) console.log(photoUrls);
 
         let startingPoint =
           config.updateSettings.refetchImgs || icon ? 0 : Math.max(0, coverIndexes?.length - 1);
@@ -291,7 +291,7 @@ export async function getManga(
     await job.updateProgress(90);
     job.log(logWithTimestamp('All Data Fetched processing now'));
 
-    if (config.logging.verboseLogging) {
+    if (config.debug.verboseLogging) {
       console.log(url.split('chapter-').at(-1));
       console.log(chapterNumbers);
     }
@@ -316,7 +316,7 @@ export async function getManga(
   } catch (err) {
     job.log(logWithTimestamp(`Error: ${err}`));
     console.warn('Unable to fetch data for: ' + url);
-    if (config.logging.verboseLogging) console.warn(err);
+    if (config.debug.verboseLogging) console.warn(err);
 
     //ensure only custom error messages gets sent to user
     if (err.message.startsWith('Manga:')) throw new Error(err.message);

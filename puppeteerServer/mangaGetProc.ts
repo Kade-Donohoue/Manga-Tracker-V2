@@ -9,7 +9,7 @@ import { getManga as getMangafire } from './puppeteerScripts/mangafire';
 import { getManga as GetBato } from './puppeteerScripts/bato';
 
 export default async function (job: Job) {
-  if (config.logging.verboseLogging) console.log('starting job \n' + job.data);
+  if (config.debug.verboseLogging) console.log('starting job \n' + job.data);
   switch (job.data.type) {
     case 'manganato':
       return await getManganato(

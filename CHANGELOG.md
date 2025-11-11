@@ -3,6 +3,7 @@
 ## Change Log 3.1.9
  - Fixed mobile changelog poup size
  - Resolved MangaPark pages being left open
+ - Puppeteer headless browser config option
 
 ## Change Log 3.1.8
  - Updated all puppeteer server packages.

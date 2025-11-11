@@ -16,7 +16,9 @@ app.listen({ port: port, host: host }, async function (err, address) {
   }
 
   if (config.queue.clearQueuesAtStart) {
-    console.log("Clearing Queue! If this isn't the behavior you want mangaFireQueuemangafirechange it in config.json");
+    console.log(
+      "Clearing Queue! If this isn't the behavior you want mangaFireQueuemangafirechange it in config.json"
+    );
     await getQueue.obliterate({ force: true });
     await mangaFireQueue.obliterate({ force: true });
   }
@@ -106,7 +108,7 @@ app.get('/checkStatus/get', checkOpts, async function (req, res) {
       job = await mangaFireQueue.getJob(fetchId);
     }
 
-    if (config.logging.verboseLogging) {
+    if (config.debug.verboseLogging) {
       console.log('status check current job: ');
       console.log(job);
     }

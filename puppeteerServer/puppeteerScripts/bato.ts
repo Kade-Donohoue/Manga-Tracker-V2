@@ -135,7 +135,7 @@ export async function getManga(
 
       job.log(logWithTimestamp('Loading Cover Image'));
 
-      if (config.logging.verboseLogging) console.log(photoUrl);
+      if (config.debug.verboseLogging) console.log(photoUrl);
       const iconBuffer = await fetch(photoUrl, {
         headers: {
           Host: 'img-r1.2xstorage.com',
@@ -150,7 +150,7 @@ export async function getManga(
         },
       });
 
-      if (config.logging.verboseLogging) console.log(iconBuffer);
+      if (config.debug.verboseLogging) console.log(iconBuffer);
       if (!iconBuffer.ok) throw new Error('Manga: Unable to fetch cover image contact an admin!');
       job.log(logWithTimestamp('Cover Image Loaded saving now!'));
       await job.updateProgress(80);
@@ -162,7 +162,7 @@ export async function getManga(
     await job.updateProgress(90);
     job.log(logWithTimestamp('All Data Fetched processing now'));
 
-    if (config.logging.verboseLogging) {
+    if (config.debug.verboseLogging) {
       console.log(url.split('chapter-').at(-1));
       console.log(slugList);
     }
@@ -187,7 +187,7 @@ export async function getManga(
   } catch (err) {
     job.log(logWithTimestamp(`Error: ${err}`));
     console.warn('Unable to fetch data for: ' + url);
-    if (config.logging.verboseLogging) console.warn(err);
+    if (config.debug.verboseLogging) console.warn(err);
 
     //ensure only custom error messages gets sent to user
     if (err.message.startsWith('Manga:')) throw new Error(err.message);

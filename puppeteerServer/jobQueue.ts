@@ -41,7 +41,7 @@ export function createWorkers() {
     limiter: mangaFireLimiter,
   });
 
-  if (config.logging.verboseLogging) {
+  if (config.debug.verboseLogging) {
     mainGetWorker.on('ready', () => {
       console.log('Main worker ready');
     });
@@ -77,7 +77,7 @@ export async function getBrowser() {
   if (!browser) {
     browser = await puppeteer.launch({
       executablePath: config.browserPath,
-      headless: false,
+      headless: config.debug.headlessBrowser,
       devtools: false,
       acceptInsecureCerts: true,
       args: [
@@ -88,7 +88,7 @@ export async function getBrowser() {
         '--mute-audio',
       ],
     });
-    if (config.logging.verboseLogging) console.log('Stated Puppeteer!');
+    if (config.debug.verboseLogging) console.log('Stated Puppeteer!');
   }
   return browser;
 }

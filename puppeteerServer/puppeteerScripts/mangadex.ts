@@ -24,7 +24,7 @@ export async function getManga(
   maxSavedAt: string,
   job: Job
 ): Promise<fetchData> {
-  if (config.logging.verboseLogging) console.log('mangaDex');
+  if (config.debug.verboseLogging) console.log('mangaDex');
 
   const logWithTimestamp = createTimestampLogger();
 
@@ -139,7 +139,7 @@ export async function getManga(
       const coverReq = await fetch(
         `https://mangadex.org/covers/${mangaId}/${coverData.data.attributes.fileName}`
       );
-      if (config.logging.verboseLogging)
+      if (config.debug.verboseLogging)
         console.log(`https://mangadex.org/covers/${mangaId}/${coverID}.jpg`);
 
       const iconBuffer = await coverReq.arrayBuffer();
@@ -171,7 +171,7 @@ export async function getManga(
   } catch (err) {
     job.log(logWithTimestamp(`Error: ${err}`));
     console.warn(`Unable to fetch data for: ${url}`);
-    if (config.logging.verboseLogging) console.warn(err);
+    if (config.debug.verboseLogging) console.warn(err);
 
     //ensure only custom error messages gets sent to user
     if (err.message.startsWith('Manga:')) throw new Error(err.message);
