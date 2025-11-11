@@ -25,12 +25,12 @@ export async function getManga(
   specialFetchData: any,
   job: Job
 ): Promise<fetchData> {
-  if (config.logging.verboseLogging) console.log('comick');
+  if (config.debug.verboseLogging) console.log('comick');
   const logWithTimestamp = createTimestampLogger();
 
   try {
     const slug = await resolveSlug(url, job);
-    if (config.logging.verboseLogging) console.log('slug: ', slug);
+    if (config.debug.verboseLogging) console.log('slug: ', slug);
     job.log(logWithTimestamp('Fetching Comic Data with following slug: ' + slug));
 
     let comickHid: string | null = specialFetchData;
@@ -38,7 +38,7 @@ export async function getManga(
     let images: { image: Buffer<ArrayBufferLike>; index: number }[] = [];
     let newCoverIndex: number = 0;
 
-    if (config.logging.verboseLogging) console.log(comickHid, mangaTitle);
+    if (config.debug.verboseLogging) console.log(comickHid, mangaTitle);
 
     //Determine if refetching cover image
     const inputDate = maxSavedAt ? new Date(maxSavedAt.replace(' ', 'T') + 'Z') : new Date();
@@ -56,12 +56,12 @@ export async function getManga(
           },
         }
       );
-      if (config.logging.verboseLogging) console.log(comicResult);
+      if (config.debug.verboseLogging) console.log(comicResult);
 
       if (!comicResult.ok) throw new Error('Manga: Unable to fetch Comick Data!');
 
       const comicData: comicData = await comicResult.json();
-      if (config.logging.verboseLogging) console.log('comic Data: ', comicData);
+      if (config.debug.verboseLogging) console.log('comic Data: ', comicData);
 
       await job.updateProgress(20);
       job.log(logWithTimestamp('comic Data Retrieved!'));
@@ -129,17 +129,17 @@ export async function getManga(
         },
       }
     );
-    if (config.logging.verboseLogging) console.log(chapterReq);
+    if (config.debug.verboseLogging) console.log(chapterReq);
     if (!chapterReq.ok) throw new Error('Manga: Unable to fetch chapter Data!');
     const chapterData: chapterData = await chapterReq.json();
 
-    if (config.logging.verboseLogging) console.log('Chapter Data: ', chapterData);
+    if (config.debug.verboseLogging) console.log('Chapter Data: ', chapterData);
     await job.updateProgress(40);
     job.log(logWithTimestamp('chapter Data Retrieved! Parsing Data Now.'));
 
     let userHid = url.split('/').at(-1).toLowerCase();
     userHid = userHid.replace(/-chapter-\d+.?\d*-[a-z]+/gi, '');
-    if (config.logging.verboseLogging) console.log('userHid: ', userHid);
+    if (config.debug.verboseLogging) console.log('userHid: ', userHid);
 
     const chapterMap: ChapterMap = {};
     let userChap = null;
@@ -162,7 +162,7 @@ export async function getManga(
       }
     }
 
-    if (config.logging.verboseLogging) console.log('userChap: ', userChap);
+    if (config.debug.verboseLogging) console.log('userChap: ', userChap);
 
     const chapters: number[] = [];
     const hidList: string[] = [];
@@ -177,7 +177,7 @@ export async function getManga(
     job.updateProgress(70);
     job.log(logWithTimestamp('Chapter Data parsed getting final data!'));
 
-    if (config.logging.verboseLogging) {
+    if (config.debug.verboseLogging) {
       console.log('url ends: ', hidList.join(','));
       console.log('chapters: ', chapters.join(','));
     }
@@ -201,7 +201,7 @@ export async function getManga(
   } catch (err) {
     job.log(logWithTimestamp(`Error: ${err}`));
     console.warn(`Unable to fetch data for: ${url}`);
-    if (config.logging.verboseLogging) console.warn(err);
+    if (config.debug.verboseLogging) console.warn(err);
 
     //ensure only custom error messages gets sent to user
     if (err.message.startsWith('Manga:')) throw new Error(err.message);

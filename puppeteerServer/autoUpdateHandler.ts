@@ -30,7 +30,7 @@ async function updateAllManga() {
         pass: config.serverCom.serverPassWord,
       },
     });
-    if (config.logging.verboseLogging) console.log(resp);
+    if (config.debug.verboseLogging) console.log(resp);
     if (resp.status != 200) {
       if (config.notif.updateFetchFailureNotif) {
         await sendNotif(
@@ -75,7 +75,7 @@ async function updateAllManga() {
       if (returnData[i].slugList.indexOf(',') == -1) {
         if (returnData[i].slugList.length <= 0) {
           console.log('Unable to find first chap skipping: ' + returnData[i].mangaId);
-          if (config.logging.verboseLogging) console.log(returnData[i].slugList);
+          if (config.debug.verboseLogging) console.log(returnData[i].slugList);
           // invalidCount++;
           const batch = dataCollector.get(batchId);
           batch.batchData.batchLength -= 1;
@@ -90,7 +90,7 @@ async function updateAllManga() {
           returnData[i].urlBase +
           returnData[i].slugList.substring(0, returnData[i].slugList.indexOf(','));
       }
-      if (config.logging.verboseLogging) console.log(firstChapUrl);
+      if (config.debug.verboseLogging) console.log(firstChapUrl);
 
       const webSite = validMangaCheck(firstChapUrl);
       if (webSite.success === false) {
@@ -102,7 +102,7 @@ async function updateAllManga() {
         // console.log(batch.batchData.completedCount)
         continue;
       }
-      if (config.logging.verboseLogging) console.log(returnData[i]);
+      if (config.debug.verboseLogging) console.log(returnData[i]);
 
       const job = {
         name: webSite.value,
@@ -142,7 +142,7 @@ async function updateAllManga() {
     await getQueue.addBulk(universalJobs);
     await mangaFireQueue.addBulk(mangafireJobs);
 
-    if (config.logging.verboseLogging) console.log('Jobs Added to Queue');
+    if (config.debug.verboseLogging) console.log('Jobs Added to Queue');
   } catch (err) {
     console.error(err);
   }
@@ -172,8 +172,8 @@ async function mangaCompleteFuction(job: Job<dataType, fetchData>, returnvalue: 
           ) || 0;
         // const newChapterCountFallback = newSlugs.length - oldSlugs.length; idk use case yet but leaving for future
 
-        if (config.logging.verboseLogging) console.log(returnvalue.urlBase);
-        if (config.logging.verboseLogging) logArrayDifferences(oldSlugs, newSlugs);
+        if (config.debug.verboseLogging) console.log(returnvalue.urlBase);
+        if (config.debug.verboseLogging) logArrayDifferences(oldSlugs, newSlugs);
 
         if (newChapterCount != 0) batch.batchData.newChapterCount += newChapterCount;
         batch.batchData.newData.push({
@@ -308,7 +308,7 @@ async function sendUpdate(batch: updateCollector) {
           }),
         });
 
-        if (config.logging.verboseLogging) console.log(resp);
+        if (config.debug.verboseLogging) console.log(resp);
         if (!resp.ok) {
           console.warn(`Failed to save!; ${manga.mangaId}`);
           failedImageCount++;

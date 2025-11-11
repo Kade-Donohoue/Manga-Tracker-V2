@@ -23,8 +23,9 @@
     "removeCompleted": 1000,
     "removeFailed": 5000
   },
-  "logging": {
-    "verboseLogging": false
+  "debug": {
+    "verboseLogging": false,
+    "headlessBrowser": true
   },
   "serverCom": {
     "serverUrl": "enter_url_here",

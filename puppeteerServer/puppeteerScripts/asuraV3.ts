@@ -24,7 +24,7 @@ export async function getManga(
   maxSavedAt: string,
   job: Job
 ): Promise<fetchData> {
-  if (config.logging.verboseLogging) console.log('Asura');
+  if (config.debug.verboseLogging) console.log('Asura');
 
   const logWithTimestamp = createTimestampLogger();
 
@@ -105,7 +105,7 @@ export async function getManga(
         return JSON.parse(`{${str.slice(startIndex, endIndex + 2).trim()}}`);
       }
     );
-    if (config.logging.verboseLogging) console.log(chapterData);
+    if (config.debug.verboseLogging) console.log(chapterData);
     await job.updateProgress(30);
 
     const overViewURL = url.split('/chapter/')[0];
@@ -130,7 +130,7 @@ export async function getManga(
 
     job.log(logWithTimestamp('Data Retried! processing Data'));
     // let dataRows = stringData.trim().split('\n')
-    if (config.logging.verboseLogging) console.log(chapterData);
+    if (config.debug.verboseLogging) console.log(chapterData);
 
     let chapeterList = [];
     // let chapterLinks = []
@@ -153,7 +153,7 @@ export async function getManga(
       { timeout: 500 }
     );
 
-    if (config.logging.verboseLogging) {
+    if (config.debug.verboseLogging) {
       // console.log(chapterLinks)
       // console.log(chapterText)
       console.log(chapeterList);
@@ -173,7 +173,7 @@ export async function getManga(
     var resizedImage: Buffer | null = null;
     if (icon || inputDate < oneMonthAgo) {
       job.log(logWithTimestamp('Starting Icon Fetch'));
-      if (config.logging.verboseLogging) console.log(overViewURL);
+      if (config.debug.verboseLogging) console.log(overViewURL);
       await page.goto(overViewURL, { timeout: 10000 });
       job.log(logWithTimestamp('Overview Page loaded'));
 
@@ -191,7 +191,6 @@ export async function getManga(
     }
     job.log(logWithTimestamp('Data fetched'));
     await job.updateProgress(80);
-    await page.close();
 
     //match index by chapter number as asura frequently changes id in url
     // let endChapUrls = chapterLinks.map((valUrl) => valUrl.split('/chapter/').at(-1))
@@ -215,11 +214,15 @@ export async function getManga(
   } catch (err) {
     job.log(logWithTimestamp(`Error: ${err}`));
     console.warn(`Unable to fetch data for: ${url}`);
-    if (config.logging.verboseLogging) console.warn(err);
-    if (!page.isClosed()) await page.close();
+    if (config.debug.verboseLogging) console.warn(err);
 
     //ensure only custom error messages gets sent to user
     if (err.message.startsWith('Manga:')) throw new Error(err.message);
     throw new Error('Unable to fetch Data! maybe invalid Url?');
+  } finally {
+    if (page && !page.isClosed()) {
+      page.removeAllListeners();
+      await page.close().catch(() => {});
+    }
   }
 }

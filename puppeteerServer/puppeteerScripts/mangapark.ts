@@ -24,7 +24,7 @@ export async function getManga(
   maxSavedAt: string,
   job: Job
 ): Promise<fetchData> {
-  if (config.logging.verboseLogging) console.log('mangaDex');
+  if (config.debug.verboseLogging) console.log('mangaDex');
 
   const logWithTimestamp = createTimestampLogger();
 
@@ -74,7 +74,7 @@ export async function getManga(
 
     const chapterResults: ComicChapterListResponse = await response.json();
 
-    console.log(chapterResults.data.get_comicChapterList);
+    if (config.debug.verboseLogging) console.log(chapterResults.data.get_comicChapterList);
 
     const chapters = chapterResults.data?.get_comicChapterList;
 
@@ -144,12 +144,16 @@ export async function getManga(
   } catch (err) {
     job.log(logWithTimestamp(`Error: ${err}`));
     console.warn(`Unable to fetch data for: ${url}`);
-    if (config.logging.verboseLogging) console.warn(err);
-    // if (!page.isClosed()) await page.close()
+    if (config.debug.verboseLogging) console.warn(err);
 
     //ensure only custom error messages gets sent to user
     if (err.message.startsWith('Manga:')) throw new Error(err.message);
     throw new Error('Unable to fetch Data! maybe invalid Url?');
+  } finally {
+    if (page && !page.isClosed()) {
+      page.removeAllListeners();
+      await page.close().catch(() => {});
+    }
   }
 
   interface ComicChapter {
