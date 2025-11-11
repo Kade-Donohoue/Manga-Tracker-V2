@@ -145,11 +145,15 @@ export async function getManga(
     job.log(logWithTimestamp(`Error: ${err}`));
     console.warn(`Unable to fetch data for: ${url}`);
     if (config.logging.verboseLogging) console.warn(err);
-    // if (!page.isClosed()) await page.close()
 
     //ensure only custom error messages gets sent to user
     if (err.message.startsWith('Manga:')) throw new Error(err.message);
     throw new Error('Unable to fetch Data! maybe invalid Url?');
+  } finally {
+    if (page && !page.isClosed()) {
+      page.removeAllListeners();
+      await page.close().catch(() => {});
+    }
   }
 
   interface ComicChapter {

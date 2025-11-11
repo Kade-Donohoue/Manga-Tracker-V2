@@ -45,7 +45,11 @@ export default function ChangelogModal({ changelogs }: ChangelogModalProps) {
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          width: 500,
+          width: {
+            xs: '90%',
+            sm: 400,
+            md: 500,
+          },
           bgcolor: 'background.paper',
           borderRadius: 2,
           boxShadow: 24,

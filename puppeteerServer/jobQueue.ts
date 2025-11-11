@@ -77,7 +77,7 @@ export async function getBrowser() {
   if (!browser) {
     browser = await puppeteer.launch({
       executablePath: config.browserPath,
-      headless: true,
+      headless: false,
       devtools: false,
       acceptInsecureCerts: true,
       args: [

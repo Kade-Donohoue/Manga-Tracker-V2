@@ -125,6 +125,7 @@ export async function getManga(
 
     if (chapterResp.status === 429) {
       let retryDelay = (parseInt(chapterResp.headers.get('retry-after')) || 5) * 1000;
+      page.removeAllListeners();
       await page.close();
 
       console.warn(
@@ -158,9 +159,7 @@ export async function getManga(
 
       specialFetchData = vrf;
 
-      await page
-        .goto('about:blank', { waitUntil: 'domcontentloaded', timeout: 1000 })
-        .catch(() => null);
+      await page.setContent('', { waitUntil: 'domcontentloaded' }).catch(() => null);
 
       if (!specialFetchData) throw new Error('Manga: Unable to get VFR!');
       job.log(logWithTimestamp('Loading Chapter Data'));
@@ -290,7 +289,6 @@ export async function getManga(
       }
     }
     await job.updateProgress(90);
-    await page.close();
     job.log(logWithTimestamp('All Data Fetched processing now'));
 
     if (config.logging.verboseLogging) {
@@ -319,10 +317,14 @@ export async function getManga(
     job.log(logWithTimestamp(`Error: ${err}`));
     console.warn('Unable to fetch data for: ' + url);
     if (config.logging.verboseLogging) console.warn(err);
-    if (!page.isClosed()) await page.close();
 
     //ensure only custom error messages gets sent to user
     if (err.message.startsWith('Manga:')) throw new Error(err.message);
     throw new Error('Unable to fetch Data! maybe invalid Url?');
+  } finally {
+    if (page && !page.isClosed()) {
+      page.removeAllListeners();
+      await page.close().catch(() => {});
+    }
   }
 }
