@@ -75,18 +75,28 @@ export function createWorkers() {
 let browser: Browser | null = null;
 export async function getBrowser() {
   if (!browser) {
+    const launchArgs = [
+      '--disable-gpu',
+      '--enable-features=NetworkService',
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--mute-audio',
+    ];
+
+    if (config.debug.remotePuppetDebug) {
+      const port = config.debug.remotePuppetDebugPort ?? 9222;
+      launchArgs.push(`--remote-debugging-port=${port}`);
+      if (config.debug.verboseLogging) {
+        console.log(`Puppeteer remote debugging enabled on port ${port}`);
+      }
+    }
+
     browser = await puppeteer.launch({
       executablePath: config.browserPath,
       headless: config.debug.headlessBrowser,
       devtools: false,
       acceptInsecureCerts: true,
-      args: [
-        '--disable-gpu',
-        '--enable-features=NetworkService',
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--mute-audio',
-      ],
+      args: launchArgs,
     });
     if (config.debug.verboseLogging) console.log('Stated Puppeteer!');
   }
