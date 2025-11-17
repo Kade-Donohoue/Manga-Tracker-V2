@@ -82,36 +82,6 @@ export async function getManga(
       request.continue();
     });
 
-    // await page.evaluateOnNewDocument(() => {
-    //   // Freeze the current URL
-    //   const current = window.location.href;
-
-    //   // Redefine window.location so scripts can't redirect
-    //   Object.defineProperty(window, 'location', {
-    //     configurable: false,
-    //     enumerable: true,
-    //     value: Object.freeze({
-    //       ...window.location,
-    //       assign: () => {},
-    //       replace: () => {},
-    //       reload: () => {},
-    //       get href() {
-    //         return current;
-    //       },
-    //       set href(_) {
-    //         // ignore attempts to navigate
-    //       },
-    //     }),
-    //   });
-
-    //   // Prevent history-based navigation
-    //   history.pushState = () => {};
-    //   history.replaceState = () => {};
-    //   history.back = () => {};
-    //   history.forward = () => {};
-    //   history.go = () => {};
-    // });
-
     const urlBase = url.split(/\/[a-z]{2}\/chapter/i)[0];
     const mangaId = urlBase.split('.').at(-1);
 
@@ -123,7 +93,7 @@ export async function getManga(
       }
     );
 
-    if (chapterResp.status === 429) {
+    if (chapterResp.status === 429 || chapterResp.status === 1015) {
       let retryDelay = (parseInt(chapterResp.headers.get('retry-after')) || 5) * 1000;
       page.removeAllListeners();
       await page.close();
@@ -233,13 +203,23 @@ export async function getManga(
 
         if (photoUrls?.length <= 0) {
           job.log(logWithTimestamp('Using Alternate Cover Image Fetch'));
-          await page.goto(urlBase.replace('read', 'manga'));
+          let overviewResp = await page.goto(urlBase.replace('read', 'manga'));
 
-          const imgElement = await page.waitForSelector('div.poster > div > img');
+          const overviewStatus = overviewResp.status();
+          if (overviewStatus === 1015 || overviewStatus === 429 || overviewStatus === 403) {
+            page.removeAllListeners();
+            await page.close();
 
-          const imgSrc = await imgElement.evaluate((el) => el.getAttribute('src'));
-          if (imgSrc) {
-            photoUrls.push(imgSrc);
+            console.warn(
+              'MangaFire Rate Limit Hit on Cover Response, consider adjusting base delay if this appears frequently! Skipping Cover Image Fetch'
+            );
+          } else {
+            const imgElement = await page.waitForSelector('div.poster > div > img');
+
+            const imgSrc = await imgElement.evaluate((el) => el.getAttribute('src'));
+            if (imgSrc) {
+              photoUrls.push(imgSrc);
+            }
           }
         }
 
