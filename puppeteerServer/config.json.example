@@ -25,7 +25,9 @@
   },
   "debug": {
     "verboseLogging": false,
-    "headlessBrowser": true
+    "headlessBrowser": true,
+    "remotePuppetDebug": false,
+    "remotePuppetDebugPort": 9222
   },
   "serverCom": {
     "serverUrl": "enter_url_here",
