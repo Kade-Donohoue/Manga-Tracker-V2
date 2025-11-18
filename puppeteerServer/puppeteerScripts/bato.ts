@@ -177,7 +177,7 @@ export async function getManga(
     await job.updateProgress(100);
     return {
       mangaName: mangaName,
-      urlBase: 'bato.to/chapter/',
+      urlBase: 'https://bato.to/chapter/',
       slugList: slugList.join(','),
       chapterTextList: chapterTextList.join(','),
       currentIndex: currIndex,
