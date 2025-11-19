@@ -106,8 +106,6 @@ export async function getManga(
 
     job.log(logWithTimestamp('Data Proccessed'));
 
-    // await page.goto(url, {waitUntil: 'networkidle0', timeout: 10*1000}
-
     await job.updateProgress(40);
 
     let inputDate = new Date();
@@ -117,7 +115,7 @@ export async function getManga(
       oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
     }
 
-    var resizedImage: Buffer | null = null;
+    let images: { image: Buffer<ArrayBufferLike>; index: number }[] = [];
     if (icon || inputDate < oneMonthAgo) {
       job.log(logWithTimestamp('Fetching Image'));
 
@@ -143,12 +141,13 @@ export async function getManga(
         console.log(`https://mangadex.org/covers/${mangaId}/${coverID}.jpg`);
 
       const iconBuffer = await coverReq.arrayBuffer();
-      resizedImage = await sharp(iconBuffer).resize(480, 720).toBuffer();
+      let resizedImage = await sharp(iconBuffer).resize(480, 720).toBuffer();
+
+      images.push({ image: resizedImage, index: 0 });
     }
     job.log(logWithTimestamp('All Data fetch. processing data.'));
     await job.updateProgress(90);
 
-    let urlParts = url.split('chapter/').at(-1).split('/');
     let currIndex = slugList.indexOf(chapterId);
 
     if (currIndex == -1) currIndex = chapterTestList.indexOf(currChapData.data.attributes.chapter);
@@ -165,7 +164,7 @@ export async function getManga(
       slugList: slugList.join(','),
       chapterTextList: chapterTestList.join(','),
       currentIndex: currIndex,
-      images: [{ image: resizedImage, index: 0 }],
+      images: images,
       specialFetchData: mangaId + `(${language})`,
     };
   } catch (err) {
@@ -173,7 +172,6 @@ export async function getManga(
     console.warn(`Unable to fetch data for: ${url}`);
     if (config.debug.verboseLogging) console.warn(err);
 
-    //ensure only custom error messages gets sent to user
     if (err.message.startsWith('Manga:')) throw new Error(err.message);
     throw new Error('Unable to fetch Data! maybe invalid Url?');
   } finally {

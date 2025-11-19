@@ -95,7 +95,8 @@ export async function getManga(
     }
 
     let baseUrl = url.split('/').slice(0, 5).join('/') + '/';
-    var resizedImage: Buffer | null = null;
+
+    let images: { image: Buffer<ArrayBufferLike>; index: number }[] = [];
     if (icon || inputDate < oneMonthAgo) {
       await page.goto(baseUrl, { timeout: 5000 });
 
@@ -118,7 +119,9 @@ export async function getManga(
       const imageReq = await fetch(imgSrc);
 
       const iconBuffer = await imageReq.arrayBuffer();
-      resizedImage = await sharp(iconBuffer).resize(480, 720).toBuffer();
+      let resizedImage = await sharp(iconBuffer).resize(480, 720).toBuffer();
+
+      images.push({ image: resizedImage, index: 0 });
     }
 
     job.log(logWithTimestamp('All Data fetch. processing data.'));
@@ -138,7 +141,7 @@ export async function getManga(
       slugList: slugList.join(','),
       chapterTextList: chapterTextList.join(','),
       currentIndex: currIndex,
-      images: [{ image: resizedImage, index: 0 }],
+      images: images,
       specialFetchData: null,
     };
   } catch (err) {

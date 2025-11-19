@@ -308,7 +308,10 @@ async function sendUpdate(batch: updateCollector) {
           }),
         });
 
-        if (config.debug.verboseLogging) console.log(resp);
+        if (config.debug.verboseLogging) {
+          console.log(manga.images[j].image);
+          console.log(resp);
+        }
         if (!resp.ok) {
           console.warn(`Failed to save!; ${manga.mangaId}`);
           failedImageCount++;

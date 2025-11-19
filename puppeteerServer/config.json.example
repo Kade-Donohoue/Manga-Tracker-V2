@@ -44,7 +44,7 @@
     "intitalMangaFire": false
   },
   "rateLimits": {
-      "mangaFireDuration": 1500,
+      "mangaFireDuration": 2000,
       "mangaFireMax": 2
   },
   "browserPath": "/usr/bin/chromium"

@@ -114,7 +114,7 @@ export async function getManga(
       oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
     }
 
-    var resizedImage: Buffer | null = null;
+    let images: { image: Buffer<ArrayBufferLike>; index: number }[] = [];
     // var iconBuffer:Buffer|null|undefined = null
     if (icon || inputDate < oneMonthAgo) {
       job.log(logWithTimestamp('Loading Overview Page'));
@@ -155,9 +155,11 @@ export async function getManga(
       job.log(logWithTimestamp('Cover Image Loaded saving now!'));
       await job.updateProgress(80);
 
-      resizedImage = await sharp(await iconBuffer.arrayBuffer())
+      let resizedImage = await sharp(await iconBuffer.arrayBuffer())
         .resize(480, 720)
         .toBuffer();
+
+      images.push({ image: resizedImage, index: 0 });
     }
     await job.updateProgress(90);
     job.log(logWithTimestamp('All Data Fetched processing now'));
@@ -181,7 +183,7 @@ export async function getManga(
       slugList: slugList.join(','),
       chapterTextList: chapterTextList.join(','),
       currentIndex: currIndex,
-      images: [{ image: resizedImage, index: 0 }],
+      images: images,
       specialFetchData: null,
     };
   } catch (err) {

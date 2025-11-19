@@ -124,8 +124,7 @@ export async function getManga(
       oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
     }
 
-    var resizedImage: Buffer | null = null;
-    // var iconBuffer:Buffer|null|undefined = null
+    let images: { image: Buffer<ArrayBufferLike>; index: number }[] = [];
     if (icon || inputDate < oneMonthAgo) {
       job.log(logWithTimestamp('Loading Overview Page'));
       await page.setJavaScriptEnabled(false);
@@ -157,7 +156,6 @@ export async function getManga(
         headers: {
           Host: 'img-r1.2xstorage.com',
           'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:137.0) Gecko/20100101 Firefox/137.0',
-          // "Accept": "image/avif,image/webp,image/png,image/svg+xml,image/*;q=0.8,*/*;q=0.5",
           'Accept-Language': 'en-US,en;q=0.5',
           Referer: 'https://www.manganato.gg/',
           'Sec-Fetch-Dest': 'image',
@@ -173,9 +171,11 @@ export async function getManga(
       job.log(logWithTimestamp('Cover Image Loaded saving now!'));
       await job.updateProgress(80);
 
-      resizedImage = await sharp(await iconBuffer.arrayBuffer())
+      let resizedImage = await sharp(await iconBuffer.arrayBuffer())
         .resize(480, 720)
         .toBuffer();
+
+      images.push({ image: resizedImage, index: 0 });
     }
     await job.updateProgress(90);
     job.log(logWithTimestamp('All Data Fetched processing now'));
@@ -199,7 +199,7 @@ export async function getManga(
       slugList: urlList.join(','),
       chapterTextList: urlList.join(',').replace('.', '-'),
       currentIndex: currIndex,
-      images: [{ image: resizedImage, index: 0 }],
+      images: images,
       specialFetchData: null,
     };
   } catch (err) {
