@@ -6,6 +6,7 @@
   },
   "dependencies": {
     "bullmq": "^5.56.9",
+    "drizzle-orm": "^0.45.0",
     "puppeteer": "^22.15.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-adblocker": "^2.13.6",

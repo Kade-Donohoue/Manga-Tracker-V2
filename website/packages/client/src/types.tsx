@@ -26,11 +26,11 @@ export interface mangaDetails {
   currentIndex: number;
   userCat: string;
   interactTime: number;
-  imageIndexes: number[];
+  imageIndexes: number;
   currentChap: number;
   userTitle: string | null;
   userCoverIndex: number;
-  sharedFriends: {
+  friends: {
     userID: string;
     avatarUrl: string;
     userName: string;
@@ -56,7 +56,7 @@ export interface categoryOption {
 }
 
 export type friend = {
-  id: number;
+  friendId: number;
   userID: string;
   userName: string;
   imageURl: string;

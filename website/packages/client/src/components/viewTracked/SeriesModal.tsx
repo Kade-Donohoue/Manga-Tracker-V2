@@ -37,34 +37,33 @@ const fetchFriendsData = async (
   manga: mangaDetails | null
 ): Promise<{ userID: string; currentIndex: number; avatarUrl: string; userName: string }[]> => {
   if (!manga) return [];
-  const response = await fetch(`${fetchPath}/api/data/pull/getSharedManga`, {
+  const response = await fetch(`${fetchPath}/api/data/pull/sharedFriends/${manga.mangaId}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      mangaId: manga.mangaId,
-    }),
   });
+
+  if (response.status === 404) return [];
 
   if (!response.ok) {
     // toast.error('Unable to get User Cats');
     throw new Error('Failed to fetch Friend Manga Status!');
   }
 
-  const data: { friendData: { userID: string; currentIndex: number }[]; expiresAt: string } =
-    await response.json();
+  const data: {
+    friendData: { userID: string; currentIndex: number; userName: string; avatarUrl: string }[];
+    expiresAt: string;
+  } = await response.json();
 
-  const joindedData = data.friendData
-    .map((indexData) => {
-      const match = manga.sharedFriends.find(
-        (avatarData) => avatarData.userID === indexData.userID
-      );
-      return match ? { ...indexData, ...match } : null;
-    })
-    .filter((u) => u !== null);
+  // const joindedData = data.friendData
+  //   .map((indexData) => {
+  //     const match = manga.friends.find((avatarData) => avatarData.userID === indexData.userID);
+  //     return match ? { ...indexData, ...match } : null;
+  //   })
+  //   .filter((u) => u !== null);
 
-  return joindedData;
+  return data.friendData;
 };
 
 const SeriesModal: React.FC<SeriesModalProps> = ({
@@ -225,6 +224,11 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
     }
   };
 
+  const coverIndex =
+    manga.userCoverIndex != null && manga.userCoverIndex >= 0
+      ? manga.userCoverIndex
+      : (manga.imageIndexes ?? 0);
+
   return (
     <Dialog
       open={open}
@@ -281,9 +285,7 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
             >
               <img
                 src={
-                  `${
-                    import.meta.env.VITE_IMG_URL
-                  }/${manga.mangaId}/${manga.imageIndexes.includes(manga.userCoverIndex) ? manga.userCoverIndex : manga.imageIndexes.at(-1) || 0}` ||
+                  `${import.meta.env.VITE_IMG_URL}/${manga.mangaId}/${coverIndex}` ||
                   'mangaNotFoundImage.png'
                 }
                 alt={manga.mangaName}
@@ -366,7 +368,10 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
                         <Tooltip title={friend.userName}>
                           <Avatar
                             alt={friend.userName}
-                            src={friend.avatarUrl}
+                            src={
+                              friend.avatarUrl ??
+                              `https://api.dicebear.com/7.x/thumbs/svg?seed=${friend.userID}`
+                            }
                             sx={{ width: 24, height: 24 }}
                           />
                         </Tooltip>

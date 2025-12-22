@@ -75,6 +75,11 @@ export default function SeriesCard({
       ? Math.max(0, Math.min(100, (currentChapter / totalChapters) * 100))
       : 0;
 
+  const coverIndex =
+    data.userCoverIndex != null && data.userCoverIndex >= 0
+      ? data.userCoverIndex
+      : (data.imageIndexes ?? 0);
+
   return (
     <Card
       elevation={3}
@@ -107,7 +112,7 @@ export default function SeriesCard({
         >
           <CardMedia
             component="img"
-            image={`${import.meta.env.VITE_IMG_URL}/${data.mangaId}/${data.imageIndexes.includes(data.userCoverIndex) ? data.userCoverIndex : data.imageIndexes.at(-1) || 0}`}
+            image={`${import.meta.env.VITE_IMG_URL}/${data.mangaId}/${coverIndex}`}
             alt={`Cover for ${data.mangaName}`}
             sx={{
               position: 'absolute',
@@ -165,11 +170,17 @@ export default function SeriesCard({
               </Typography>
 
               <AvatarGroup max={4} sx={{ '& .MuiAvatar-root': { width: 16, height: 16 } }}>
-                {data.sharedFriends
+                {data.friends
                   .filter((val) => val)
                   .map((friend) => (
                     <Tooltip key={friend.userID} title={friend.userName}>
-                      <Avatar alt={friend.userName} src={friend.avatarUrl} />
+                      <Avatar
+                        alt={friend.userName}
+                        src={
+                          friend.avatarUrl ??
+                          `https://api.dicebear.com/7.x/thumbs/svg?seed=${friend.userID}`
+                        }
+                      />
                     </Tooltip>
                   ))}
               </AvatarGroup>

@@ -21,7 +21,6 @@ import MenuIcon from '@mui/icons-material/Menu';
 
 import * as S from './AppStyles';
 import IconButton from '@mui/material/IconButton';
-import { RedirectToSignIn, SignedIn, SignedOut, SignIn, SignUp } from '@clerk/clerk-react';
 import CookieBanner from './components/cookies';
 import { queryClient } from './queryClient';
 import Box from '@mui/material/Box';
@@ -31,6 +30,11 @@ import addContainer from './pages/command/addManga/addContainer';
 import ChangelogModal from './components/ChangelogModal';
 
 import changelogs from './changelog.json';
+
+import { createAuthClient } from 'better-auth/react';
+import SignInPage from './pages/auth/SignInPage';
+import SignUpPage from './pages/auth/SignUpPage';
+import { useAuthStatus } from './hooks/useAuthStatus';
 
 interface CenteredPageProps {
   children: React.ReactNode;
@@ -51,105 +55,105 @@ const CenteredPage: React.FC<CenteredPageProps> = ({ children }) => (
 );
 
 // Add contexts here
-export default function App(): React.ReactElement {
-  return (
-    <div style={{ width: '100%', height: '100%' }}>
-      <Router>
-        <Routes>
-          {/* Public routes */}
-          <Route
-            path="/"
-            element={
-              <div>
-                <SignedOut>
-                  <Navigate to="/home" replace />
-                </SignedOut>
-                <SignedIn>
-                  <Navigate to="/tracked" replace />
-                </SignedIn>
-              </div>
-            }
-          />
-          <Route
-            path="/home"
-            element={
-              <SignedOut>
-                <Home />
-              </SignedOut>
-            }
-          />
-          <Route
-            path="/sign-in"
-            element={
-              <SignedOut>
-                <CenteredPage>
-                  <SignIn signUpUrl="/sign-up" />
-                </CenteredPage>
-              </SignedOut>
-            }
-          />
-          <Route
-            path="/sign-up"
-            element={
-              <SignedOut>
-                <CenteredPage>
-                  <SignUp signInUrl="/sign-in" />
-                </CenteredPage>
-              </SignedOut>
-            }
-          />
+// export default function App(): React.ReactElement {
+//   return (
+//     <div style={{ width: '100%', height: '100%' }}>
+//       <Router>
+//         <Routes>
+//           {/* Public routes */}
+//           <Route
+//             path="/"
+//             element={
+//               <div>
+//                 <SignedOut>
+//                   <Navigate to="/home" replace />
+//                 </SignedOut>
+//                 <SignedIn>
+//                   <Navigate to="/tracked" replace />
+//                 </SignedIn>
+//               </div>
+//             }
+//           />
+//           <Route
+//             path="/home"
+//             element={
+//               <SignedOut>
+//                 <Home />
+//               </SignedOut>
+//             }
+//           />
+//           <Route
+//             path="/sign-in"
+//             element={
+//               <SignedOut>
+//                 <CenteredPage>
+//                   <SignIn signUpUrl="/sign-up" />
+//                 </CenteredPage>
+//               </SignedOut>
+//             }
+//           />
+//           <Route
+//             path="/sign-up"
+//             element={
+//               <SignedOut>
+//                 <CenteredPage>
+//                   <SignUp signInUrl="/sign-in" />
+//                 </CenteredPage>
+//               </SignedOut>
+//             }
+//           />
 
-          {/* Protected app */}
-          <Route
-            path="/*"
-            element={
-              <div style={{ width: '100%', height: '100%' }}>
-                <SignedIn>
-                  <DesignSystemProvider>
-                    <ToastContainer
-                      position="top-right"
-                      autoClose={5000}
-                      hideProgressBar={false}
-                      newestOnTop={false}
-                      closeOnClick
-                      rtl={false}
-                      pauseOnFocusLoss={false}
-                      draggable
-                      pauseOnHover
-                      theme="dark"
-                    />
-                    <QueryClientProvider client={queryClient}>
-                      <RootedApp />
-                    </QueryClientProvider>
-                  </DesignSystemProvider>
-                </SignedIn>
-                <SignedOut>
-                  <RedirectToSignIn signInFallbackRedirectUrl={'/tracked'} />
-                </SignedOut>
-              </div>
-            }
-          />
+//           {/* Protected app */}
+//           <Route
+//             path="/*"
+//             element={
+//               <div style={{ width: '100%', height: '100%' }}>
+//                 <SignedIn>
+//                   <DesignSystemProvider>
+//                     <ToastContainer
+//                       position="top-right"
+//                       autoClose={5000}
+//                       hideProgressBar={false}
+//                       newestOnTop={false}
+//                       closeOnClick
+//                       rtl={false}
+//                       pauseOnFocusLoss={false}
+//                       draggable
+//                       pauseOnHover
+//                       theme="dark"
+//                     />
+//                     <QueryClientProvider client={queryClient}>
+//                       <RootedApp />
+//                     </QueryClientProvider>
+//                   </DesignSystemProvider>
+//                 </SignedIn>
+//                 <SignedOut>
+//                   <RedirectToSignIn signInFallbackRedirectUrl={'/tracked'} />
+//                 </SignedOut>
+//               </div>
+//             }
+//           />
 
-          {/* Catch-all for unauthenticated access to protected pages */}
-          <Route
-            path="*"
-            element={
-              <div>
-                <SignedOut>
-                  <Navigate to="/home" replace />
-                </SignedOut>
-                <SignedIn>
-                  <Navigate to="/tracked" replace />
-                </SignedIn>
-              </div>
-            }
-          />
-        </Routes>
-      </Router>
-      <CookieBanner />
-    </div>
-  );
-}
+//           {/* Catch-all for unauthenticated access to protected pages */}
+//           <Route
+//             path="*"
+//             element={
+//               <div>
+//                 <SignedOut>
+//                   <Navigate to="/home" replace />
+//                 </SignedOut>
+//                 <SignedIn>
+//                   <Navigate to="/tracked" replace />
+//                 </SignedIn>
+//               </div>
+//             }
+//           />
+//         </Routes>
+//       </Router>
+//       <CookieBanner />
+//     </div>
+//   );
+// }
 
 interface AppRoute {
   path: string;
@@ -229,7 +233,7 @@ export function RootedApp() {
 
   return (
     <S.SiteWrapper>
-      <ChangelogModal changelogs={changelogs}/>
+      <ChangelogModal changelogs={changelogs} />
       {/* Sidebar / Bottom Nav */}
       {!isMobile ? (
         // Desktop / Tablet Sidebar
@@ -333,5 +337,90 @@ export function RootedApp() {
         </Routes>
       </Box>
     </S.SiteWrapper>
+  );
+}
+
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isLoggedIn, isLoading, session, user } = useAuthStatus();
+
+  if (isLoading) return <div>loading...</div>;
+
+  if (!isLoggedIn) return <Navigate to="/home" replace />;
+
+  return <>{children}</>;
+};
+
+const UnprotectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isLoggedIn } = useAuthStatus();
+
+  if (isLoggedIn) return <Navigate to="/tracked" replace />;
+
+  return <>{children}</>;
+};
+
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <DesignSystemProvider>
+        <Router>
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <UnprotectedRoute>
+                  <Navigate to="/home" replace />
+                </UnprotectedRoute>
+              }
+            />
+            <Route
+              path="/home"
+              element={
+                <UnprotectedRoute>
+                  <Home />
+                </UnprotectedRoute>
+              }
+            />
+            <Route
+              path="/sign-in"
+              element={
+                <UnprotectedRoute>
+                  <SignInPage />
+                </UnprotectedRoute>
+              }
+            />
+            <Route
+              path="/sign-up"
+              element={
+                <UnprotectedRoute>
+                  <SignUpPage />
+                </UnprotectedRoute>
+              }
+            />
+
+            <Route
+              path="/*"
+              element={
+                <ProtectedRoute>
+                  <RootedApp />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </Router>
+        <ToastContainer
+          position="top-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss={false}
+          draggable
+          pauseOnHover
+          theme="dark"
+        />
+        <CookieBanner />
+      </DesignSystemProvider>
+    </QueryClientProvider>
   );
 }

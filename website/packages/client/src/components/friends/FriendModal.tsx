@@ -118,7 +118,7 @@ const FriendModal: React.FC<friendModalProps> = ({ open, onCloseFriend, friend }
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          recId: recId,
+          requestId: recId,
           newStatus: newStatus,
         }),
       });

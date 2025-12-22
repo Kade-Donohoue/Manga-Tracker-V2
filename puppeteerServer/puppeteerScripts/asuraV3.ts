@@ -170,7 +170,7 @@ export async function getManga(
       oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
     }
 
-    var resizedImage: Buffer | null = null;
+    let images: { image: Buffer<ArrayBufferLike>; index: number }[] = [];
     if (icon || inputDate < oneMonthAgo) {
       job.log(logWithTimestamp('Starting Icon Fetch'));
       if (config.debug.verboseLogging) console.log(overViewURL);
@@ -187,7 +187,9 @@ export async function getManga(
       await job.updateProgress(60);
 
       let iconBuffer = await icon?.buffer();
-      resizedImage = await sharp(iconBuffer).resize(480, 720).toBuffer();
+      let resizedImage = await sharp(iconBuffer).resize(480, 720).toBuffer();
+
+      images.push({ image: resizedImage, index: 0 });
     }
     job.log(logWithTimestamp('Data fetched'));
     await job.updateProgress(80);
@@ -208,8 +210,9 @@ export async function getManga(
       slugList: chapeterList.join(','),
       chapterTextList: chapeterList.join(','),
       currentIndex: currIndex,
-      images: [{ image: resizedImage, index: 0 }],
+      images: images,
       specialFetchData: null,
+      sourceId: overViewURL.split('-').at(-1),
     };
   } catch (err) {
     job.log(logWithTimestamp(`Error: ${err}`));

@@ -226,14 +226,18 @@ export async function addCoversToD1(env: Env) {
 }
 
 export async function saveCoverImage(img: any, index: number, mangaId: string, env: Env) {
-  console.log(`Saving New Cover Image for mangaId: ${mangaId} at index ${index}`);
-  await env.IMG.put(`${mangaId}/${index}`, new Uint8Array(img.data).buffer);
+  try {
+    console.log(`Saving New Cover Image for mangaId: ${mangaId} at index ${index}`);
+    await env.IMG.put(`${mangaId}/${index}`, new Uint8Array(img.data).buffer);
 
-  await env.DB.prepare(
-    'INSERT INTO coverImages (mangaId, coverIndex) VALUES (?, ?) ON CONFLICT (mangaId, coverIndex) DO UPDATE SET savedAt = CURRENT_TIMESTAMP'
-  )
-    .bind(mangaId, index)
-    .run();
+    await env.DB.prepare(
+      'INSERT INTO coverImages (mangaId, coverIndex) VALUES (?, ?) ON CONFLICT (mangaId, coverIndex) DO UPDATE SET savedAt = CURRENT_TIMESTAMP'
+    )
+      .bind(mangaId, index)
+      .run();
 
-  return new Response('Image Saved!');
+    return new Response('Image Saved!');
+  } catch (err) {
+    console.error({ message: `Failed to save Image at index ${mangaId}/${index}`, error: err });
+  }
 }

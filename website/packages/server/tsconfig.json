@@ -1,17 +1,48 @@
 {
   "compilerOptions": {
-    "noEmit": true,
-    "module": "esnext",
-    "target": "es2020",
-    "lib": ["es2020"],
+    // Target modern runtimes (Cloudflare Workers requires ES2022+)
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+
+    // Strict typing recommended
     "strict": true,
-    "alwaysStrict": true,
-    "preserveConstEnums": true,
-    "moduleResolution": "node",
-    "sourceMap": true,
     "skipLibCheck": true,
-    "types": ["@cloudflare/workers-types", "@types/jest", "@types/service-worker-mock"]
+
+    // Cloudflare Workers runtime types
+    "lib": ["ES2022", "DOM"],
+
+    // If your server uses Hono JSX:
+    // (safe to leave here even if only used occasionally)
+    "jsx": "react-jsx",
+    "jsxImportSource": "hono/jsx",
+
+    // Paths / Alias support
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+
+    // Output dir
+    "outDir": "./dist",
+
+    // Allow type imports & modern module interop
+    "allowImportingTsExtensions": false,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+
+    // This is important for ESM Workers
+    "moduleDetection": "force"
   },
-  "include": ["src"],
-  "exclude": ["node_modules", "dist", "test"]
+
+  // Include Cloudflare Workers runtime types globally
+  "include": [
+    "src",
+    "global.d.ts",   // optional
+    "node_modules/@cloudflare/workers-types/index.d.ts"
+, "drizzle.config.ts"  ],
+
+  "tsc-alias": {
+    "resolveFullPaths": true
+  }
 }

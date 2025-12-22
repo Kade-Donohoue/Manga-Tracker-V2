@@ -22,3 +22,8 @@ an output in the console showing successes and fails with a done message after c
 1. run `npm i`
 2. run `node .`
 3. connect to localhost:5911/admin/queues
+
+
+# Clerk(3.x.x) To Better-Auth(4.x.x)
+This is a major update and takes some manual work to migrate. Some tools (found in `./v4migration`) have been made to make migration as easy as possible. 
+All Manga data gets moved at once but a flaw in the old system allowed duplicate manga entries and these need resolved. some sql commands are generated that might be able to fix but I advise double checking it. Second for moving user Data its done one user at a time. **For Detailed instructions See readme in `./v4migration` **

@@ -3,12 +3,8 @@ import { z } from 'zod';
 export interface Env {
   ENVIRONMENT: 'dev' | 'staging' | 'production';
   VITE_CLIENT_ID: string;
-  CLIENT_SECRET: string;
-  BOT_TOKEN: string;
-  VITE_DISCORD_API_BASE: string;
   VITE_SERVER_URL: string;
   VITE_CLIENT_URL: string;
-  VITE_CLERK_PUBLISHABLE_KEY: string;
   CF_ACCESS_CLIENT_ID?: string;
   CF_ACCESS_CLIENT_SECRET?: string;
   DB: D1Database;
@@ -16,7 +12,6 @@ export interface Env {
   KV: KVNamespace;
   PUPPETEER_SERVER: string;
   SERVER_PASSWORD: string;
-  CLERK_SECRET_KEY: string;
   NOTIF_WEBHOOK_URLS: string;
 }
 

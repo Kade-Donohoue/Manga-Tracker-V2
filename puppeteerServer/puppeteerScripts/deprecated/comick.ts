@@ -25,6 +25,7 @@ export async function getManga(
   specialFetchData: any,
   job: Job
 ): Promise<fetchData> {
+  throw new Error('Deprecated!');
   if (config.debug.verboseLogging) console.log('comick');
   const logWithTimestamp = createTimestampLogger();
 
@@ -197,6 +198,7 @@ export async function getManga(
       currentIndex: currIndex,
       images: images,
       specialFetchData: comickHid,
+      sourceId: '',
     };
   } catch (err) {
     job.log(logWithTimestamp(`Error: ${err}`));

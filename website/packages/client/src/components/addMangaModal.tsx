@@ -15,6 +15,7 @@ import { fetchPath } from '../vars';
 import { modalStyle } from '../AppStyles';
 import { customStyles } from '../styled/index';
 import { useUserCategories } from '../hooks/useUserCategories';
+import { submitManga } from '../utils';
 
 interface AddMangaModalProps {
   open: boolean;
@@ -23,122 +24,67 @@ interface AddMangaModalProps {
 
 const AddMangaModal: React.FC<AddMangaModalProps> = ({ open, onClose }) => {
   const queryClient = useQueryClient();
-
-  const { data: catOptions, isLoading: isLoadingCats, isError } = useUserCategories();
+  const { data: catOptions, isLoading: isLoadingCats } = useUserCategories();
 
   const [selectedCat, setSelectedCat] = useState<dropdownOption | null>(null);
+  const [urls, setUrls] = useState(''); // controlled input
+  const [errorMessages, setErrorMessages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-
-  async function submitManga() {
-    if (isLoading) return toast.error('Already adding!');
-    const notif = toast.loading('Adding Manga!', { closeOnClick: true, draggable: true });
-    try {
-      setIsLoading(true);
-      const urlBox = document.getElementById('chapURL') as HTMLInputElement | null;
-      let urls: string | null = urlBox?.value.replace(/\s/g, '') || null;
-
-      if (!urls) {
-        toast.update(notif, {
-          render: 'No Manga Provided!',
-          type: 'error',
-          isLoading: false,
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          draggable: true,
-          progress: 0,
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      const urlList = urls.split(',');
-      const errorLog: string[] = [];
-
-      const reply = await fetch(`${fetchPath}/api/data/add/addManga`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userCat: selectedCat?.value,
-          urls: urlList,
-        }),
-      });
-
-      if (!reply.ok) {
-        toast.update(notif, {
-          render: 'An Internal Server Error Occurred!',
-          type: 'error',
-          isLoading: false,
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          draggable: true,
-          progress: 0,
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      const { results }: { results: { message: string; url: string; success: boolean }[] } =
-        await reply.json();
-
-      for (const manga of results) {
-        if (!manga.success) errorLog.push(`${manga.url}: ${manga.message}`);
-      }
-
-      urlBox!.value = '';
-      if (errorLog.length === 0) {
-        queryClient.invalidateQueries({ queryKey: ['userManga'] });
-        toast.update(notif, {
-          render: 'Manga Successfully Added!',
-          type: 'success',
-          isLoading: false,
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          draggable: true,
-          progress: 0,
-        });
-      } else {
-        toast.update(notif, {
-          render: 'Unable to Add 1 or More Manga!',
-          type: 'error',
-          isLoading: false,
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          draggable: true,
-          progress: 0,
-        });
-
-        const errorField = document.getElementById('errorField') as HTMLLabelElement | null;
-        if (errorField) {
-          errorField.innerHTML = errorLog.join('<br/>');
-        }
-      }
-
-      setIsLoading(false);
-    } catch (error) {
-      console.error('Error adding manga: ', error);
-      toast.update(notif, {
-        render: 'An Unknown Error has Occurred',
-        type: 'error',
-        isLoading: false,
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        draggable: true,
-        progress: 0,
-      });
-      setIsLoading(false);
-    }
-  }
 
   React.useEffect(() => {
     if (catOptions && !selectedCat) {
       setSelectedCat(catOptions[0] || null);
     }
   }, [catOptions, selectedCat]);
+
+  const handleAddManga = async () => {
+    if (isLoading) return toast.error('Already adding!');
+    const urlList = urls
+      .split(',')
+      .map((u) => u.trim())
+      .filter(Boolean);
+    if (!urlList.length) return toast.error('No Manga URLs provided');
+
+    setIsLoading(true);
+    setErrorMessages([]);
+    const notif = toast.loading('Adding Manga...', { closeOnClick: true, draggable: true });
+
+    try {
+      // Call the simplified submitManga function
+      const errors = await submitManga(urlList, selectedCat?.value || 'reading');
+
+      queryClient.invalidateQueries({ queryKey: ['userManga'] });
+      if (errors.length === 0) {
+        toast.update(notif, {
+          render: 'Manga Successfully Added!',
+          type: 'success',
+          isLoading: false,
+          autoClose: 5000,
+        });
+        setUrls('');
+      } else {
+        toast.update(notif, {
+          render: 'Some Manga Failed!',
+          type: 'error',
+          isLoading: false,
+          autoClose: 5000,
+        });
+        setErrorMessages(errors.map((e) => `${e.url}: ${e.message}`));
+      }
+
+      onClose();
+    } catch (err) {
+      console.error(err);
+      toast.update(notif, {
+        render: 'An Unknown Error Occurred',
+        type: 'error',
+        isLoading: false,
+        autoClose: 5000,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <Modal
@@ -152,7 +98,8 @@ const AddMangaModal: React.FC<AddMangaModalProps> = ({ open, onClose }) => {
         <input
           type="text"
           id="chapURL"
-          name="chapURL"
+          value={urls}
+          onChange={(e) => setUrls(e.target.value)}
           placeholder="https://mangaURL1.com/manga/chapter,https://mangaURL2.com/manga/chapter"
           style={{
             width: '100%',
@@ -167,19 +114,22 @@ const AddMangaModal: React.FC<AddMangaModalProps> = ({ open, onClose }) => {
         <Select
           name="categories"
           id="cat-select"
-          className="catSelect"
           value={selectedCat}
-          onChange={(e) => setSelectedCat(e)}
+          onChange={setSelectedCat}
           options={catOptions}
           styles={customStyles as StylesConfig<dropdownOption, false>}
           isSearchable={false}
         />
         <br />
+        {errorMessages.length > 0 && (
+          <Box sx={{ color: 'red', mb: 2 }}>
+            {errorMessages.map((msg, i) => (
+              <div key={i}>{msg}</div>
+            ))}
+          </Box>
+        )}
         <Button
-          onClick={() => {
-            submitManga();
-            onClose();
-          }}
+          onClick={handleAddManga}
           variant="contained"
           color="primary"
           fullWidth

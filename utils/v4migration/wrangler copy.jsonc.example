@@ -1,0 +1,21 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "v2migration",
+	"main": "src/index.ts",
+	"compatibility_date": "2025-12-05",
+	"observability": {
+		"enabled": true
+	},
+	"d1_databases": [
+    {
+      "binding": "OLD_DB",
+      "database_name": "old-db-name",
+      "database_id": "old-db-id"
+    },
+		{
+      "binding": "NEW_DB",
+      "database_name": "new-db-name",
+      "database_id": "new-db-id"
+    },
+  ]
+}

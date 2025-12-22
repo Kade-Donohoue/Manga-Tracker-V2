@@ -1,0 +1,70 @@
+compatibility_flags = [ "nodejs_compat" ]
+name = "manga-server"
+compatibility_date = "2025-09-18"
+
+workers_dev = false
+route = {pattern = "enter_domain_for_server_worker_here", custom_domain = true}
+
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+[triggers]
+crons = ["1 0 * * *"]
+
+[vars]
+ENVIRONMENT = "dev"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "name_for_dev_data_base"
+database_id = "id_to_dev_database"
+remote = true
+
+[[kv_namespaces]]
+binding = "KV"
+id = "id_for_dev_kv_namespace"
+preview_id = "id_for_dev_kv_namespace"
+
+[env.dev.vars]
+ENVIRONMENT = "dev"
+[[env.dev.d1_databases]]
+binding = "DB"
+database_name = "name_for_dev_data_base"
+database_id = "id_to_dev_database"
+remote = true
+[[env.dev.r2_buckets]]
+binding = "IMG"
+bucket_name = "name_for_dev_image_server"
+preview_bucket_name = "name_for_dev_image_server"
+remote = true
+[[env.dev.kv_namespaces]]
+binding = "KV"
+id = "id_for_dev_kv_namespace"
+preview_id = "id_for_dev_kv_namespace"
+
+[env.staging.vars]
+ENVIRONMENT = "staging"
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "name_for_staging_data_base"
+database_id = "id_to_staging_database"
+[[env.staging.r2_buckets]]
+binding = "IMG"
+bucket_name = "name_for_staging_image_server"
+[[env.staging.kv_namespaces]]
+binding = "KV"
+id = "id_for_staging_kv_namespace"
+
+[env.production.vars]
+ENVIRONMENT = "production"
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "name_for_production_data_base"
+database_id = "id_to_production_database"
+[[env.production.r2_buckets]]
+binding = "IMG"
+bucket_name = "name_for_production_image_server"
+[[env.production.kv_namespaces]]
+binding = "KV"
+id = "id_for_prod_kv_namespace"

@@ -1,4 +1,5 @@
 import { dropdownOption, mangaDetails } from './types';
+import { fetchPath } from './vars';
 
 /**
  * calculates how long ago a event happened and returns it in a human readable form
@@ -57,4 +58,66 @@ export function checkFilter(
   }
 
   return filterOptions.some((cat) => cat.value === manga.userCat);
+}
+
+type MangaStatus = {
+  status: {
+    fetchId: string;
+    status: 'processing' | 'failed' | 'success';
+    url: string;
+  }[];
+};
+
+type MangaError = {
+  url: string;
+  message: string;
+};
+
+export async function submitManga(urls: string[], category: string): Promise<MangaError[]> {
+  if (!urls || urls.length === 0) return [];
+
+  try {
+    // Step 1: submit manga and get fetchIds
+    const addResp = await fetch(`${fetchPath}/api/data/add/addManga`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ urls, userCat: category }),
+    });
+    if (!addResp.ok) throw new Error('Failed to submit manga');
+
+    const added: { fetchId: string; url: string }[] = await addResp.json();
+    const fetchIds = added.map((a) => a.fetchId);
+
+    // Step 2: poll checkStatus until all complete
+    const errorLog: MangaError[] = [];
+    const pollStatus = async (): Promise<void> => {
+      const statusResp = await fetch(`${fetchPath}/api/data/add/checkStatus`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fetchIds }),
+      });
+      if (!statusResp.ok) throw new Error('Failed to check status');
+
+      const statuses: MangaStatus = await statusResp.json();
+      console.log(statuses);
+      let pending = false;
+
+      for (const s of statuses.status) {
+        if (s.status === 'failed') errorLog.push({ url: s.url, message: 'Failed to add manga' });
+        if (s.status === 'processing') pending = true;
+      }
+
+      if (pending) {
+        await new Promise((res) => setTimeout(res, 1500));
+        await pollStatus();
+      }
+    };
+
+    await pollStatus();
+
+    return errorLog;
+  } catch (err: any) {
+    console.error(err);
+    return urls.map((url) => ({ url, message: err.message || 'Unknown error' }));
+  }
 }
