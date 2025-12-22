@@ -54,7 +54,7 @@ export default function OutgoingFriendsPanel() {
           userName={friend.userName}
           imgUrl={friend.imageURl}
           sentAt={new Date(friend.sentAt.replace(' ', 'T') + 'Z')}
-          requestId={friend.id}
+          requestId={friend.friendId}
         />
       ))}
 

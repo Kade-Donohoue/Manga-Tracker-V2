@@ -143,6 +143,7 @@ export async function getManga(
       currentIndex: currIndex,
       images: images,
       specialFetchData: null,
+      sourceId: comicId,
     };
   } catch (err) {
     job.log(logWithTimestamp(`Error: ${err}`));

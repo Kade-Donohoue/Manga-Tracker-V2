@@ -1,151 +1,151 @@
-import { z } from 'zod';
-import { Env } from './types';
-import { createClerkClient } from '@clerk/backend';
+import { eq, and, or, SQL, sql, desc, gte, inArray, ne } from 'drizzle-orm';
+import { DrizzleD1Database } from 'drizzle-orm/d1';
+import * as schema from '@/db/schema';
+import {
+  dailyUserStats,
+  globalDailyStats,
+  mangaData,
+  mangaStats,
+  userData,
+  userStats,
+} from '@/db/schema';
 
-/**
- * Validates user requests
- * @param path Requests path
- * @param req Request to validate
- * @param env environment
- * @param protectedAction function to call and passes path, req, env, userId(from authentication)
- * @returns protectedAction
- */
-export async function verifyUserAuth(
-  path: string[],
-  req: Request,
-  env: Env,
-  protectedAction: (path: string[], req: Request, env: Env, userId: string) => any
+export function friendPairCondition(
+  a: string,
+  b: string,
+  table: {
+    senderId: any;
+    receiverId: any;
+  }
 ) {
-  const clerkClient = createClerkClient({
-    secretKey: env.CLERK_SECRET_KEY,
-    publishableKey: env.VITE_CLERK_PUBLISHABLE_KEY,
-  });
-
-  const authState = await clerkClient.authenticateRequest(req, {
-    authorizedParties: [
-      env.VITE_CLIENT_URL,
-      env.VITE_SERVER_URL,
-      'kd://callback',
-      'http://localhost:3000',
-    ],
-  });
-  console.log(authState);
-
-  if (!authState.isSignedIn) {
-    return new Response(JSON.stringify({ message: authState.message, reason: authState.reason }), {
-      status: 401,
-    });
-  }
-
-  const { userId } = authState.toAuth();
-  console.log(userId);
-
-  return protectedAction(path, req, env, userId);
-}
-
-/**
- * Validates server requests against env server password
- * @param path Requests path
- * @param req Request to validate
- * @param env environment
- * @param protectedAction function to call and passes path, req, env, userId(from headers)
- * @returns protectedAction
- */
-export async function validateServerAuth(
-  path: string[],
-  req: Request,
-  env: Env,
-  protectedAction: (path: string[], req: Request, env: Env, userId: string) => any
-) {
-  const userId = req.headers.get('userId') || '';
-  if (req.headers.get('pass') === env.SERVER_PASSWORD)
-    return protectedAction(path, req, env, userId);
-
-  return new Response(JSON.stringify({ Message: 'Unauthorized' }), { status: 401 });
-}
-
-/**
- * Validates index is within array length
- * @param index Index to validate
- * @param listLength Length of list
- * @returns index or last index of array
- */
-export function verifyIndexRange(index: number, listLength: number) {
-  if (index < 0) return 0;
-  if (index < listLength) return index;
-  return listLength - 1;
-}
-
-/**
- * Parses request with zod schema
- * @param request Client Request
- * @param schema Zod Schema to parse request with
- * @returns parsed body based on provided schema
- */
-export async function zodParse<T extends z.ZodType<unknown, any, any>>(
-  request: Request,
-  schema: T
-): Promise<z.infer<T> | Response> {
-  try {
-    const json = await request.json();
-    const result = schema.safeParse(json);
-
-    if (result.success) {
-      return result.data;
-    } else {
-      const tree = z.treeifyError(result.error);
-      console.error({ 'Error Message': 'Zod validation failed', error: tree });
-      return new Response(
-        JSON.stringify({
-          message: 'Validation error',
-          issues: result.error.issues,
-        }),
-        { status: 400 }
-      );
-    }
-  } catch (err) {
-    console.log(err);
-    return new Response(JSON.stringify({ message: 'Bad Request, unable to parse', err: err }), {
-      status: 400,
-    });
-  }
-}
-
-/**
- * Extracts a numeric value from the first object in an array by a specified key.
- *
- * @template T - The key type, constrained to string.
- * @param res - An array of unknown objects to search.
- * @param key - The property name to extract from the first object in the array.
- * @param fallback - A default value to return if the key does not exist or the value is not a number (default is 0).
- * @returns The numeric value corresponding to the key in the first object, or the fallback if unavailable.
- *
- * @example
- * const data = [{ count: 5, name: 'Item' }];
- * const value = extractValue(data, 'count'); // returns 5
- *
- * const emptyData: any[] = [];
- * const value2 = extractValue(emptyData, 'count', 10); // returns 10
- */
-export function extractValue<T extends string>(res: unknown[], key: T, fallback = 0): number {
-  if (res && res.length && typeof (res[0] as any)[key] === 'number') {
-    return (res[0] as Record<T, number>)[key];
-  }
-  return fallback;
-}
-
-export async function sendNotif(title: string, message: string, env: Env) {
-  const webhookUrls = env.NOTIF_WEBHOOK_URLS.split(',');
-  const results = await Promise.allSettled(
-    webhookUrls.map((url) =>
-      fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: 'Server: ' + title,
-          content: message,
-        }),
-      })
-    )
+  return or(
+    and(eq(table.senderId, a), eq(table.receiverId, b)),
+    and(eq(table.senderId, b), eq(table.receiverId, a))
   );
+}
+
+export const cond = (condition: SQL | undefined) =>
+  sql`CASE WHEN ${condition ?? sql`0`} THEN 1 ELSE 0 END`;
+
+export const condValue = (condition: SQL | undefined, value: SQL) =>
+  sql`CASE WHEN ${condition ?? sql`0`} THEN ${value} ELSE 0 END`;
+
+export function chunkArray<T>(arr: T[], size: number): T[][] {
+  if (size <= 0) throw new Error('chunk size must be > 0');
+  const out: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) {
+    out.push(arr.slice(i, i + size));
+  }
+  return out;
+}
+
+//STATS
+interface LiveUserStats {
+  readChapters: number;
+  trackedChapters: number;
+  chaptersUnread: number;
+  readThisMonth: number;
+  unreadManga: number;
+  readManga: number;
+  averagePerDay: number;
+  priorAveragePerDay: number;
+}
+interface GlobalStats {
+  mangaCount: number;
+  newManga: number;
+  trackedChapters: number;
+  readChapters: number;
+  newChapters: number;
+  readThisMonth: number;
+}
+
+export async function getLiveUserStats(
+  db: DrizzleD1Database<typeof schema>,
+  userID: string,
+  date: string // YYYY-MM-DD of last snapshot
+): Promise<{ userStats: LiveUserStats; globalStats: GlobalStats }> {
+  const snapshot = await db
+    .select()
+    .from(dailyUserStats)
+    .where(eq(dailyUserStats.userID, userID))
+    .orderBy(desc(dailyUserStats.date))
+    .limit(2);
+
+  const baseStats = snapshot[0] ?? {
+    totalCurrentChapters: 0,
+    totalLatestChapters: 0,
+    backlog: 0,
+    pastMonthReads: 0,
+    updatedAt: date,
+  };
+
+  const trackedManga = await db
+    .select({ mangaId: userData.mangaId })
+    .from(userData)
+    .where(eq(userData.userID, userID))
+    .all();
+
+  const unreadCount = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(userData)
+    .leftJoin(mangaData, eq(userData.mangaId, mangaData.mangaId))
+    .where(and(eq(userData.userID, userID), ne(userData.currentChap, mangaData.latestChapterText)))
+    .get();
+
+  const newUserStats = await db
+    .select({
+      chapsRead: sql<number>`SUM(CASE WHEN ${userStats.type} = 'chapsRead' THEN ${userStats.value} ELSE 0 END)`,
+      newManga: sql<number>`SUM(CASE WHEN ${userStats.type} = 'newManga' THEN ${userStats.value} ELSE 0 END)`,
+    })
+    .from(userStats)
+    .where(and(eq(userStats.userID, userID), gte(userStats.timestamp, baseStats.updatedAt)))
+    .get();
+
+  const newMangaStats = await db
+    .select({
+      chapCount: sql<number>`SUM(CASE WHEN ${mangaStats.type} = 'chapCount' THEN ${mangaStats.value} ELSE 0 END)`,
+      mangaCount: sql<number>`SUM(CASE WHEN ${mangaStats.type} = 'mangaCount' THEN ${mangaStats.value} ELSE 0 END)`,
+    })
+    .from(mangaStats)
+    .innerJoin(userData, eq(mangaStats.mangaId, userData.mangaId))
+    .where(and(gte(mangaStats.timestamp, baseStats.updatedAt), eq(userData.userID, userID)))
+    .get();
+
+  const globalStatsRow = await db
+    .select({
+      mangaCount: globalDailyStats.mangaTracked,
+      newManga: globalDailyStats.newManga30,
+      trackedChapters: globalDailyStats.totalChaptersTracked,
+      readChapters: globalDailyStats.totalChaptersRead,
+      newChapters: globalDailyStats.newChapters30,
+      readThisMonth: globalDailyStats.chaptersRead30,
+    })
+    .from(globalDailyStats)
+    .orderBy(desc(globalDailyStats.updatedAt))
+    .get();
+
+  const globalStats: GlobalStats = {
+    mangaCount: globalStatsRow?.mangaCount ?? 0,
+    newManga: globalStatsRow?.newManga ?? 0,
+    trackedChapters: globalStatsRow?.trackedChapters ?? 0,
+    readChapters: globalStatsRow?.readChapters ?? 0,
+    newChapters: globalStatsRow?.newChapters ?? 0,
+    readThisMonth: 0,
+  };
+
+  const userReadMonth = baseStats.pastMonthReads + (newUserStats?.chapsRead ?? 0);
+
+  const liveStats: LiveUserStats = {
+    readChapters: baseStats.totalCurrentChapters + (newUserStats?.chapsRead ?? 0),
+    trackedChapters: baseStats.totalLatestChapters + (newMangaStats?.chapCount ?? 0),
+    chaptersUnread:
+      baseStats.backlog + (newMangaStats?.chapCount ?? 0) - (newUserStats?.chapsRead ?? 0),
+    readThisMonth: userReadMonth,
+    unreadManga: unreadCount?.count ?? 0,
+    readManga: trackedManga.length,
+    averagePerDay: userReadMonth / 30,
+    priorAveragePerDay: (snapshot[2]?.pastMonthReads ?? 0) / 30,
+  };
+
+  return { userStats: liveStats, globalStats: globalStats };
 }

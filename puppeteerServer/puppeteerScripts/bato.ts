@@ -185,6 +185,7 @@ export async function getManga(
       currentIndex: currIndex,
       images: images,
       specialFetchData: null,
+      sourceId: overviewUrl.split('/').at(-1),
     };
   } catch (err) {
     job.log(logWithTimestamp(`Error: ${err}`));

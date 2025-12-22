@@ -23,11 +23,11 @@ async function updateAllManga() {
   let date = new Date();
   console.log(`Updating all manga at ${date.toLocaleString()}`);
   try {
-    const resp = await fetch(`${config.serverCom.serverUrl}/serverReq/data/getAllManga`, {
+    const resp = await fetch(`${config.serverCom.serverUrl}/api/serverReq/data/getAllManga`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        pass: config.serverCom.serverPassWord,
+        'x-api-key': config.serverCom.apiKey,
       },
     });
     if (config.debug.verboseLogging) console.log(resp);
@@ -190,6 +190,77 @@ async function mangaCompleteFuction(job: Job<dataType, fetchData>, returnvalue: 
       console.log(err);
       console.log(job);
     }
+  } else {
+    /*
+     * Logic To Return Manga for user Started Fetches
+     * sent as soon as done to improve user experience.
+     */
+
+    const resp = await fetch(`${config.serverCom.serverUrl}/api/serverReq/data/saveManga`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': config.serverCom.apiKey,
+      },
+      body: JSON.stringify({
+        fetchId: job.id,
+        newMangaData: returnvalue,
+      }),
+    });
+
+    if (!resp.ok) {
+      let body: unknown = null;
+
+      try {
+        body = await resp.clone().json();
+      } catch {
+        try {
+          body = await resp.clone().text();
+        } catch {
+          body = '[Unable to read response body]';
+        }
+      }
+
+      console.warn(
+        `Failed to save user manga! jobId=${job.id} url=${job.data.url} status=${resp.status}\nResponse body:`,
+        body
+      );
+
+      await sendNotif(
+        'User Manga Save Failed!',
+        'Unable to save data for user. Please check logs and fix ASAP'
+      );
+
+      return;
+    }
+
+    let respData = await resp.json();
+
+    console.log(respData);
+    for (let j = 0; j < returnvalue.images.length; j++) {
+      const resp = await fetch(`${config.serverCom.serverUrl}/api/serverReq/data/saveCoverImage`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': config.serverCom.apiKey,
+        },
+        body: JSON.stringify({
+          img: returnvalue.images[j].image,
+          index: returnvalue.images[j].index,
+          mangaId: respData.mangaId,
+        }),
+      });
+
+      if (config.debug.verboseLogging) {
+        console.log(returnvalue.images[j].image);
+        console.log(resp);
+      }
+      if (!resp.ok) {
+        console.warn(`Failed to save!; ${respData.mangaId}`);
+        console.log(await resp.json());
+        continue;
+      }
+    }
   }
 }
 
@@ -220,7 +291,19 @@ function logArrayDifferences(oldArr, newArr) {
 }
 
 async function mangaFailedEvent(job: Job) {
-  if (!job.data.update) return;
+  if (!job.data.update) {
+    const resp = await fetch(
+      `${config.serverCom.serverUrl}/api/serverReq/data/userMangaFailed/${job.id}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': config.serverCom.apiKey,
+        },
+      }
+    );
+    return;
+  }
 
   if (job.attemptsMade < (job.opts.attempts ?? 1)) {
     return;
@@ -257,16 +340,14 @@ async function sendUpdate(batch: updateCollector) {
   if (batch.batchData.newData.length > 0) {
     // returns all manga together if images not fetched
     const updateData = batch.batchData.newData.map(({ images, ...rest }) => rest); //Drops images from updateManga request to be sent seperatly avoiding 503
-    const resp = await fetch(`${config.serverCom.serverUrl}/serverReq/data/updateManga`, {
+    const resp = await fetch(`${config.serverCom.serverUrl}/api/serverReq/data/updateManga`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        pass: config.serverCom.serverPassWord,
+        'x-api-key': config.serverCom.apiKey,
       },
       body: JSON.stringify({
         newData: updateData,
-        amountNewChapters: 0, //batch.batchData.newChapterCount - some edge case causes this to become NaN.
-        expiresAt: Date.now() + config.updateSettings.updateDelay + 50000, //50 extra seconds compared to what this pull took
       }),
     });
 
@@ -295,18 +376,21 @@ async function sendUpdate(batch: updateCollector) {
       console.log(`Saving ${manga.images.length} Images for mangaId: ${manga.mangaId}`);
 
       for (let j = 0; j < manga.images.length; j++) {
-        const resp = await fetch(`${config.serverCom.serverUrl}/serverReq/data/saveCoverImage`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            pass: config.serverCom.serverPassWord,
-          },
-          body: JSON.stringify({
-            img: manga.images[j].image,
-            index: manga.images[j].index,
-            mangaId: manga.mangaId,
-          }),
-        });
+        const resp = await fetch(
+          `${config.serverCom.serverUrl}/api/serverReq/data/saveCoverImage`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': config.serverCom.apiKey,
+            },
+            body: JSON.stringify({
+              img: manga.images[j].image,
+              index: manga.images[j].index,
+              mangaId: manga.mangaId,
+            }),
+          }
+        );
 
         if (config.debug.verboseLogging) {
           console.log(manga.images[j].image);
@@ -331,5 +415,7 @@ async function sendUpdate(batch: updateCollector) {
     // console.log('done, Its recomended to turn of auto update images now!');
   } else if (config.updateSettings.autoUpdateInfo)
     console.log('Update Complete! No New Chapters Found!');
+
+  console.log('Completed!');
   dataCollector.delete(batch.batchId);
 }

@@ -38,10 +38,9 @@ export default function ConfirmRemovalModal({
         return;
       }
 
-      const reply = await fetch(`${fetchPath}/api/data/remove/deleteUserManga`, {
-        method: 'POST',
+      const reply = await fetch(`${fetchPath}/api/data/remove/userManga/${mangaId}`, {
+        method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mangaId }),
       });
 
       if (reply.ok) {

@@ -224,7 +224,7 @@ export default function Tracked() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               mangaId: currentMangaId,
-              interactionTime: Date.now(),
+              newTime: Date.now(),
             }),
           });
         }}

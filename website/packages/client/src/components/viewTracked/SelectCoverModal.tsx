@@ -59,7 +59,7 @@ export default function SelectCoverModal({
   async function submitCover(newIndex: number) {
     const notif = toast.loading('Setting Title!', { closeOnClick: true, draggable: true });
     try {
-      if (newIndex !== -1 && !manga?.imageIndexes.includes(newIndex)) {
+      if (newIndex !== -1 && newIndex > (manga?.imageIndexes ?? 0)) {
         toast.update(notif, {
           render: 'Invalid Index',
           type: 'error',
@@ -78,7 +78,7 @@ export default function SelectCoverModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           mangaId: mangaId,
-          index: newIndex,
+          newIndex: newIndex,
         }),
       });
 
@@ -153,7 +153,7 @@ export default function SelectCoverModal({
             justifyContent="flex-start"
             alignItems="flex-start"
           >
-            {manga.imageIndexes.map((index) => {
+            {Array.from({ length: (manga.imageIndexes ?? 0) + 1 }, (_, i) => i).map((index) => {
               const imgUrl =
                 `${import.meta.env.VITE_IMG_URL}/${manga.mangaId}/${index}` ||
                 'mangaNotFoundImage.png';

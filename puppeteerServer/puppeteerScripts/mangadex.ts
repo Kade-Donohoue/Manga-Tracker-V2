@@ -166,6 +166,7 @@ export async function getManga(
       currentIndex: currIndex,
       images: images,
       specialFetchData: mangaId + `(${language})`,
+      sourceId: mangaId + `(${language})`,
     };
   } catch (err) {
     job.log(logWithTimestamp(`Error: ${err}`));

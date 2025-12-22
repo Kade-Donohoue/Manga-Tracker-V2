@@ -292,6 +292,7 @@ export async function getManga(
       currentIndex: currIndex,
       images: images,
       specialFetchData: specialFetchData,
+      sourceId: mangaId
     };
   } catch (err) {
     job.log(logWithTimestamp(`Error: ${err}`));

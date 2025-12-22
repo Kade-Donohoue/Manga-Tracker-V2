@@ -7,7 +7,6 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import HistoryIcon from '@mui/icons-material/History';
 
 import LogoutIcon from '@mui/icons-material/Logout';
-import { SignOutButton, UserButton, UserProfile } from '@clerk/clerk-react';
 import { CategoryManager } from '../components/CategoryManager';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import { useUISetting } from '../hooks/useUiSetting';
@@ -22,6 +21,9 @@ import ListItemText from '@mui/material/ListItemText';
 
 import changeLog from '../changelog.json';
 import Box from '@mui/material/Box';
+import { authClient, useAuthStatus } from '../hooks/useAuthStatus';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const uiSettingsConfig = [
   {
@@ -48,6 +50,9 @@ const uiSettingsConfig = [
 ];
 
 export default function settings() {
+  const { isLoggedIn, isLoading, session, user } = useAuthStatus();
+  const navigate = useNavigate();
+
   return (
     <div style={{ padding: 32, width: '100%' }}>
       <div>
@@ -169,26 +174,77 @@ export default function settings() {
         <Accordion sx={{ backgroundColor: '#1e1e1e', color: '#ffffff', width: '80%' }}>
           <AccordionSummary
             expandIcon={<ExpandMoreIcon sx={{ color: '#ffffff' }} />}
-            id="panel-category-header"
+            id="panel-user-header"
           >
-            User
+            <Typography>User</Typography>
           </AccordionSummary>
+
           <AccordionDetails>
-            <div
-              className="clerk-profile-wrapper"
-              style={{ width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}
-            >
-              {window.matchMedia('(max-width: 768px)').matches ? (
-                <UserButton showName={true} />
-              ) : (
-                <div>
-                  <UserProfile />
-                  <SignOutButton>
-                    <Button startIcon={<LogoutIcon />}>Logout</Button>
-                  </SignOutButton>
-                </div>
-              )}
-            </div>
+            {isLoading ? (
+              <Typography sx={{ opacity: 0.7 }}>Loading session...</Typography>
+            ) : !isLoggedIn ? (
+              <Typography sx={{ opacity: 0.7 }}>No user logged in</Typography>
+            ) : (
+              <Box display="flex" flexDirection="column" gap={2}>
+                <Box>
+                  <Typography variant="subtitle2" sx={{ opacity: 0.6 }}>
+                    Name
+                  </Typography>
+                  <Typography>{user?.name ?? 'N/A'}</Typography>
+                </Box>
+
+                <Divider sx={{ backgroundColor: '#444' }} />
+
+                <Box>
+                  <Typography variant="subtitle2" sx={{ opacity: 0.6 }}>
+                    Email
+                  </Typography>
+                  <Typography>{user?.email ?? 'N/A'}</Typography>
+                </Box>
+
+                <Divider sx={{ backgroundColor: '#444' }} />
+
+                <Box>
+                  <Typography variant="subtitle2" sx={{ opacity: 0.6 }}>
+                    Creation Date
+                  </Typography>
+                  <Typography>{user?.createdAt.toDateString() ?? 'N/A'}</Typography>
+                </Box>
+
+                <Divider sx={{ backgroundColor: '#444' }} />
+
+                <Box>
+                  <Typography variant="subtitle2" sx={{ opacity: 0.6 }}>
+                    User ID
+                  </Typography>
+                  <Typography>{user?.id ?? 'N/A'}</Typography>
+                </Box>
+
+                <Divider sx={{ backgroundColor: '#444' }} />
+
+                <Button
+                  startIcon={<LogoutIcon />}
+                  variant="outlined"
+                  color="error"
+                  onClick={async () => {
+                    await authClient.signOut({
+                      fetchOptions: {
+                        onSuccess: () => {
+                          navigate('/home');
+                        },
+                        onError: () => {
+                          toast.error('Unable To Sign Out!');
+                        },
+                      },
+                    });
+                    navigate('/home');
+                  }}
+                  sx={{ alignSelf: 'flex-start' }}
+                >
+                  Logout
+                </Button>
+              </Box>
+            )}
           </AccordionDetails>
         </Accordion>
         <Accordion sx={{ backgroundColor: '#1e1e1e', color: '#ffffff', width: '80%' }}>

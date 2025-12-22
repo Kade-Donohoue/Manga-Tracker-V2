@@ -32,7 +32,7 @@ export default function FriendIncommingCard(userData: {
       },
       body: JSON.stringify({
         requestId: requestId,
-        status: newStatus,
+        newStatus: newStatus,
       }),
     });
 

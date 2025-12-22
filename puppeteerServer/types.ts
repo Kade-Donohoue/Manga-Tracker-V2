@@ -6,6 +6,7 @@ export type fetchData = {
   currentIndex: number;
   images: { image: Buffer<ArrayBufferLike>; index: number }[];
   specialFetchData: any;
+  sourceId: string;
 };
 
 export type dataType = {
@@ -37,6 +38,7 @@ export type updateCollector = {
       mangaId: string;
       newChapterCount: number;
       specialFetchData: any;
+      sourceId: string;
     }[];
   };
 };

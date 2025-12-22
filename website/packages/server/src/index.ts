@@ -1,69 +1,30 @@
-import {Env} from './types';
-import {handleApiRequest} from './handlers/clientHandlers/handleApiRequest';
-import {handleErrors} from './handlers/handleErrors';
-import { handleServerRequest } from './handlers/serverHandlers/handleserverRequest';
+import createApp from '@/lib/create-app';
+import index from '@/routes/index.route';
+import auth from '@/routes/auth/auth.index';
+import ping from '@/routes/api/ping.route';
+import dataRouter from '@/routes/api/data.routes';
+import { router } from 'better-auth/api';
+import friendsRouter from './routes/api/friends.routes';
+import { Environment } from './env';
+import { scheduled } from './scheduledTasks';
+import adminRouter from './routes/api/admin.routes';
+
+const app = createApp();
+
+const routes = [
+  { route: '/api', router: index },
+  { route: '/api/auth', router: auth },
+  { route: '/api/ping', router: ping },
+  { route: '/api/data', router: dataRouter },
+  { route: '/api/friends', router: friendsRouter },
+  { route: '/api/serverReq/data', router: adminRouter },
+] as const;
+
+routes.forEach(({ route, router }) => {
+  app.route(route, router);
+});
+
 export default {
-  async fetch(request: Request, env: Env) {
-    return await handleErrors(request, async () => {
-      // We have received an HTTP request! Parse the URL and route the request.
-      const url = await new URL(request.url);
-      const path = url.pathname.slice(1).split('/');
-
-      if (request.method === 'OPTIONS') {
-        return new Response(null, {
-          status: 204,
-          headers: {
-            'Access-Control-Allow-Origin': env.VITE_CLIENT_URL, // Use your domain in production
-            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-            'Access-Control-Allow-Credentials': 'true',
-            'Access-Control-Max-Age': '86400',
-          }
-        });
-      }
-    
-
-      switch (path[0]) {
-        case 'api':
-          // This is a request for `/api/...`, call the API handler.
-          console.log(path)
-          let newResp = await handleApiRequest(path.slice(1), request, env);
-
-          if ( newResp instanceof Response) {
-            let modResp = new Response(newResp.body, newResp)
-            modResp.headers.set('Access-Control-Allow-Origin', env.VITE_CLIENT_URL)
-            modResp.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-            modResp.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-            modResp.headers.set('Access-Control-Allow-Credentials', 'true')
-
-            return modResp
-          }
-          return new Response(JSON.stringify({'message': 'Internal Server Error'}), {status: 500})
-        case 'serverReq': 
-          return await handleServerRequest(path.slice(1), request, env)
-        default:
-          console.log("Unknown subdirectory tried" + path)
-          return new Response(JSON.stringify({message: 'Not found', path: path[0]}), {status: 404});
-      }
-    });
-  },
-    async scheduled(
-    controller: ScheduledController,
-    env: Env,
-    ctx: ExecutionContext,
-  ) {
-    console.log("cron processed");
-
-    const userIds = await env.DB.prepare(`SELECT userID FROM users`).all<{userID:string}>()
-
-    console.log(userIds.results)
-
-    let stmt = env.DB.prepare(`INSERT into userStats (type, mangaId, userId, value) VALUES ('chapsRead', 'auto', ?, 0)`)
-    let bound:D1PreparedStatement[] = []
-    userIds.results.forEach((res) => {
-      bound.push(stmt.bind(res.userID))
-    })
-
-    await env.DB.batch(bound)
-  },
+  fetch: app.fetch,
+  scheduled: scheduled,
 };

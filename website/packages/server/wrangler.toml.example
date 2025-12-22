@@ -1,70 +1,29 @@
-compatibility_flags = [ "nodejs_compat" ]
 name = "manga-server"
-compatibility_date = "2025-09-18"
-
-workers_dev = false
-route = {pattern = "enter_domain_for_server_worker_here", custom_domain = true}
+main = "src/index.ts"
+compatibility_date = "2025-11-18"
 
 [observability]
 enabled = true
 head_sampling_rate = 1
-
-[triggers]
-crons = ["1 0 * * *"]
 
 [vars]
 ENVIRONMENT = "dev"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "name_for_dev_data_base"
-database_id = "id_to_dev_database"
+database_name = "db-name-here"
+database_id = "db-id"
+remote = true
+migrations_dir = "drizzle/migrations"
+
+[[r2_buckets]]
+binding = "IMG"
+bucket_name = "bucket-name-here"
+preview_bucket_name = "dev-preview-name-here"
 remote = true
 
 [[kv_namespaces]]
 binding = "KV"
-id = "id_for_dev_kv_namespace"
-preview_id = "id_for_dev_kv_namespace"
-
-[env.dev.vars]
-ENVIRONMENT = "dev"
-[[env.dev.d1_databases]]
-binding = "DB"
-database_name = "name_for_dev_data_base"
-database_id = "id_to_dev_database"
+id = "kv_id_here"
+preview_id = "dev_kv_id_here"
 remote = true
-[[env.dev.r2_buckets]]
-binding = "IMG"
-bucket_name = "name_for_dev_image_server"
-preview_bucket_name = "name_for_dev_image_server"
-remote = true
-[[env.dev.kv_namespaces]]
-binding = "KV"
-id = "id_for_dev_kv_namespace"
-preview_id = "id_for_dev_kv_namespace"
-
-[env.staging.vars]
-ENVIRONMENT = "staging"
-[[env.staging.d1_databases]]
-binding = "DB"
-database_name = "name_for_staging_data_base"
-database_id = "id_to_staging_database"
-[[env.staging.r2_buckets]]
-binding = "IMG"
-bucket_name = "name_for_staging_image_server"
-[[env.staging.kv_namespaces]]
-binding = "KV"
-id = "id_for_staging_kv_namespace"
-
-[env.production.vars]
-ENVIRONMENT = "production"
-[[env.production.d1_databases]]
-binding = "DB"
-database_name = "name_for_production_data_base"
-database_id = "id_to_production_database"
-[[env.production.r2_buckets]]
-binding = "IMG"
-bucket_name = "name_for_production_image_server"
-[[env.production.kv_namespaces]]
-binding = "KV"
-id = "id_for_prod_kv_namespace"

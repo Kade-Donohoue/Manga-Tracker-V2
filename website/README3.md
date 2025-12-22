@@ -58,15 +58,7 @@ pnpm resetDbLocal
  - Enter Id into packages/server/wrangler.toml
  - Add R2 credentials to packages/server/wrangler.toml.
 
-## 🔑 Clerk Setup
-### 1. Create a Clerk Account
- - Go to [Clerk](https://dashboard.clerk.com/sign-in?sign_in_force_redirect_url=https%3A%2F%2Fdashboard.clerk.com%2F&redirect_url=https%3A%2F%2Fclerk.com%2F) and sign up for an account.
- - Create a new application in your Clerk dashboard.
-### 2. Update .env File
- - Add your Clerk API keys to your .env file: 
-   - VITE_CLERK_PUBLISHABLE_KEY
-   - CLERK_SECRET_KEY
-   - VITE_CLERK_PROXY_URL
+## 🔑 Auth Setup
 
 ## 🚀 Manual Deployment
 ### Step 1: Set Up
@@ -85,7 +77,6 @@ npx wrangler pages deploy dist
 ```
 In Cloudflare Pages, Create and set the following Variables and Secrets:
  - VITE_SERVER_URL
- - VITE_CLIENT_URL
  - VITE_IMG_URL
 
 ### Step 4: Deploy the Server

@@ -1,5 +1,10 @@
 # **Change Logs**
 
+## Change Log 4.0.0
+ - Server rewrote and uses Hono
+ - auth changed to Better-Auth
+ - add Manga flow changed
+
 ## Change Log 3.1.9
  - Fixed mobile changelog poup size
  - Resolved MangaPark pages being left open

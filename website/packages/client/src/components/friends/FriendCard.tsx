@@ -145,7 +145,7 @@ export default function FriendCard({
         onClose={() => setConfirmOpen(false)}
         onConfirm={() => {
           setConfirmOpen(false);
-          removeFriend(friend.id);
+          removeFriend(friend.friendId);
         }}
         itemName={`Friendship with ${friend.userName}`}
       />

@@ -7,7 +7,7 @@ import { friend } from '../../../types';
 
 async function fetchRequests(): Promise<{ message: string; data: friend[] }> {
   const resp = await fetch(`${fetchPath}/api/friends/getRecieved`, {
-    method: 'GET',
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
@@ -47,12 +47,9 @@ export default function IncommingFriendsPanel() {
           userName={friend.userName}
           imgUrl={friend.imageURl}
           sentAt={new Date(friend.sentAt.replace(' ', 'T') + 'Z')}
-          requestId={friend.id}
+          requestId={friend.friendId}
         />
       ))}
-
-      {/* <FriendIncommingCard userId="1245" userName="Kgamer5911" imgUrl="https://cdn.discordapp.com/avatars/381109499479719940/2aaa432f08750167eb6864ececa49aed.webp" mangaTracked="365" chaptersRead="7856"/>
-      <FriendIncommingCard userId="1245" userName="Jucv" imgUrl="https://cdn.discordapp.com/avatars/456939350744104960/948e186b4133d64068f2d5f1f03bc3b5.webp" mangaTracked="406" chaptersRead="11620"/> */}
     </Box>
   );
 }

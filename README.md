@@ -25,7 +25,7 @@ Each folder includes its own `README.md` with setup instructions specific to tha
 
 
 - **`utils/`**  
-  Contains various tools and scripts for tasks like viewing logs, migrating to new database versions, and other utility functions.
+  Contains various tools and scripts for tasks like viewing logs, migrating to new database versions, and other utility functions. **If you are updating and their are changes to the Database check this folder out!**
 
 - **`puppeteerServer/`**  
   Responsible for collecting manga data from supported websites using Puppeteer. This is one of the required components for running the tracker.
@@ -33,9 +33,9 @@ Each folder includes its own `README.md` with setup instructions specific to tha
 - **`website/`**  
   Hosts both the Cloudflare server and the React-based web app. This is the main user interface and another required component for running the app.
 
-- **`slashCommandBot/`**  
+- **`slashCommandBot/ (Currently Not Working)`**  
   A Discord bot that lets users interact with the tracker using slash commands. This component is optional.
 
-> 💡 **For the best experience**, it's recommended to use the **web app**.  
-> 📁 **Each folder has its own `README.md`** with setup instructions.  
-> 🔧 **Required for core functionality**: `puppeteerServer/` and `website/`
+> - **For the best experience**, it's recommended to use the **web app**.  
+> - **Each folder has its own `README.md`** with setup instructions.  
+> - **Required for core functionality**: `puppeteerServer/` and `website/`
