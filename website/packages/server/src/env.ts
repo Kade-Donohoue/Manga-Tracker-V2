@@ -12,9 +12,18 @@ const EnvSchema = z.object({
   BETTER_AUTH_URL: z.url(),
   BETTER_AUTH_PATH: z.string(),
   BETTER_AUTH_ADMIN_USER_ID: z.string(),
-  REDIRECT_URI: z.string(),
+  REDIRECT_URI: z.url(),
   PUPPETEER_SERVER: z.string(),
   SERVER_PASSWORD: z.string(),
+  TRUSTED_ORIGINS: z
+    .string()
+    .transform((v) =>
+      v
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+    )
+    .pipe(z.array(z.url())),
 });
 
 export const BindingsSchema = {

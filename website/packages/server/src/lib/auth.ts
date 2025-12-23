@@ -25,7 +25,7 @@ export const createAuth = (env: Environment) => {
       twitter: {
         clientId: env.TWITTER_CLIENT_ID as string,
         clientSecret: env.TWITTER_CLIENT_SECRET as string,
-      }
+      },
     },
     database: drizzleAdapter(db, {
       provider: 'sqlite',
@@ -42,11 +42,6 @@ export const createAuth = (env: Environment) => {
     baseURL: env.BETTER_AUTH_URL,
     basePath: env.BETTER_AUTH_PATH,
     secret: env.BETTER_AUTH_SECRET,
-    trustedOrigins: [
-      'http://localhost:3000',
-      'http://localhost:8787',
-      'https://devmanga.kdonohoue.com',
-      'https://devmanga.kdonohoue.com',
-    ],
+    trustedOrigins: env.TRUSTED_ORIGINS,
   });
 };
