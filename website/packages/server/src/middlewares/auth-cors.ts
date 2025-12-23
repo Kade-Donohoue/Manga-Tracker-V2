@@ -1,12 +1,13 @@
 import { cors } from 'hono/cors';
 
 export default cors({
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:8787',
-    'https://devmanga.kdonohoue.com',
-    'https://devmanga.kdonohoue.com',
-  ],
+  origin: (origin, c) => {
+    if (!origin) return false;
+
+    const allowed = c.env.TRUSTED_ORIGINS;
+
+    return allowed.includes(origin);
+  },
   allowHeaders: ['Content-Type', 'Authorization'],
   allowMethods: ['POST', 'GET', 'OPTIONS'],
   exposeHeaders: ['Content-Length'],

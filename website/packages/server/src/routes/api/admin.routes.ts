@@ -179,7 +179,7 @@ adminRouter.post('/updateManga', zValidator('json', updateDataSchema), async (c)
   const { newData } = c.req.valid('json');
 
   // Safe batch size based on your table size
-  const BATCH_SIZE = 75;
+  const BATCH_SIZE = 10;
   const batches = chunkArray(newData, BATCH_SIZE);
 
   for (const batch of batches) {
