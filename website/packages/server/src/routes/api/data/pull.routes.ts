@@ -60,7 +60,7 @@ pullRouter.post('/getUserManga', async (c) => {
   const allFriendsReading = await db
     .select({
       mangaId: userData.mangaId,
-      userId: userData.userID,
+      userID: userData.userID,
       userName: user.name,
       avatarUrl: user.image,
       userCat: userData.userCat,
@@ -80,12 +80,12 @@ pullRouter.post('/getUserManga', async (c) => {
 
   const mangaIdFriendList: Record<
     string,
-    { userId: string; avatarUrl: string | null; userName: string }[]
+    { userID: string; avatarUrl: string | null; userName: string }[]
   > = {};
 
-  friendsReading.forEach(({ mangaId, userId, userName, avatarUrl }) => {
+  friendsReading.forEach(({ mangaId, userID, userName, avatarUrl }) => {
     if (!mangaIdFriendList[mangaId]) mangaIdFriendList[mangaId] = [];
-    mangaIdFriendList[mangaId].push({ userId, avatarUrl: avatarUrl, userName });
+    mangaIdFriendList[mangaId].push({ userID, avatarUrl: avatarUrl, userName });
   });
 
   const compiledMangaList = manga.map((manga) => ({
