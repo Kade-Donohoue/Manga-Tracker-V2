@@ -67,12 +67,15 @@ pullRouter.post('/getUserManga', async (c) => {
       public: userCategories.public,
     })
     .from(userData)
-    .innerJoin(userCategories, eq(userData.userID, userCategories.userID))
+    .innerJoin(
+      userCategories,
+      and(eq(userData.userID, userCategories.userID), eq(userData.userCat, userCategories.value))
+    )
     .innerJoin(user, eq(user.id, userData.userID))
     .where(inArray(userData.userID, friendsIds));
 
   const friendsReading = allFriendsReading.filter(
-    (row) => myMangaIds.includes(row.mangaId) && row.public && row.userCat === row.userCat
+    (row) => myMangaIds.includes(row.mangaId) && row.public
   );
 
   const mangaIdFriendList: Record<
