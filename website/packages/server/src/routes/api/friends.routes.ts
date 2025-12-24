@@ -192,7 +192,7 @@ friendsRouter.post('/getSent', async (c) => {
     .select({
       senderId: friends.senderId,
       receiverId: friends.receiverId,
-      id: friends.id,
+      requestId: friends.id,
       respondedAt: friends.respondedAt,
       sentAt: friends.sentAt,
     })
@@ -218,7 +218,7 @@ friendsRouter.post('/getSent', async (c) => {
     const u = userMap.get(otherId);
 
     return {
-      id: row.id,
+      requestId: row.requestId,
       sentAt: row.sentAt,
       respondedAt: row.respondedAt,
       userID: u?.userID,
