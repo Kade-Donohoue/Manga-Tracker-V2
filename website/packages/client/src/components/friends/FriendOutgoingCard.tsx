@@ -24,8 +24,6 @@ export default function FriendOutgoingCard(userData: {
   async function cancelRequest(requestId: number) {
     const notif = toast.loading('Sending Request!', { closeOnClick: true, draggable: true });
 
-    const userName = (document.getElementById('userNameInput') as HTMLInputElement)?.value;
-
     const results = await fetch(`${fetchPath}/api/friends/cancel`, {
       method: 'POST',
       headers: {

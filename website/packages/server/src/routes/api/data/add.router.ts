@@ -6,6 +6,7 @@ import { zValidator } from '@hono/zod-validator';
 import { addMangaSchema, addRecomendedSchema, addStatusSchema } from '@/schemas/zodSchemas';
 import { recommendations, userData } from '@/db/schema';
 import { and, eq } from 'drizzle-orm';
+import { error } from 'console';
 
 const addRouter = createRouter();
 
@@ -15,6 +16,8 @@ addRouter.post('/addManga', zValidator('json', addMangaSchema), async (c) => {
 
   if (urls && urls.length <= 0) return c.json({ Message: 'No Urls Provided!' }, 500);
 
+  console.log(urls);
+
   const mangaReq: any = await fetch(
     `${c.env.PUPPETEER_SERVER}/getManga?urls=${urls.join('&urls=')}&pass=${c.env.SERVER_PASSWORD}`,
     {
@@ -22,9 +25,11 @@ addRouter.post('/addManga', zValidator('json', addMangaSchema), async (c) => {
     }
   );
 
+  console.log(mangaReq.status);
+
   if (!mangaReq.ok) {
     const errorResp = await mangaReq.json();
-    c.json(
+    return c.json(
       {
         message: errorResp.message,
       },
@@ -32,7 +37,9 @@ addRouter.post('/addManga', zValidator('json', addMangaSchema), async (c) => {
     );
   }
 
-  const ids: { addedManga: { fetchId: string; url: string }[] } = await mangaReq.json();
+  const ids: { addedManga: { fetchId: string; url: string }[]; errors: any } =
+    await mangaReq.json();
+  console.log(ids.errors);
 
   console.log(ids.addedManga);
 
