@@ -55,6 +55,7 @@ adminRouter.post('/saveManga', zValidator('json', newMangaSchama), async (c) => 
   } = JSON.parse(userDataKV);
 
   console.log(fetchData);
+  console.log(newMangaData);
 
   let newMangaId = crypto.randomUUID();
   const mangaId = await db
@@ -72,7 +73,7 @@ adminRouter.post('/saveManga', zValidator('json', newMangaSchama), async (c) => 
       sourceId: newMangaData.sourceId,
     })
     .onConflictDoUpdate({
-      target: [mangaData.urlBase],
+      target: [mangaData.sourceId],
       set: {
         mangaName: newMangaData.mangaName,
         slugList: newMangaData.slugList,
