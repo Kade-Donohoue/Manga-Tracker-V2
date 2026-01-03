@@ -138,21 +138,20 @@ async function shutdown() {
   process.exit(0);
 }
 
-setInterval(async () => {
-  if (!browser) return;
+if (config.debug.memoryLogging) {
+  setInterval(async () => {
+    const contexts = browser.browserContexts();
+    let totalPages = 0;
 
-  const pages = await browser.pages();
-
-  if (pages.length <= config.queue.instances + config.queue.mangaFireInstances + 15) return;
-
-  const firstPage = pages[0];
-
-  for (const page of pages) {
-    if (page != firstPage) {
-      console.log('Closing stray tab');
-      try {
-        await page.close();
-      } catch (_) {}
+    for (const ctx of contexts) {
+      totalPages += (await ctx.pages()).length;
     }
-  }
-}, 18_000_000); //30 min
+
+    console.log({
+      contexts: contexts.length,
+      pages: totalPages,
+      targets: browser.targets().length,
+      heap: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + 'MB',
+    });
+  }, 5000);
+}

@@ -20,6 +20,14 @@ const dataCollector = new Map<number, updateCollector>();
 
 // start manga fetch
 async function updateAllManga() {
+  let now = Date.now();
+  const maxAge = config.updateSettings.updateDelay * 2;
+  dataCollector.forEach((values, key) => {
+    if (key + maxAge <= now) {
+      dataCollector.delete(key);
+    }
+  });
+
   let date = new Date();
   console.log(`Updating all manga at ${date.toLocaleString()}`);
   try {
@@ -53,7 +61,7 @@ async function updateAllManga() {
     }[] = (await resp.json()).data;
     console.log(`Starting to Fetch ${returnData.length} Manga!`);
     // console.log(returnData)
-    let batchId = Date.now();
+    let batchId = now;
 
     dataCollector.set(batchId, {
       batchId: batchId,

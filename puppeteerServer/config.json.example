@@ -12,6 +12,7 @@
     "allowAsura": true,
     "allowMangafire": true,
     "allowBato": true,
+    "allowComix": false,
     "allowMangaPark": true
   },
   "queue": {
@@ -28,7 +29,8 @@
     "verboseLogging": false,
     "headlessBrowser": true,
     "remotePuppetDebug": false,
-    "remotePuppetDebugPort": 9222
+    "remotePuppetDebugPort": 9222,
+    "memoryLogging": flase
   },
   "serverCom": {
     "serverUrl": "enter_url_here",
