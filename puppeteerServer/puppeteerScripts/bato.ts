@@ -2,8 +2,72 @@ import config from '../config.json';
 import { createTimestampLogger, match } from '../util';
 import sharp from 'sharp';
 import { getBrowser } from '../jobQueue';
-import { Job } from 'bullmq';
-import { fetchData } from '../types';
+import { CheckResult, fetchData, SiteQueue } from '../types';
+import { Queue, Worker, Job } from 'bullmq';
+import { connection } from '../connections';
+
+const Bato = 'bato-site';
+const ENABLED = true;
+
+export const batoQueue = new Queue(Bato, {
+  connection,
+});
+
+function check(url: string): CheckResult {
+  let u: URL;
+
+  try {
+    u = new URL(url);
+  } catch {
+    return { ok: false, stage: 0, reason: 'Invalid URL' };
+  }
+
+  if (!u.hostname.includes('bato.')) {
+    return { ok: false, stage: 1, reason: 'Hostname does not match bato.*' };
+  }
+
+  const match = u.pathname.match(/\/chapter\/\d+/i);
+  if (!match) {
+    return {
+      ok: false,
+      stage: 2, 
+      reason: 'Path must match /title-manga-slug/{id}',
+    };
+  }
+
+  return { ok: true, stage: 3 };
+}
+
+export const batoSite: SiteQueue = {
+  name: Bato,
+  enabled: ENABLED,
+  check,
+  queue: batoQueue,
+  start: start,
+};
+
+let worker: Worker | null = null;
+async function start() {
+  if (worker) return;
+
+  worker = new Worker(
+    Bato,
+    async (job) => {
+      const { url } = job.data;
+      console.log('[Bato] processing:', url);
+
+      return await getManga(
+        job.data.url,
+        job.data.getIcon,
+        job.data.update,
+        job.data.coverIndexes,
+        job.data.maxSavedAt,
+        job
+      );
+    },
+    { connection }
+  );
+}
 
 /**
  * Gets the chapter list from bato.to

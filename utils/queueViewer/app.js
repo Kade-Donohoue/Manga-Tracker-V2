@@ -7,18 +7,17 @@ const path = require('path');
 
 const connection = { host: '127.0.0.1', port: 6379 };
 
-const getQueue = new Queue('Get Manga Queue', { connection });
-const getComickQueue = new Queue('MangaFire Manga Queue', { connection });
-
+const queueNames = ['Manganato-site','bato-site','Mangadex-site','Mangapark-site','asura-site','Mangafire-site', 'auto-update', 'user-bulk']
+const baseQueues = queueNames.map(queueName => new Queue(queueName, { connection }))
 
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath('/admin/queues');
 
-const queues = [getQueue, getComickQueue].map((queue, idx) => {
+const queues = baseQueues.map((queue, idx) => {
   const adapter = new BullMQAdapter(queue);
 
   // Optional: format job name with queue info
-  adapter.setFormatter('name', (job) => `${job.name} - ${job.data.mangaId}`);
+  adapter.setFormatter('name', (job) => `${job.name}`);
 
   // Custom sanitize job.data
   adapter.setFormatter('data', (data) => {

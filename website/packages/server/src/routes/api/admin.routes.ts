@@ -86,6 +86,8 @@ adminRouter.post('/saveManga', zValidator('json', newMangaSchama), async (c) => 
     })
     .returning({ mangaId: mangaData.mangaId });
 
+    console.log
+
   await db
     .insert(userData)
     .values({

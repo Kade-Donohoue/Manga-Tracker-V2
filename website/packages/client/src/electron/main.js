@@ -9,7 +9,7 @@ app.whenReady().then(() => {
 
 // Create the main window
 function createWindow() {
-  const persistentSession = session.fromPartition('persist:clerkSession');
+  // const persistentSession = session.fromPartition('persist:clerkSession');
   const win = new BrowserWindow({
     show: false,
     autoHideMenuBar: true,
@@ -33,11 +33,11 @@ function createWindow() {
   win.show();
   
   win.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.includes('clerk.') || url.includes('oauth')) {
-      shell.openExternal(url); // Opens in the default browser
-      return { action: 'deny' };
-    }
-    return { action: 'allow' };
+    // if (url.includes('clerk.') || url.includes('oauth')) {
+    //   shell.openExternal(url); // Opens in the default browser
+    //   return { action: 'deny' };
+    // }
+    // return { action: 'allow' };
   });
 
 };

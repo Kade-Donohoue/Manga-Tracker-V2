@@ -2,8 +2,73 @@ import { createTimestampLogger, match } from '../util';
 import config from '../config.json';
 import sharp from 'sharp';
 import { getBrowser } from '../jobQueue';
-import { Job } from 'bullmq';
-import { fetchData } from '../types';
+import { CheckResult, fetchData, SiteQueue } from '../types';
+import { Queue, Worker, Job } from 'bullmq';
+import { connection } from '../connections';
+
+const Mangapark = 'Mangapark-site';
+const ENABLED = true;
+
+export const mangaparkQueue = new Queue(Mangapark, {
+  connection,
+});
+
+function check(url: string): CheckResult {
+  let u: URL;
+
+  try {
+    u = new URL(url);
+  } catch {
+    return { ok: false, stage: 0, reason: 'Invalid URL' };
+  }
+
+  if (!u.hostname.includes('mangapark.org')) {
+    return { ok: false, stage: 1, reason: 'Hostname does not match mangapark.org' };
+  }
+
+  const match = u.pathname.match(/\/title\/\d+-[^\/]+\/\d+/i);
+  if (!match) {
+    return {
+      ok: false,
+      stage: 2,
+      reason: 'Path must match /title/{manga-id}-{manga-slug}/chapter-{chapter-id}',
+    };
+  }
+
+  return { ok: true, stage: 3 };
+}
+
+export const mangaparkSite: SiteQueue = {
+  name: Mangapark,
+  enabled: ENABLED,
+  check,
+  queue: mangaparkQueue,
+  start: start,
+};
+
+let worker: Worker | null = null;
+async function start() {
+  if (worker) return;
+
+  worker = new Worker(
+    Mangapark,
+    async (job) => {
+      const { url } = job.data;
+      console.log('[MangaPark] processing:', url);
+
+      return await getManga(
+        job.data.url,
+        job.data.getIcon,
+        job.data.update,
+        job.data.coverIndexes,
+        job.data.maxSavedAt,
+        // job.data.specialFetchData,
+        job
+      );
+    },
+    { connection }
+  );
+}
 
 /**
  * Gets the chapter list from MangaPark

@@ -230,18 +230,18 @@ export const updateUserCategoriesSchema = z.object({
   ),
 });
 
-export const clerkUserSchema = z
-  .object({
-    data: z
-      .object({
-        id: z.string(),
-        username: z.string(),
-        image_url: z.string().url(),
-        created_at: z.number(),
-      })
-      .passthrough(),
-  })
-  .passthrough();
+// export const clerkUserSchema = z
+//   .object({
+//     data: z
+//       .object({
+//         id: z.string(),
+//         username: z.string(),
+//         image_url: z.string().url(),
+//         created_at: z.number(),
+//       })
+//       .passthrough(),
+//   })
+//   .passthrough();
 
 const friendRecomendationsSchema = z
   .object({

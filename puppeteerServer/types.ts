@@ -79,3 +79,43 @@ export const checkOpts = {
     },
   },
 };
+
+export interface SiteQueue {
+  name: string;
+  enabled: boolean;
+  check(url: string): CheckResult;
+  queue: import('bullmq').Queue;
+  start: () => void;
+}
+
+export type CheckResult =
+  | { ok: true; stage: number }
+  | { ok: false; stage: number; reason: string };
+
+export type oldMangaData = {
+  mangaId: string;
+  urlBase: string;
+  slugList: string;
+  mangaName: string;
+  coverIndexes: number[];
+  maxSavedAt: string;
+  specialFetchData: any;
+};
+
+export type MangaQueueInsertResult = {
+  batchId: string;
+  enqueued: { fetchId: string; url: string }[];
+  rejected: siteReject[];
+};
+
+export type siteReject = { reason: string; url: string };
+
+export type SiteResolveResult =
+  | { ok: true; site: SiteQueue }
+  | { ok: false; error: { url: string; reason: string } };
+
+export type PendingSave = {
+  fetchId: string;
+  data: Omit<fetchData, 'images'>;
+  images: fetchData['images'];
+};

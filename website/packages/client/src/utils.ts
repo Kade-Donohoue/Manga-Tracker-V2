@@ -85,8 +85,9 @@ export async function submitManga(urls: string[], category: string): Promise<Man
     });
     if (!addResp.ok) throw new Error('Failed to submit manga');
 
-    const added: { fetchId: string; url: string }[] = await addResp.json();
-    const fetchIds = added.map((a) => a.fetchId);
+    const added: { batchId: string; enqueued: { fetchId: string; url: string }[]; rejected: {} } =
+      await addResp.json();
+    const fetchIds = added.enqueued.map((a) => a.fetchId);
 
     // Step 2: poll checkStatus until all complete
     const errorLog: MangaError[] = [];
@@ -94,7 +95,7 @@ export async function submitManga(urls: string[], category: string): Promise<Man
       const statusResp = await fetch(`${fetchPath}/api/data/add/checkStatus`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fetchIds }),
+        body: JSON.stringify({ batchId: added.batchId, fetchIds: fetchIds }),
       });
       if (!statusResp.ok) throw new Error('Failed to check status');
 

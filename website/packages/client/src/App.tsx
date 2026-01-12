@@ -54,107 +54,6 @@ const CenteredPage: React.FC<CenteredPageProps> = ({ children }) => (
   </div>
 );
 
-// Add contexts here
-// export default function App(): React.ReactElement {
-//   return (
-//     <div style={{ width: '100%', height: '100%' }}>
-//       <Router>
-//         <Routes>
-//           {/* Public routes */}
-//           <Route
-//             path="/"
-//             element={
-//               <div>
-//                 <SignedOut>
-//                   <Navigate to="/home" replace />
-//                 </SignedOut>
-//                 <SignedIn>
-//                   <Navigate to="/tracked" replace />
-//                 </SignedIn>
-//               </div>
-//             }
-//           />
-//           <Route
-//             path="/home"
-//             element={
-//               <SignedOut>
-//                 <Home />
-//               </SignedOut>
-//             }
-//           />
-//           <Route
-//             path="/sign-in"
-//             element={
-//               <SignedOut>
-//                 <CenteredPage>
-//                   <SignIn signUpUrl="/sign-up" />
-//                 </CenteredPage>
-//               </SignedOut>
-//             }
-//           />
-//           <Route
-//             path="/sign-up"
-//             element={
-//               <SignedOut>
-//                 <CenteredPage>
-//                   <SignUp signInUrl="/sign-in" />
-//                 </CenteredPage>
-//               </SignedOut>
-//             }
-//           />
-
-//           {/* Protected app */}
-//           <Route
-//             path="/*"
-//             element={
-//               <div style={{ width: '100%', height: '100%' }}>
-//                 <SignedIn>
-//                   <DesignSystemProvider>
-//                     <ToastContainer
-//                       position="top-right"
-//                       autoClose={5000}
-//                       hideProgressBar={false}
-//                       newestOnTop={false}
-//                       closeOnClick
-//                       rtl={false}
-//                       pauseOnFocusLoss={false}
-//                       draggable
-//                       pauseOnHover
-//                       theme="dark"
-//                     />
-//                     <QueryClientProvider client={queryClient}>
-//                       <RootedApp />
-//                     </QueryClientProvider>
-//                   </DesignSystemProvider>
-//                 </SignedIn>
-//                 <SignedOut>
-//                   <RedirectToSignIn signInFallbackRedirectUrl={'/tracked'} />
-//                 </SignedOut>
-//               </div>
-//             }
-//           />
-
-//           {/* Catch-all for unauthenticated access to protected pages */}
-//           <Route
-//             path="*"
-//             element={
-//               <div>
-//                 <SignedOut>
-//                   <Navigate to="/home" replace />
-//                 </SignedOut>
-//                 <SignedIn>
-//                   <Navigate to="/tracked" replace />
-//                 </SignedIn>
-//               </div>
-//             }
-//           />
-//         </Routes>
-//       </Router>
-//       <CookieBanner />
-//     </div>
-//   );
-// }
-
 interface AppRoute {
   path: string;
   name: string;
@@ -163,42 +62,18 @@ interface AppRoute {
 }
 
 const routes: Record<string, AppRoute> = {
-  // home: {
-  //   path: '/',
-  //   name: 'Home',
-  //   icon: HomeIcon,
-  //   component: Home,
-  // },
   tracked: {
     path: '/tracked',
     name: 'View Tracked',
     icon: ArtTrackIcon,
     component: tracked,
   },
-  // feed: {
-  //   path: '/feed',
-  //   name: 'Feed',
-  //   icon: DynamicFeedIcon,
-  //   component: feed,
-  // },
   addManga: {
     path: '/addManga',
     name: 'Add Manga',
     icon: AddCircleIcon,
     component: addContainer,
   },
-  // addBookmarks: {
-  //   path: '/addBookmarks',
-  //   name: 'Import Bookmarks',
-  //   icon: UploadFileIcon,
-  //   component: addBookmarks
-  // },
-  // removeManga: {
-  //   path: '/removeManga',
-  //   name: 'Remove Manga',
-  //   icon: DeleteForeverIcon,
-  //   component: removeManga,
-  // },
   stats: {
     path: '/stats',
     name: 'Statistics',
