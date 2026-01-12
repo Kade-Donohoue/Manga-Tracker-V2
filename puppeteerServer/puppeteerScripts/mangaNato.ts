@@ -2,8 +2,73 @@ import config from '../config.json';
 import { createTimestampLogger, match } from '../util';
 import sharp from 'sharp';
 import { getBrowser } from '../jobQueue';
-import { Job } from 'bullmq';
-import { fetchData } from '../types';
+import { CheckResult, fetchData, SiteQueue } from '../types';
+import { Queue, Worker, Job } from 'bullmq';
+import { connection } from '../connections';
+
+const Manganato = 'Manganato-site';
+const ENABLED = true;
+
+export const manganatoQueue = new Queue(Manganato, {
+  connection,
+});
+
+function check(url: string): CheckResult {
+  let u: URL;
+
+  try {
+    u = new URL(url);
+  } catch {
+    return { ok: false, stage: 0, reason: 'Invalid URL' };
+  }
+
+  if (!u.hostname.includes('manganato.gg')) {
+    return { ok: false, stage: 1, reason: 'Hostname does not match manganato.gg' };
+  }
+
+  const match = u.pathname.match(/\/manga\/[^\/]+\/chapter-\d+/i);
+  if (!match) {
+    return {
+      ok: false,
+      stage: 2,
+      reason: 'Path must match /manga/{chapter-slug}/chapter-{chapterNum}',
+    };
+  }
+
+  return { ok: true, stage: 3 };
+}
+
+export const manganatoSite: SiteQueue = {
+  name: Manganato,
+  enabled: ENABLED,
+  check,
+  queue: manganatoQueue,
+  start: start,
+};
+
+let worker: Worker | null = null;
+async function start() {
+  if (worker) return;
+
+  worker = new Worker(
+    Manganato,
+    async (job) => {
+      const { url } = job.data;
+      console.log('[Mangadex] processing:', url);
+
+      return await getManga(
+        job.data.url,
+        job.data.getIcon,
+        job.data.update,
+        job.data.coverIndexes,
+        job.data.maxSavedAt,
+        // job.data.specialFetchData,
+        job
+      );
+    },
+    { connection }
+  );
+}
 
 /**
  * Gets the chapter list from ChapManganato

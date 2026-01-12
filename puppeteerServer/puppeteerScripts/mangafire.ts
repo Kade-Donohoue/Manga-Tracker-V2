@@ -1,9 +1,78 @@
 import config from '../config.json';
 import { createTimestampLogger, match } from '../util';
 import sharp from 'sharp';
-import { getBrowser, mangaFireQueue } from '../jobQueue';
-import { Job, Worker } from 'bullmq';
-import { fetchData } from '../types';
+import { getBrowser } from '../jobQueue';
+import { CheckResult, fetchData, SiteQueue } from '../types';
+import { Queue, Worker, Job } from 'bullmq';
+import { connection } from '../connections';
+
+const Mangafire = 'Mangafire-site';
+const ENABLED = true;
+
+let mangaFireLimiter = config.updateSettings.intitalMangaFire
+  ? { max: 1, duration: 2000 }
+  : { max: config.rateLimits.mangaFireMax, duration: config.rateLimits.mangaFireDuration };
+
+export const mangafireQueue = new Queue(Mangafire, {
+  connection,
+});
+
+function check(url: string): CheckResult {
+  let u: URL;
+
+  try {
+    u = new URL(url);
+  } catch {
+    return { ok: false, stage: 0, reason: 'Invalid URL' };
+  }
+
+  if (!u.hostname.includes('mangafire.to')) {
+    return { ok: false, stage: 1, reason: 'Hostname does not match mangafire.to' };
+  }
+
+  const match = u.pathname.match(/\/read\/[^\/]+\/[^\/]+\/chapter-\d+/i);
+  if (!match) {
+    return {
+      ok: false,
+      stage: 2,
+      reason: 'Path must match /read/{chapter-slug}.{chapter-id}/chapter-{chapterNum}',
+    };
+  }
+
+  return { ok: true, stage: 3 };
+}
+
+export const mangafireSite: SiteQueue = {
+  name: Mangafire,
+  enabled: ENABLED,
+  check,
+  queue: mangafireQueue,
+  start: start,
+};
+
+let worker: Worker | null = null;
+async function start() {
+  if (worker) return;
+
+  worker = new Worker(
+    Mangafire,
+    async (job) => {
+      const { url } = job.data;
+      console.log('[Mangafire] processing:', url);
+
+      return await getManga(
+        job.data.url,
+        job.data.getIcon,
+        job.data.update,
+        job.data.coverIndexes,
+        job.data.maxSavedAt,
+        job.data.specialFetchData,
+        job
+      );
+    },
+    { connection, limiter: mangaFireLimiter }
+  );
+}
 
 /**
  * Fetches Data from mangaFire
@@ -102,7 +171,7 @@ export async function getManga(
         'MangaFire Rate Limit Hit, consider adjusting base delay if this appears frequently!'
       );
       job.log(logWithTimestamp(`Rate Limit Hit. setting rate limit to ${retryDelay}ms`));
-      await mangaFireQueue.rateLimit(retryDelay);
+      await mangafireQueue.rateLimit(retryDelay);
 
       throw Worker.RateLimitError();
     }
@@ -292,7 +361,7 @@ export async function getManga(
       currentIndex: currIndex,
       images: images,
       specialFetchData: specialFetchData,
-      sourceId: mangaId
+      sourceId: mangaId,
     };
   } catch (err) {
     job.log(logWithTimestamp(`Error: ${err}`));

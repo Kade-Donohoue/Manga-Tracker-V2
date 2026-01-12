@@ -49,7 +49,7 @@ pullRouter.post('/getUserManga', async (c) => {
     })
     .from(userData)
     .innerJoin(mangaData, eq(userData.mangaId, mangaData.mangaId))
-    .innerJoin(coverImages, eq(userData.mangaId, coverImages.mangaId))
+    .leftJoin(coverImages, eq(userData.mangaId, coverImages.mangaId))
     .where(eq(userData.userID, currentUser.id))
     .groupBy(userData.mangaId);
 

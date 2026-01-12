@@ -99,6 +99,7 @@ export const addMangaSchema = z.object({
 });
 
 export const addStatusSchema = z.object({
+  batchId: z.coerce.string().min(1),
   fetchIds: z.array(z.coerce.string()).min(1),
 });
 

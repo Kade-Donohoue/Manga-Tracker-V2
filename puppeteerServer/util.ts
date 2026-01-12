@@ -1,5 +1,7 @@
+import { Job, Queue } from 'bullmq';
 import config from './config.json';
 import { mangaUrlCheck } from './types';
+import { connection } from './connections';
 
 export function match(string: string, subStrings: string[]) {
   for (const subString of subStrings) {
@@ -72,4 +74,18 @@ function formatTimeDifference(diff: number): string {
   if (diff >= 60000) return ` (Took ${(diff / 60000).toFixed(2)} min)`;
   if (diff >= 1000) return ` (Took ${(diff / 1000).toFixed(2)} sec)`;
   return ` (Took ${diff} ms)`;
+}
+
+export async function getJobByFullId(fullId: string) {
+  const { queueName, jobId } = parseBullJobId(fullId);
+
+  const queue = new Queue(queueName, { connection });
+  const job = await Job.fromId(queue, jobId);
+
+  return job;
+}
+
+function parseBullJobId(fullId: string) {
+  const [, queueName, jobId] = fullId.split(':');
+  return { queueName, jobId };
 }

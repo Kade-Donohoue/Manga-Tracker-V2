@@ -2,8 +2,72 @@ import { createTimestampLogger, match } from '../util';
 import config from '../config.json';
 import sharp from 'sharp';
 import { getBrowser } from '../jobQueue';
-import { Job } from 'bullmq';
-import { fetchData } from '../types';
+import { CheckResult, fetchData, SiteQueue } from '../types';
+import { Queue, Worker, Job } from 'bullmq';
+import { connection } from '../connections';
+
+const Asura = 'asura-site';
+const ENABLED = true;
+
+export const asuraQueue = new Queue(Asura, {
+  connection,
+});
+
+function check(url: string): CheckResult {
+  let u: URL;
+
+  try {
+    u = new URL(url);
+  } catch {
+    return { ok: false, stage: 0, reason: 'Invalid URL' };
+  }
+
+  if (!u.hostname.includes('asuracomic')) {
+    return { ok: false, stage: 1, reason: 'Hostname does not match asuracomic.net' };
+  }
+
+  const match = u.pathname.match(/\/chapter\/\d+/i);
+  if (!match) {
+    return {
+      ok: false,
+      stage: 2,
+      reason: 'Path must match /chapter/{id}',
+    };
+  }
+
+  return { ok: true, stage: 3 };
+}
+
+export const asuraSite: SiteQueue = {
+  name: Asura,
+  enabled: ENABLED,
+  check,
+  queue: asuraQueue,
+  start: start,
+};
+
+let worker: Worker | null = null;
+async function start() {
+  if (worker) return;
+
+  worker = new Worker(
+    Asura,
+    async (job) => {
+      const { url } = job.data;
+      console.log('[Asura] processing:', url);
+
+      return await getManga(
+        job.data.url,
+        job.data.getIcon,
+        job.data.update,
+        job.data.coverIndexes,
+        job.data.maxSavedAt,
+        job
+      );
+    },
+    { connection, limiter: { max: 1, duration: 2000 } }
+  );
+}
 
 /**
  * Gets the chapter list from ChapManganato
@@ -216,7 +280,8 @@ export async function getManga(
     };
   } catch (err) {
     job.log(logWithTimestamp(`Error: ${err}`));
-    console.warn(`Unable to fetch data for: ${url}`);
+    console.warn(`Unable to fetch data for: ${url}, setting 10 second timeout`);
+    // await asuraQueue.rateLimit(10000);
     if (config.debug.verboseLogging) console.warn(err);
 
     //ensure only custom error messages gets sent to user

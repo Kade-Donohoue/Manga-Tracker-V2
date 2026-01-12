@@ -37,14 +37,17 @@ addRouter.post('/addManga', zValidator('json', addMangaSchema), async (c) => {
     );
   }
 
-  const ids: { addedManga: { fetchId: string; url: string }[]; errors: any } =
-    await mangaReq.json();
+  const ids: {
+    batchId: string;
+    enqueued: { fetchId: string; url: string }[];
+    errors: { reason: string; url: string }[];
+  } = await mangaReq.json();
   console.log(ids.errors);
 
-  console.log(ids.addedManga);
+  console.log(ids.enqueued);
 
   await Promise.all(
-    ids.addedManga.map((m) =>
+    ids.enqueued.map((m) =>
       c.env.KV.put(
         `fetchStatus:${m.fetchId}`,
         JSON.stringify({
@@ -59,14 +62,15 @@ addRouter.post('/addManga', zValidator('json', addMangaSchema), async (c) => {
     )
   );
 
-  return c.json(ids.addedManga, 200);
+  return c.json(ids, 200);
 });
 
 addRouter.post('/checkStatus', zValidator('json', addStatusSchema), async (c) => {
   const currentUser: User = c.get('user');
-  const { fetchIds } = c.req.valid('json');
+  const { batchId, fetchIds } = c.req.valid('json');
 
-  if (!fetchIds || fetchIds.length <= 0) return c.json({ message: 'No IDs provided!' }, 400);
+  if (!batchId || !fetchIds || fetchIds.length <= 0)
+    return c.json({ message: 'No ID provided!' }, 400);
 
   const rawStatus = await Promise.all(fetchIds.map((id) => c.env.KV.get(`fetchStatus:${id}`)));
 
@@ -94,6 +98,7 @@ addRouter.post('/checkStatus', zValidator('json', addStatusSchema), async (c) =>
       fetchId,
       status: curStat.status,
       url: curStat.url,
+      mangaId: curStat.mangaId,
     });
   }
 
