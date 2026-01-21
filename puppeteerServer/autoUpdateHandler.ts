@@ -192,7 +192,9 @@ new Worker(
     });
 
     // If you want only entries where there are actually new chapters
-    const updatesWithNewChapters = updateData.filter((d) => d.newChapterCount > 0);
+    const updatesWithNewChapters = updateData.filter(
+      (d) => config.updateSettings.forceUpdateManga || d.newChapterCount > 0
+    );
 
     // console.log(updateData);
     // return;

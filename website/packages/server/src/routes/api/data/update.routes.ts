@@ -1,6 +1,14 @@
 import { createDb } from '@/db';
 import { eq, and, or, inArray, max } from 'drizzle-orm';
-import { coverImages, friends, mangaData, user, userCategories, userData } from '@/db/schema';
+import {
+  coverImages,
+  friends,
+  mangaData,
+  user,
+  userCategories,
+  userData,
+  userStats,
+} from '@/db/schema';
 import { createRouter } from '@/lib/create-app';
 import { requireAuth } from '@/middlewares/require-auth';
 import { User } from 'better-auth';
@@ -53,10 +61,41 @@ updateRouter.post('updateCurrentIndex', zValidator('json', updateMangaIndexSchem
   const currentUser: User = c.get('user');
   const { mangaId, newIndex } = c.req.valid('json');
 
+  const [row] = await db
+    .select({
+      oldIndex: userData.currentIndex,
+      chapterTextList: mangaData.chapterTextList,
+    })
+    .from(userData)
+    .innerJoin(mangaData, eq(userData.mangaId, mangaData.mangaId))
+    .where(and(eq(userData.userID, currentUser.id), eq(userData.mangaId, mangaId)))
+    .limit(1);
+
+  if (!row) {
+    return c.json({ error: 'User manga entry not found' }, 404);
+  }
+
+  const chapterTextList = row.chapterTextList.split(',') as string[];
+
+  const chaptersRead = Math.max(
+    0,
+    parseFloat(chapterTextList[newIndex]) - parseFloat(chapterTextList[row.oldIndex])
+  );
+
+  const newCurrentChap = chapterTextList[newIndex] ?? 'chapter unknown';
+
   await db
     .update(userData)
-    .set({ currentIndex: newIndex })
+    .set({
+      currentIndex: newIndex,
+      currentChap: newCurrentChap,
+      interactTime: Date.now(),
+    })
     .where(and(eq(userData.userID, currentUser.id), eq(userData.mangaId, mangaId)));
+
+  await db
+    .insert(userStats)
+    .values({ userID: currentUser.id, type: 'chapsRead', mangaId: mangaId, value: chaptersRead });
 
   return c.json({ message: 'Success' });
 });
