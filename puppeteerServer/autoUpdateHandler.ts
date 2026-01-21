@@ -110,7 +110,6 @@ async function updateAllManga() {
         total: children.length,
       },
       opts: {
-        // failParentOnFailure: false,
         removeOnComplete: false,
         removeOnFail: false,
       },
@@ -133,31 +132,34 @@ new Worker(
         return job;
       })
     );
+    const totalFailedCount = job.data.total - results.length;
 
-    const states = await Promise.all(
-      results.map(async (job) => ({
-        job,
-        completed: await job.isCompleted(),
-        failed: await job.isFailed(),
-      }))
-    );
+    if (totalFailedCount > 0) {
+      const failures = await job.getIgnoredChildrenFailures();
+      const title = `Jobs: ${totalFailedCount}/${results.length} failed`;
 
-    // return;
-    const successful = states.filter((s) => s.completed).map((s) => s.job);
-    const failedCount = job.data.total - successful.length;
+      const queueCounts: Record<string, number> = {};
 
-    if (failedCount > 0) {
-      const title = `Jobs: ${failedCount}/${results.length} failed`;
+      for (const childJobId of Object.keys(failures)) {
+        const childJob = await getJobByFullId(childJobId);
+        if (!childJob) continue;
 
-      console.warn(title);
-      await sendNotif(title, 'Check Bullboard for specifics!');
+        const queueName = childJob.queueName ?? 'unknown';
+
+        queueCounts[queueName] = (queueCounts[queueName] ?? 0) + 1;
+      }
+
+      const body = Object.entries(queueCounts)
+        .map(([queue, count]) => `${queue}: ${count}`)
+        .join('\n');
+
+      console.warn(title, queueCounts);
+      await sendNotif(title, body);
     }
-
-    // const newData =
 
     let totalNewChapters = 0;
 
-    let updateData = successful.map(
+    let updateData = results.map(
       ({ returnvalue: { images, ...rest }, data: { oldSlugList, mangaId } }) => {
         // Split old and new slugs by comma and trim whitespace
         const oldSlugs = oldSlugList
@@ -182,7 +184,7 @@ new Worker(
       }
     );
 
-    let imageData = successful.map(({ returnvalue: { images, ...rest }, data: { mangaId } }) => {
+    let imageData = results.map(({ returnvalue: { images, ...rest }, data: { mangaId } }) => {
       return {
         images,
         mangaId,
@@ -216,7 +218,7 @@ new Worker(
       const err = await resp.json();
       console.warn(err);
     } else {
-      const successMessage = `${updatesWithNewChapters.length} / ${results.length} Manga Update Saved With ${totalNewChapters} New Chapters! ${failedCount} Failed.`;
+      const successMessage = `${updatesWithNewChapters.length} / ${results.length} Manga Update Saved With ${totalNewChapters} New Chapters! ${totalFailedCount} Failed.`;
       if (config.notif.batchSuccessNotif) {
         await sendNotif(`Puppeteer: Successfully sent update Data!`, successMessage);
       }
@@ -228,8 +230,7 @@ new Worker(
 
     for (let i = 0; i < imageData.length; i++) {
       const manga = imageData[i];
-      // console.log(successful[i]);
-      // console.log(manga);
+
       if (!manga.images.length) continue;
       console.log(`Saving ${manga.images.length} Images for mangaId: ${manga.mangaId}`);
 
@@ -265,8 +266,8 @@ new Worker(
     }
     return {
       total: results.length,
-      successfulCount: successful.length,
-      failedCount,
+      successfulCount: results.length,
+      failedCount: totalFailedCount,
     };
   },
   { connection }
