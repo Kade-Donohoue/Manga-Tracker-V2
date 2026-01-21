@@ -86,8 +86,6 @@ adminRouter.post('/saveManga', zValidator('json', newMangaSchama), async (c) => 
     })
     .returning({ mangaId: mangaData.mangaId });
 
-    console.log
-
   await db
     .insert(userData)
     .values({
@@ -195,7 +193,7 @@ adminRouter.post('/updateManga', zValidator('json', updateDataSchema), async (c)
           urlBase: m.urlBase,
           slugList: m.slugList,
           chapterTextList: m.chapterTextList,
-          latestChapterText: m.newChapterCount,
+          latestChapterText: parseFloat(m.chapterTextList?.split(',')?.at(-1) || '0'),
           specialFetchData: m.specialFetchData,
           updateTime: new Date().toISOString(),
           sourceId: m.sourceId,
