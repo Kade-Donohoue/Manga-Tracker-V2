@@ -65,7 +65,12 @@ async function start() {
         job
       );
     },
-    { connection, limiter: { max: 1, duration: 2000 } }
+    {
+      connection,
+      limiter: { max: 1, duration: 2000 },
+      removeOnFail: { count: 1000 },
+      removeOnComplete: {age: 86400, count: 1000},
+    }
   );
 }
 

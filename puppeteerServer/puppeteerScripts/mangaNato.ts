@@ -66,7 +66,7 @@ async function start() {
         job
       );
     },
-    { connection }
+    { connection, removeOnFail: { count: 1000 }, removeOnComplete: { age: 86400, count: 1000 } }
   );
 }
 
@@ -170,7 +170,7 @@ export async function getManga(
       ? (
           await chapterDropdown.evaluate((select) =>
             Array.from(select.querySelectorAll('option')).map((option) =>
-              option.getAttribute('data-c').split('chapter-').at(-1)
+              option.getAttribute('data-url').split('chapter-').at(-1)
             )
           )
         ).reverse()

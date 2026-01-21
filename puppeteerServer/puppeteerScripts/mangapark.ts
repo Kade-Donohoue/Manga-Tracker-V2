@@ -66,7 +66,7 @@ async function start() {
         job
       );
     },
-    { connection }
+    { connection, removeOnFail: { count: 1000 }, removeOnComplete: { age: 86400, count: 1000 } }
   );
 }
 

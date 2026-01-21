@@ -70,7 +70,12 @@ async function start() {
         job
       );
     },
-    { connection, limiter: mangaFireLimiter }
+    {
+      connection,
+      limiter: mangaFireLimiter,
+      removeOnFail: { count: 1000 },
+      removeOnComplete: { age: 86400, count: 1000 },
+    }
   );
 }
 
