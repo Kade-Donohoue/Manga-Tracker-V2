@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 const EnvSchema = z.object({
+  VITE_IMG_URL: z.string(),
   NODE_ENV: z.string().default('development'),
   GOOGLE_CLIENT_ID: z.string(),
   GOOGLE_CLIENT_SECRET: z.string(),
@@ -24,6 +25,10 @@ const EnvSchema = z.object({
         .filter(Boolean)
     )
     .pipe(z.array(z.url())),
+  AWS_SECRET_ACCESS_KEY: z.string(),
+  AWS_ACCESS_KEY_ID: z.string(),
+  SES_FROM: z.email(),
+  AWS_REGION: z.string(),
 });
 
 export const BindingsSchema = {

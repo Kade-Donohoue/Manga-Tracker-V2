@@ -7,6 +7,8 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import HistoryIcon from '@mui/icons-material/History';
 
 import LogoutIcon from '@mui/icons-material/Logout';
+import SaveIcon from '@mui/icons-material/Save';
+import EditIcon from '@mui/icons-material/Edit';
 import { CategoryManager } from '../components/CategoryManager';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import { useUISetting } from '../hooks/useUiSetting';
@@ -21,9 +23,19 @@ import ListItemText from '@mui/material/ListItemText';
 
 import changeLog from '../changelog.json';
 import Box from '@mui/material/Box';
-import { authClient, useAuthStatus } from '../hooks/useAuthStatus';
+import {
+  authClient,
+  useAuthStatus,
+  authActions,
+  UseAuthStatusInterface,
+} from '../hooks/useAuthStatus';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import TextField from '@mui/material/TextField';
+import Stack from '@mui/material/Stack';
+import IconButton from '@mui/material/IconButton';
+import Avatar from '@mui/material/Avatar';
+import Chip from '@mui/material/Chip';
 
 const uiSettingsConfig = [
   {
@@ -50,7 +62,7 @@ const uiSettingsConfig = [
 ];
 
 export default function settings() {
-  const { isLoggedIn, isLoading, session, user } = useAuthStatus();
+  const authStatus = useAuthStatus();
   const navigate = useNavigate();
 
   return (
@@ -178,8 +190,17 @@ export default function settings() {
           >
             <Typography>User</Typography>
           </AccordionSummary>
-
           <AccordionDetails>
+            {authStatus.isLoading ? (
+              <Typography sx={{ opacity: 0.7 }}>Loading session...</Typography>
+            ) : !authStatus.isLoggedIn ? (
+              <Typography sx={{ opacity: 0.7 }}>No user logged in</Typography>
+            ) : (
+              <UserAccountSection authStatus={authStatus} />
+            )}
+          </AccordionDetails>
+
+          {/* <AccordionDetails>
             {isLoading ? (
               <Typography sx={{ opacity: 0.7 }}>Loading session...</Typography>
             ) : !isLoggedIn ? (
@@ -245,7 +266,7 @@ export default function settings() {
                 </Button>
               </Box>
             )}
-          </AccordionDetails>
+          </AccordionDetails> */}
         </Accordion>
         <Accordion sx={{ backgroundColor: '#1e1e1e', color: '#ffffff', width: '80%' }}>
           <AccordionSummary
@@ -277,5 +298,204 @@ export default function settings() {
         </Accordion>
       </div>
     </div>
+  );
+}
+
+function UserAccountSection({ authStatus }: { authStatus: UseAuthStatusInterface }) {
+  const { isLoading, isLoggedIn, user, session, refresh } = authStatus;
+  const [sessions, setSessions] = React.useState<any[]>([]);
+  const [editingName, setEditingName] = React.useState(false);
+  const [name, setName] = React.useState(user.name);
+  const [currentPassword, setCurrentPassword] = React.useState('');
+  const [newPassword, setNewPassword] = React.useState('');
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const hasPassword = user.emailVerified === true;
+
+  React.useEffect(() => {
+    authActions.listSessions().then((res) => {
+      if (res.data) setSessions(res.data);
+    });
+  }, []);
+
+  const saveName = async () => {
+    await authActions.updateProfile({ name });
+    toast.success('Username updated');
+    setEditingName(false);
+  };
+
+  const uploadAvatar = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const res = await fetch('/api/user/avatar', {
+      method: 'POST',
+      body: formData,
+      credentials: 'include',
+    });
+
+    if (!res.ok) {
+      toast.error('Failed to upload avatar');
+      return;
+    }
+
+    const { url } = (await res.json()) as { url: string };
+
+    await authActions.updateProfile({ image: url });
+
+    refresh();
+    toast.success('Avatar updated');
+  };
+
+  return (
+    <Stack spacing={3}>
+      {/* Header */}
+      <Box display="flex" alignItems="center" gap={2}>
+        <Avatar
+          src={user.image ?? `https://api.dicebear.com/7.x/thumbs/svg?seed=${user.id}`}
+          sx={{ width: 64, height: 64, cursor: 'pointer' }}
+          onClick={() => fileInputRef.current?.click()}
+        />
+        <input
+          ref={fileInputRef}
+          type="file"
+          hidden
+          accept="image/*"
+          onChange={(e) => e.target.files && uploadAvatar(e.target.files[0])}
+        />
+
+        <Box>
+          <Typography variant="h6">{user.name}</Typography>
+          <Typography variant="body2" sx={{ opacity: 0.6 }}>
+            {user.email}
+          </Typography>
+        </Box>
+      </Box>
+
+      <Divider sx={{ backgroundColor: '#444' }} />
+
+      {/* Profile */}
+      <Box>
+        <Typography variant="subtitle1" gutterBottom>
+          Profile
+        </Typography>
+
+        <Stack spacing={2} maxWidth={420}>
+          <Box display="flex" alignItems="center" gap={1}>
+            <TextField
+              size="small"
+              label="Username"
+              value={name}
+              disabled={!editingName}
+              onChange={(e) => setName(e.target.value)}
+              fullWidth
+            />
+            <IconButton onClick={editingName ? saveName : () => setEditingName(true)}>
+              {editingName ? <SaveIcon /> : <EditIcon />}
+            </IconButton>
+          </Box>
+
+          <TextField size="small" label="User ID" value={user.id} InputProps={{ readOnly: true }} />
+          <TextField
+            size="small"
+            label="Email"
+            value={user.email}
+            InputProps={{ readOnly: true }}
+          />
+
+          <TextField
+            size="small"
+            label="Account Created"
+            value={user.createdAt.toDateString()}
+            InputProps={{ readOnly: true }}
+          />
+        </Stack>
+      </Box>
+
+      <Divider sx={{ backgroundColor: '#444' }} />
+
+      {/* Security */}
+      <Box>
+        <Typography variant="subtitle1" gutterBottom>
+          Security
+        </Typography>
+
+        <Stack spacing={2} maxWidth={420}>
+          {!hasPassword ? (
+            <Typography variant="body2" sx={{ opacity: 0.7 }}>
+              You signed in with SSO. You can set a password to log in directly without SSO.
+            </Typography>
+          ) : (
+            // null}
+            <div>
+              <TextField
+                size="small"
+                label={hasPassword ? 'Current Password' : 'New Password'}
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+              />
+
+              <TextField
+                size="small"
+                label="New Password"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+              <br />
+              <Button
+                variant="contained"
+                onClick={async () => {
+                  try {
+                    // if (!hasPassword) {
+                    //   // Set password for first time
+                    //   await authActions.setPassword(newPassword);
+                    //   toast.success('Password set successfully!');
+                    // } else {
+                    // Normal password change
+                    await authActions.changePassword(currentPassword, newPassword, false);
+                    toast.success('Password updated!');
+                    // }
+                  } catch (err) {
+                    toast.error('Failed to update password');
+                  }
+                }}
+              >
+                {hasPassword ? 'Update Password' : 'Set Password'}
+              </Button>
+            </div>
+          )}
+        </Stack>
+      </Box>
+
+      <Divider sx={{ backgroundColor: '#444' }} />
+
+      {/* Sessions */}
+      <Box>
+        <Typography variant="subtitle2" gutterBottom>
+          Active Sessions
+        </Typography>
+
+        <Stack spacing={1}>
+          {sessions.map((s) => (
+            <Box key={s.id} display="flex" justifyContent="space-between" alignItems="center">
+              <Box display="flex" alignItems="center" gap={1}>
+                <Typography variant="body2" sx={{ opacity: 0.7 }}>
+                  {s.userAgent ?? 'Unknown device'}
+                  {s.id === session.id}
+                </Typography>
+                <Chip label="Current" size="small" color="primary" sx={{ height: 20 }} />
+              </Box>
+
+              {s.id !== session.id && (
+                <Button size="small" color="error" onClick={() => authActions.revokeSession(s.id)}>
+                  Revoke
+                </Button>
+              )}
+            </Box>
+          ))}
+        </Stack>
+      </Box>
+    </Stack>
   );
 }

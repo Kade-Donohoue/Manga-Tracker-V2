@@ -136,7 +136,7 @@ new Worker(
 
     if (totalFailedCount > 0) {
       const failures = await job.getIgnoredChildrenFailures();
-      const title = `Jobs: ${totalFailedCount}/${results.length} failed`;
+      const title = `Jobs: ${totalFailedCount}/${job.data.total} failed`;
 
       const queueCounts: Record<string, number> = {};
 
@@ -220,7 +220,7 @@ new Worker(
       const err = await resp.json();
       console.warn(err);
     } else {
-      const successMessage = `${updatesWithNewChapters.length} / ${results.length} Manga Update Saved With ${totalNewChapters} New Chapters! ${totalFailedCount} Failed.`;
+      const successMessage = `${updatesWithNewChapters.length} / ${job.data.total} Manga Update Saved With ${totalNewChapters} New Chapters! ${totalFailedCount} Failed.`;
       if (config.notif.batchSuccessNotif) {
         await sendNotif(`Puppeteer: Successfully sent update Data!`, successMessage);
       }

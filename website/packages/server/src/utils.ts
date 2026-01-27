@@ -130,7 +130,7 @@ export async function getLiveUserStats(
     trackedChapters: globalStatsRow?.trackedChapters ?? 0,
     readChapters: globalStatsRow?.readChapters ?? 0,
     newChapters: globalStatsRow?.newChapters ?? 0,
-    readThisMonth: -1, //Implement way to count global read past 30 days (maybe add to global daily stats)
+    readThisMonth: globalStatsRow?.readThisMonth ?? 0,
   };
 
   const userReadMonth = baseStats.pastMonthReads + (newUserStats?.chapsRead ?? 0);
