@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authClient } from '../../hooks/useAuthStatus';
 import { Box, Button, TextField, Typography, Paper, Link as MuiLink } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 
 export default function SignInPage() {
   const navigate = useNavigate();
@@ -10,14 +11,22 @@ export default function SignInPage() {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
+  const [showVerificationDialog, setShowVerificationDialog] = React.useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    const result = await authClient.signIn.email({ email, password });
+    const result = await authClient.signIn.email({ email, password, callbackURL: '/tracked' });
 
     if (result.error) {
+      if (result.error.code === 'EMAIL_NOT_VERIFIED') {
+        setShowVerificationDialog(true);
+        setLoading(false);
+        return;
+      }
+
       setError(result.error.message || 'Sign in failed');
       setLoading(false);
       return;
@@ -88,14 +97,14 @@ export default function SignInPage() {
             {loading ? 'Signing in...' : 'Sign In'}
           </Button>
 
-          {/* <MuiLink
+          <MuiLink
             component="button"
             variant="body2"
             onClick={() => navigate('/forgot-password')}
             sx={{ color: '#00bcd4', textAlign: 'center' }}
           >
             Forgot password?
-          </MuiLink> */}
+          </MuiLink>
         </Box>
 
         <Box sx={{ my: 2, textAlign: 'center', color: '#888' }}>or</Box>
@@ -137,6 +146,24 @@ export default function SignInPage() {
           </MuiLink>
         </Box>
       </Paper>
+
+      <Dialog open={showVerificationDialog} onClose={() => setShowVerificationDialog(false)}>
+        <DialogTitle>Verify your email</DialogTitle>
+
+        <DialogContent>
+          <Typography>A verification email has been sent to:</Typography>
+
+          <Typography sx={{ mt: 1, fontWeight: 600 }}>{email}</Typography>
+
+          <Typography sx={{ mt: 2, color: 'text.secondary' }}>
+            Please check your inbox and click the verification link before signing in.
+          </Typography>
+        </DialogContent>
+
+        <DialogActions>
+          <Button onClick={() => setShowVerificationDialog(false)}>OK</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

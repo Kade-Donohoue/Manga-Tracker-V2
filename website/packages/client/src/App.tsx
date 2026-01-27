@@ -31,10 +31,12 @@ import ChangelogModal from './components/ChangelogModal';
 
 import changelogs from './changelog.json';
 
-import { createAuthClient } from 'better-auth/react';
 import SignInPage from './pages/auth/SignInPage';
 import SignUpPage from './pages/auth/SignUpPage';
 import { useAuthStatus } from './hooks/useAuthStatus';
+import admin from './pages/admin/admin';
+import ForgotPasswordPage from './pages/auth/forgotPasswordPage';
+import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 
 interface CenteredPageProps {
   children: React.ReactNode;
@@ -59,6 +61,7 @@ interface AppRoute {
   name: string;
   icon: any;
   component: () => JSX.Element;
+  role?: string;
 }
 
 const routes: Record<string, AppRoute> = {
@@ -86,17 +89,18 @@ const routes: Record<string, AppRoute> = {
     icon: GroupIcon,
     component: friends,
   },
-  // debug: {
-  //   path: '/debug',
-  //   name: 'Dev',
-  //   icon: BugReportIcon,
-  //   component: debug
-  // },
   settings: {
     path: '/settings',
     name: 'Settings',
     icon: SettingsIcon,
     component: settings,
+  },
+  debug: {
+    path: '/debug',
+    name: 'Admin',
+    icon: BugReportIcon,
+    component: admin,
+    role: 'admin',
   },
 };
 
@@ -105,6 +109,7 @@ export function RootedApp() {
   const [sideBarExpanded, setSideBarExpanded] = React.useState(true);
   const location = useLocation();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { isLoggedIn, isLoading, session, user } = useAuthStatus();
 
   return (
     <S.SiteWrapper>
@@ -151,20 +156,24 @@ export function RootedApp() {
             }}
           >
             <S.Ul>
-              {Object.values(routes).map((r) => (
-                <S.Li
-                  key={r.path}
-                  to={r.path}
-                  selected={location.pathname === r.path}
-                  sx={{
-                    display: 'flex',
-                    gap: 1,
-                  }}
-                >
-                  <r.icon sx={{ fontSize: 20 }} />
-                  {sideBarExpanded && <span>{r.name}</span>}
-                </S.Li>
-              ))}
+              {Object.values(routes)
+                .filter(
+                  (r) => !r.role || (!isLoading && r.role === user.role) || session?.impersonatedBy
+                )
+                .map((r) => (
+                  <S.Li
+                    key={r.path}
+                    to={r.path}
+                    selected={location.pathname === r.path}
+                    sx={{
+                      display: 'flex',
+                      gap: 1,
+                    }}
+                  >
+                    <r.icon sx={{ fontSize: 20 }} />
+                    {sideBarExpanded && <span>{r.name}</span>}
+                  </S.Li>
+                ))}
             </S.Ul>
           </Box>
         </Box>
@@ -256,7 +265,7 @@ export default function App() {
               }
             />
             <Route
-              path="/sign-in"
+              path="/sign-in*"
               element={
                 <UnprotectedRoute>
                   <SignInPage />
@@ -264,11 +273,27 @@ export default function App() {
               }
             />
             <Route
-              path="/sign-up"
+              path="/sign-up*"
               element={
                 <UnprotectedRoute>
                   <SignUpPage />
                 </UnprotectedRoute>
+              }
+            />
+            <Route
+              path="/forgot-password*"
+              element={
+                <UnprotectedRoute>
+                  <ForgotPasswordPage />
+                </UnprotectedRoute>
+              }
+            />
+            <Route
+              path="/reset-password*"
+              element={
+                // <UnprotectedRoute>
+                <ResetPasswordPage />
+                // {/* </UnprotectedRoute> */}
               }
             />
 

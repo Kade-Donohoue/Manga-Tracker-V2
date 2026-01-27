@@ -22,19 +22,6 @@ apiRouter.post('/create', async (c) => {
 apiRouter.post('*', async (c) => {
   const auth = createAuth(c.env);
   return auth.handler(c.req.raw);
-
-  // const session = await auth.api.getSession(c.req.raw);
-
-  // if (!session?.user) return c.json({ error: 'Unauthorized' }, 401);
-  // if (session.user.role !== 'admin') return c.json({ error: 'Forbidden' }, 403);
-
-  // const apiKey = await auth.api.createApiKey({
-  // body: { userId: session.user.id, name: 'My Key', prefix: 'Util' },
-  // });
-
-  // return c.json(apiKey);
-
-  // return auth.handler(c.req.raw);
 });
 
 router.route('/api-key', apiRouter);

@@ -1,10 +1,24 @@
 import { useState, useEffect } from 'react';
 import { createAuthClient } from 'better-auth/react'; // adjust import if needed
 import { useNavigate } from 'react-router-dom';
+import { adminClient } from 'better-auth/client/plugins';
 
-interface UseAuthStatus {
+export interface UseAuthStatusInterface {
   isLoading: boolean;
   isLoggedIn: boolean;
+  user: {
+    id: string;
+    createdAt: Date;
+    updatedAt: Date;
+    email: string;
+    emailVerified: boolean;
+    name: string;
+    image?: string | null | undefined;
+    banned: boolean | null | undefined;
+    role?: string | null | undefined;
+    banReason?: string | null | undefined;
+    banExpires?: Date | null | undefined;
+  };
   session: {
     id: string;
     createdAt: Date;
@@ -14,66 +28,75 @@ interface UseAuthStatus {
     token: string;
     ipAddress?: string | null | undefined;
     userAgent?: string | null | undefined;
-  } | null;
-  user: {
-    id: string;
-    createdAt: Date;
-    updatedAt: Date;
-    email: string;
-    emailVerified: boolean;
-    name: string;
-    image?: string | null | undefined;
-  } | null;
+    impersonatedBy?: string | null | undefined;
+  };
+  refresh: () => void;
 }
 
 export const authClient = createAuthClient({
   baseURL: import.meta.env.VITE_SERVER_URL,
+  plugins: [adminClient()],
 });
 
-export const useAuthStatus = (): UseAuthStatus => {
+export const useAuthStatus = (): UseAuthStatusInterface => {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<any | null>(null);
   const [session, setSession] = useState<any | null>(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    let isMounted = true;
+  const checkSession = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await authClient.getSession(); // or authClient.useSession()
 
-    const checkSession = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error } = await authClient.getSession(); // or authClient.useSession()
-        if (!isMounted) return;
-
-        if (error || !data?.user) {
-          setIsLoggedIn(false);
-          setUser(null);
-          setSession(null);
-          navigate('/home');
-        } else {
-          setIsLoggedIn(true);
-          console.log(data.user);
-          setUser(data.user);
-          setSession(data.session);
-        }
-      } catch (err) {
-        if (!isMounted) return;
+      if (error || !data?.user) {
         setIsLoggedIn(false);
         setUser(null);
+        setSession(null);
         navigate('/home');
-      } finally {
-        if (isMounted) setIsLoading(false);
+      } else {
+        setIsLoggedIn(true);
+        console.log(data.user);
+        setUser(data.user);
+        setSession(data.session);
       }
-    };
+    } catch (err) {
+      setIsLoggedIn(false);
+      setUser(null);
+      navigate('/home');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     checkSession();
-
-    console.log(user);
-    return () => {
-      isMounted = false;
-    };
   }, []);
 
-  return { isLoading, isLoggedIn, session, user };
+  return { isLoading, isLoggedIn, user, session, refresh: checkSession };
+};
+
+export const authActions = {
+  changePassword: async (currentPassword: string, newPassword: string, revokeSessions: boolean) => {
+    return await authClient.changePassword({
+      currentPassword,
+      newPassword,
+      revokeOtherSessions: revokeSessions,
+    });
+  },
+
+  listSessions: async () => {
+    return await authClient.listSessions();
+  },
+
+  revokeSession: async (sessionToken: string) => {
+    return await authClient.revokeSession({ token: sessionToken });
+  },
+
+  revokeSessions: async () => {
+    return await authClient.revokeSessions();
+  },
+  updateProfile: (data: { name?: string; image?: string }) => authClient.updateUser(data),
+
 };
