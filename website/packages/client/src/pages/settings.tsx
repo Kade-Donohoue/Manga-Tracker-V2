@@ -482,9 +482,12 @@ function UserAccountSection({ authStatus }: { authStatus: UseAuthStatusInterface
               <Box display="flex" alignItems="center" gap={1}>
                 <Typography variant="body2" sx={{ opacity: 0.7 }}>
                   {s.userAgent ?? 'Unknown device'}
-                  {s.id === session.id}
                 </Typography>
-                <Chip label="Current" size="small" color="primary" sx={{ height: 20 }} />
+                {s.id === session.id ? (
+                  <Chip label="Current" size="small" color="primary" sx={{ height: 20 }} />
+                ) : (
+                  <div />
+                )}
               </Box>
 
               {s.id !== session.id && (
