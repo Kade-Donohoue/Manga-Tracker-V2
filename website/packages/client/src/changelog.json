@@ -1,5 +1,12 @@
 [
   { 
+    "version": "v3.2.0", 
+    "date": "2026-27-1", 
+    "features": ["Verification Emails", "Profile Updates (including avatars)", "Session Managment", "Improved Admin tooling"], 
+    "fixes": ["Chapters unread can no longer go negative"], 
+    "improvements": ["Puppeteer auto update flow improved", "User Requests for adding manga priority fixed", "Each Site gets its own queue in puppeteer.", "Config for trusted orgins in file", "Improved Notifications from puppeteer (admin side)"] 
+  },
+  { 
     "version": "v3.1.9", 
     "date": "2025-11-11", 
     "features": [], 
