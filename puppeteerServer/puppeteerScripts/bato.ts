@@ -7,7 +7,7 @@ import { Queue, Worker, Job } from 'bullmq';
 import { connection } from '../connections';
 
 const Bato = 'bato-site';
-const ENABLED = true;
+const ENABLED = false;
 
 export const batoQueue = new Queue(Bato, {
   connection,

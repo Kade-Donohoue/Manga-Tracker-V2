@@ -1,5 +1,12 @@
 [
   { 
+    "version": "v3.3.0", 
+    "date": "2026-10-2", 
+    "features": ["Comix Support"], 
+    "fixes": ["Disabled Bato / Mangapark", "Manganato now uses new endpoint"], 
+    "improvements": [] 
+  },
+  { 
     "version": "v3.2.0", 
     "date": "2026-27-1", 
     "features": ["Verification Emails", "Profile Updates (including avatars)", "Session Managment", "Improved Admin tooling"], 
