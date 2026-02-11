@@ -7,7 +7,7 @@ const path = require('path');
 
 const connection = { host: '127.0.0.1', port: 6379 };
 
-const queueNames = ['Manganato-site','bato-site','Mangadex-site','Mangapark-site','asura-site','Mangafire-site', 'auto-update', 'user-bulk']
+const queueNames = ['Manganato-site','bato-site','Mangadex-site','Mangapark-site','asura-site','Mangafire-site', 'auto-update', 'user-bulk', 'comix-site']
 const baseQueues = queueNames.map(queueName => new Queue(queueName, { connection }))
 
 const serverAdapter = new ExpressAdapter();

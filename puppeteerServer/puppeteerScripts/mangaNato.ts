@@ -153,8 +153,6 @@ export async function getManga(
     await job.updateProgress(20);
     job.log(logWithTimestamp('Chapter Page Loaded. Fetching Data'));
 
-    const chapterDropdown = await page.waitForSelector('.navi-change-chapter', { timeout: 500 });
-
     const titleSelect = await page.$eval(
       '.breadcrumb a[title][href*="/manga/"]:not([href*="chapter"])',
       (el: HTMLAnchorElement) => ({
@@ -165,18 +163,30 @@ export async function getManga(
     const mangaName = titleSelect?.title;
     const overviewUrl = titleSelect?.overviewUrl;
 
-    // Extract the text values
-    const urlList = chapterDropdown
-      ? (
-          await chapterDropdown.evaluate((select) =>
-            Array.from(select.querySelectorAll('option')).map((option) =>
-              option.getAttribute('data-url').split('chapter-').at(-1)
-            )
-          )
-        ).reverse()
-      : [];
+    const chapApiUrl = overviewUrl.replace('/manga/', '/api/manga/') + '/chapters?limit=-1';
+    const chapterResponse = await fetch(chapApiUrl);;
 
-    if (urlList.length <= 0)
+    const chapterData: {
+      data: {
+        chapters: {
+          chapter_name: string;
+          chapter_slug: string;
+          chapter_num: number;
+          updated_at: string;
+          view: number;
+        }[];
+      };
+    } = await chapterResponse.json();
+
+    console.log(chapterData);
+
+    const slugList = chapterData.data.chapters.map((chap) =>
+      chap.chapter_slug.replace('chapter-', '')
+    );
+
+    const chapterTextList = chapterData.data.chapters.map((chap) => String(chap.chapter_num));
+
+    if (slugList.length <= 0)
       throw new Error('Manga: Issue fetching chapters! Please Contact and Admin!');
 
     job.log(logWithTimestamp('Chapter Data Fetched'));
@@ -247,10 +257,10 @@ export async function getManga(
 
     if (config.debug.verboseLogging) {
       console.log(url.split('chapter-').at(-1));
-      console.log(urlList);
+      console.log(slugList);
     }
 
-    const currIndex = urlList.indexOf(url.split('chapter-').at(-1));
+    const currIndex = slugList.indexOf(url.split('chapter-').at(-1));
 
     if (currIndex == -1 && !ignoreIndex) {
       throw new Error('Manga: Unable to find current chapter. Please retry or contact Admin!');
@@ -261,8 +271,8 @@ export async function getManga(
     return {
       mangaName: mangaName,
       urlBase: overviewUrl + '/chapter-',
-      slugList: urlList.join(','),
-      chapterTextList: urlList.join(',').replace('.', '-'),
+      slugList: slugList.join(','),
+      chapterTextList: chapterTextList.join(','),
       currentIndex: currIndex,
       images: images,
       specialFetchData: null,

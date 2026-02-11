@@ -7,7 +7,7 @@ import { Queue, Worker, Job } from 'bullmq';
 import { connection } from '../connections';
 
 const Mangapark = 'Mangapark-site';
-const ENABLED = true;
+const ENABLED = false;
 
 export const mangaparkQueue = new Queue(Mangapark, {
   connection,
