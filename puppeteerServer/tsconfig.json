@@ -3,10 +3,10 @@
       "module": "commonjs",
       "resolveJsonModule": true,
       "esModuleInterop": true,
-      "target": "es6",
+      "target": "ES2018",
       "moduleResolution": "node",
       "sourceMap": true,
       "outDir": "dist"
     },
-    "lib": ["es2015"]
+    "lib": ["ES2018"]
 }

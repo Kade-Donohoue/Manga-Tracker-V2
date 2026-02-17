@@ -26,12 +26,16 @@ function check(url: string): CheckResult {
     return { ok: false, stage: 1, reason: 'Hostname does not match comix' };
   }
 
-  const match = u.pathname.match(/title\/([^-\/]+)-[^\/]+\/([0-9]+)-chapter-[0-9]+/i);
-  if (!match) {
+  const match = u.pathname.match(
+    /^\/title\/(?<mangaId>[a-z0-9]+)(?:-[^\/]+)?\/(?<chapterId>[0-9]+)(?:-chapter-(?<chapterNumber>[0-9.]+))?$/i
+  );
+
+  if (!match?.groups) {
     return {
       ok: false,
       stage: 2,
-      reason: 'Path must match /title/{manga-id}-manga-slug/{chapter-id}-chapter-{chapter-number}',
+      reason:
+        'Path must match /title/{manga-id}-slug/{chapter-id}-chapter-{chapter-number} OR /title/{manga-id}/{chapter-id}',
     };
   }
 
