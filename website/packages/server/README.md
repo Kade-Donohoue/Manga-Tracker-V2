@@ -19,3 +19,9 @@ Pass the `CloudflareBindings` as generics when instantiation `Hono`:
 // src/index.ts
 const app = new Hono<{ Bindings: CloudflareBindings }>()
 ```
+
+
+To generate notif keys run
+```
+npx web-push generate-vapid-keys
+```

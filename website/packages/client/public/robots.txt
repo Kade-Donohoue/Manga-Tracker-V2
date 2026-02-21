@@ -1,0 +1,4 @@
+# Allow search engines to index only the home page
+User-agent: *
+Allow: /home
+Disallow: /

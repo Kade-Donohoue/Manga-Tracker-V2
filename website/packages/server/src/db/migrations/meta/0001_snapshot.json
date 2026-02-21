@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "fbf79042-edb6-4886-bb0a-d721e7a973b4",
-  "prevId": "a307f3e4-fc27-41c0-991c-f6e6e69057be",
+  "id": "2924ec53-5048-4e57-9459-494a4c056e46",
+  "prevId": "a1e11694-a633-4270-9678-70c933b1bda3",
   "tables": {
     "account": {
       "name": "account",
@@ -949,6 +949,59 @@
         }
       },
       "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "subscriptions": {
+      "name": "subscriptions",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "userID": {
+          "name": "userID",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "endpoint": {
+          "name": "endpoint",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "expirationTime": {
+          "name": "expirationTime",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "keys": {
+          "name": "keys",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "subscriptions_userID_id_pk": {
+          "columns": [
+            "userID",
+            "id"
+          ],
+          "name": "subscriptions_userID_id_pk"
+        }
+      },
       "uniqueConstraints": {},
       "checkConstraints": {}
     },

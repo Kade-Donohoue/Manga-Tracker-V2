@@ -29,6 +29,9 @@ const EnvSchema = z.object({
   AWS_ACCESS_KEY_ID: z.string(),
   SES_FROM: z.email(),
   AWS_REGION: z.string(),
+  VAPID_SUBJECT: z.string(),
+  VITE_VAPID_PUBLIC_KEY: z.string(),
+  VAPID_PRIVATE_KEY: z.string(),
 });
 
 export const BindingsSchema = {

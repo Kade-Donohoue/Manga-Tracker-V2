@@ -37,6 +37,7 @@ import { useAuthStatus } from './hooks/useAuthStatus';
 import admin from './pages/admin/admin';
 import ForgotPasswordPage from './pages/auth/forgotPasswordPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
+import { useAutoPush } from './hooks/useAutoPush';
 
 interface CenteredPageProps {
   children: React.ReactNode;
@@ -227,6 +228,8 @@ export function RootedApp() {
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isLoggedIn, isLoading, session, user } = useAuthStatus();
 
+  useAutoPush(true);
+
   if (isLoading) return <div>loading...</div>;
 
   if (!isLoggedIn) return <Navigate to="/home" replace />;
@@ -265,7 +268,7 @@ export default function App() {
               }
             />
             <Route
-              path="/sign-in*"
+              path="/sign-in/*"
               element={
                 <UnprotectedRoute>
                   <SignInPage />
@@ -273,7 +276,7 @@ export default function App() {
               }
             />
             <Route
-              path="/sign-up*"
+              path="/sign-up/*"
               element={
                 <UnprotectedRoute>
                   <SignUpPage />
@@ -281,7 +284,7 @@ export default function App() {
               }
             />
             <Route
-              path="/forgot-password*"
+              path="/forgot-password/*"
               element={
                 <UnprotectedRoute>
                   <ForgotPasswordPage />
@@ -289,7 +292,7 @@ export default function App() {
               }
             />
             <Route
-              path="/reset-password*"
+              path="/reset-password/*"
               element={
                 // <UnprotectedRoute>
                 <ResetPasswordPage />
