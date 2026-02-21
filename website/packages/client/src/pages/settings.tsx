@@ -36,6 +36,7 @@ import Stack from '@mui/material/Stack';
 import IconButton from '@mui/material/IconButton';
 import Avatar from '@mui/material/Avatar';
 import Chip from '@mui/material/Chip';
+import NotificationsSettingsAccordion from '../components/settings/notification';
 
 const uiSettingsConfig = [
   {
@@ -100,6 +101,7 @@ export default function settings() {
             })}
           </AccordionDetails>
         </Accordion>
+        <NotificationsSettingsAccordion />
         <Accordion sx={{ backgroundColor: '#1e1e1e', color: '#ffffff', width: '80%' }}>
           <AccordionSummary
             expandIcon={<ExpandMoreIcon sx={{ color: '#ffffff' }} />}

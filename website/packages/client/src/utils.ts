@@ -122,3 +122,16 @@ export async function submitManga(urls: string[], category: string): Promise<Man
     return urls.map((url) => ({ url, message: err.message || 'Unknown error' }));
   }
 }
+
+const STORAGE_KEY = 'push-device-id';
+
+export function getOrCreateDeviceId() {
+  let id = localStorage.getItem(STORAGE_KEY);
+
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem(STORAGE_KEY, id);
+  }
+
+  return id;
+}

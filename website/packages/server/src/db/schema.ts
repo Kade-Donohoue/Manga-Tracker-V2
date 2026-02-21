@@ -7,6 +7,7 @@ import {
   primaryKey,
   foreignKey,
   unique,
+  customType,
 } from 'drizzle-orm/sqlite-core';
 
 export const user = sqliteTable('user', {
@@ -278,6 +279,34 @@ export const globalDailyStats = sqliteTable(
     chaptersRead30: integer('chaptersRead30').notNull(),
   },
   (t) => [primaryKey({ columns: [t.date] })]
+);
+
+const customJsonb = <TData>(name: string) =>
+  customType<{ data: TData; driverData: string }>({
+    dataType() {
+      return 'jsonb';
+    },
+    toDriver(value: TData): string {
+      return JSON.stringify(value);
+    },
+    fromDriver(value) {
+      return JSON.parse(value);
+    },
+  })(name);
+
+export const subscriptions = sqliteTable(
+  'subscriptions',
+  {
+    id: text('id').notNull(),
+    userID: text('userID').notNull(),
+    endpoint: text('endpoint').notNull(),
+    expirationTime: integer('expirationTime'),
+    keys: customJsonb<{
+      auth: string;
+      p256dh: string;
+    }>('keys').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.userID, t.id] })]
 );
 
 //--------------------------

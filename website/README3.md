@@ -106,3 +106,12 @@ pnpm capacitor:build
 5. Create a keystore and fill in credentials.
 6. Select Release, then Finish to build your APK.
 
+## Database Migrations
+```sh
+pnpm exec wrangler d1 migrations apply DB --remote
+```
+
+to generate migrations
+```sh
+npx drizzle-kit generate
+```

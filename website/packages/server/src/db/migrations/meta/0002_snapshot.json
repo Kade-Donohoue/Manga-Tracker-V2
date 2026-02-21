@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "a307f3e4-fc27-41c0-991c-f6e6e69057be",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "a1e11694-a633-4270-9678-70c933b1bda3",
+  "prevId": "fbf79042-edb6-4886-bb0a-d721e7a973b4",
   "tables": {
     "account": {
       "name": "account",
@@ -634,13 +634,20 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "sourceId": {
+          "name": "sourceId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         }
       },
       "indexes": {
-        "mangaData_urlBase_unique": {
-          "name": "mangaData_urlBase_unique",
+        "mangaData_sourceId_unique": {
+          "name": "mangaData_sourceId_unique",
           "columns": [
-            "urlBase"
+            "sourceId"
           ],
           "isUnique": true
         }
@@ -941,6 +948,51 @@
           "onUpdate": "no action"
         }
       },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "subscriptions": {
+      "name": "subscriptions",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "userID": {
+          "name": "userID",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "endpoint": {
+          "name": "endpoint",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "expirationTime": {
+          "name": "expirationTime",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "keys": {
+          "name": "keys",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}

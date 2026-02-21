@@ -192,6 +192,13 @@ export default function AdminTools() {
               {/* <Button onClick={() => navigate('/admin/users')}>User Management</Button>
               <Button onClick={() => navigate('/admin/audit-log')}>Audit Logs</Button>
               <Button onClick={() => navigate('/admin/stats')}>Statistics</Button> */}
+              <Button
+                onClick={() =>
+                  new Notification('Test', { body: 'This is a Local Notification Test' })
+                }
+              >
+                Test Notif
+              </Button>
             </CardContent>
           </Card>
         </Grid>

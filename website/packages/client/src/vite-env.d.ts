@@ -1,10 +1,12 @@
 /// <reference types="vite/client" />
+/// <reference types="vite-plugin-pwa/client" />
 
 interface ImportMetaEnv {
   readonly VITE_CLIENT_ID: string;
   readonly VITE_APPLICATION_ID: string;
   readonly VITE_SERVER_URL: string;
-  readonly VITE_DISCORD_INVITE
+  readonly VITE_DISCORD_INVITE;
+  readonly VITE_VAPID_PUBLIC_KEY;
   // add env variables here
 }
 

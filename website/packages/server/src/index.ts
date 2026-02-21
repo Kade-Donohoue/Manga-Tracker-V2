@@ -9,6 +9,7 @@ import { Environment } from './env';
 import { scheduled } from './scheduledTasks';
 import adminRouter from './routes/api/admin.routes';
 import userRouter from './routes/api/user.route';
+import notifRouter from './routes/notifs/notif';
 
 const app = createApp();
 
@@ -20,6 +21,7 @@ const routes = [
   { route: '/api/friends', router: friendsRouter },
   { route: '/api/serverReq/data', router: adminRouter },
   { route: '/api/user', router: userRouter },
+  { route: '/api/notifs', router: notifRouter },
 ] as const;
 
 routes.forEach(({ route, router }) => {

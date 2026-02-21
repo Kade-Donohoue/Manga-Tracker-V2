@@ -1,4 +1,11 @@
 [
+  {
+    "version": "v3.4.0", 
+    "date": "2026-21-2", 
+    "features": ["Notification Framework(only manual sends)"], 
+    "fixes": ["Add Manga Page works again!", "Arrow on View Tracked now shows on mobile", "Fixed bug that prevented comix from auto updating"], 
+    "improvements": [] 
+  },
   { 
     "version": "v3.3.0", 
     "date": "2026-10-2", 
