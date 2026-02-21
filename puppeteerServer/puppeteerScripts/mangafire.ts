@@ -229,6 +229,9 @@ export async function getManga(
 
     // console.log(mangaName);
 
+    //issue here?
+    if (icon) console.warn(chapterDataHTML);
+
     await page.setContent(chapterDataHTML, { waitUntil: 'domcontentloaded' });
 
     const chapterNumbers = (

@@ -307,10 +307,10 @@ export default function Tracked() {
         <Fade in={showScrollButton}>
           <Box
             sx={{
-              position: 'absolute',
-              bottom: theme.spacing(2),
+              position: 'fixed',
+              bottom: theme.spacing(8),
               right: theme.spacing(2),
-              zIndex: 1,
+              zIndex: 1300,
             }}
           >
             <IconButton
