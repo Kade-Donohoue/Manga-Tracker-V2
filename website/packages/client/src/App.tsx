@@ -21,7 +21,6 @@ import MenuIcon from '@mui/icons-material/Menu';
 
 import * as S from './AppStyles';
 import IconButton from '@mui/material/IconButton';
-import CookieBanner from './components/cookies';
 import { queryClient } from './queryClient';
 import Box from '@mui/material/Box';
 import { useTheme } from '@mui/material/styles';
@@ -38,6 +37,9 @@ import admin from './pages/admin/admin';
 import ForgotPasswordPage from './pages/auth/forgotPasswordPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import { useAutoPush } from './hooks/useAutoPush';
+import TermsOfService from './pages/policies/tos';
+import PrivacyPolicy from './pages/policies/privacy';
+import CookiePolicy from './pages/policies/cookie';
 
 interface CenteredPageProps {
   children: React.ReactNode;
@@ -299,6 +301,30 @@ export default function App() {
                 // {/* </UnprotectedRoute> */}
               }
             />
+            <Route
+              path="/tos"
+              element={
+                // <UnprotectedRoute>
+                <TermsOfService />
+                // </UnprotectedRoute>
+              }
+            />
+            <Route
+              path="/privacy-policy"
+              element={
+                // <UnprotectedRoute>
+                <PrivacyPolicy />
+                // </UnprotectedRoute>
+              }
+            />
+            <Route
+              path="/cookies-policy"
+              element={
+                // <UnprotectedRoute>
+                <CookiePolicy />
+                // </UnprotectedRoute>
+              }
+            />
 
             <Route
               path="/*"
@@ -322,7 +348,6 @@ export default function App() {
           pauseOnHover
           theme="dark"
         />
-        <CookieBanner />
       </DesignSystemProvider>
     </QueryClientProvider>
   );

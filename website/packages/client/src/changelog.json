@@ -1,5 +1,12 @@
 [
   {
+    "version": "v3.4.1", 
+    "date": "2026-22-2", 
+    "features": [], 
+    "fixes": [], 
+    "improvements": ["Cookies, TOS, Privacy Policy pages instead of banner!"] 
+  },
+  {
     "version": "v3.4.0", 
     "date": "2026-21-2", 
     "features": ["Notification Framework(only manual sends)"], 

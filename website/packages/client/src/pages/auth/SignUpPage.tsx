@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authClient } from '../../hooks/useAuthStatus';
 import { Box, Button, TextField, Typography, Paper, Link as MuiLink } from '@mui/material';
+import { FormControlLabel, Checkbox } from '@mui/material';
 
 export default function SignUpPage() {
   const navigate = useNavigate();
@@ -11,10 +12,17 @@ export default function SignUpPage() {
   const [confirmPassword, setConfirmPassword] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [agreed, setAgreed] = React.useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setLoading(true);
+
+    if (!agreed) {
+      setError('You must agree to the Privacy Policy and Terms to continue');
+      return;
+    }
 
     if (!name.trim()) {
       setError('Username is required');
@@ -114,7 +122,32 @@ export default function SignUpPage() {
             InputProps={{ sx: { color: '#f0f0f0' } }}
             InputLabelProps={{ sx: { color: '#f0f0f0' } }}
           />
-          <Button type="submit" variant="contained" color="primary" disabled={loading}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+                sx={{ color: '#00bcd4' }}
+              />
+            }
+            label={
+              <Typography variant="body2" sx={{ color: '#ccc' }}>
+                I agree to the{' '}
+                <MuiLink href="/privacy-policy" target="_blank" sx={{ color: '#00bcd4' }}>
+                  Privacy Policy
+                </MuiLink>{' '}
+                and{' '}
+                <MuiLink href="/tos" target="_blank" sx={{ color: '#00bcd4' }}>
+                  Terms of Service
+                </MuiLink>{' '}
+                and{' '}
+                <MuiLink href="/cookies-policy" target="_blank" sx={{ color: '#00bcd4' }}>
+                  Cookies Policy
+                </MuiLink>
+              </Typography>
+            }
+          />
+          <Button type="submit" variant="contained" color="primary" disabled={loading || !agreed}>
             {loading ? 'Creating account...' : 'Sign Up'}
           </Button>
         </Box>

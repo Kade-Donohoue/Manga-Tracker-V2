@@ -75,7 +75,7 @@ notifRouter.post('/send/:id', async (c) => {
   // const exampleMessage = await c.req.json<PushMessage>();
   const exampleMessage = {
     data: 'Hello! This can be anything you want including JSON',
-    options: { topic: 'web.com.kdonohoue.devmanga', ttl: 900, urgency: 'high' as const },
+    options: { ttl: 900, urgency: 'high' as const },
   };
 
   const payload = await buildPushPayload(exampleMessage, subscription, {
@@ -107,7 +107,6 @@ notifRouter.post('/send-user', async (c) => {
   const exampleMessage = {
     data: 'Hello multi-device world',
     options: {
-      // topic: base64UrlEncode('web.com.kdonohoue.devmanga'),
       ttl: 900,
       urgency: 'normal' as const,
     },
