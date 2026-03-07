@@ -17,7 +17,7 @@ export default function ForgotPasswordPage() {
     setError(null);
 
     try {
-      await authClient.forgetPassword({
+      await authClient.requestPasswordReset({
         email,
         redirectTo: `${import.meta.env.VITE_SERVER_URL}/reset-password`,
       });

@@ -38,7 +38,7 @@ export default defineConfig(({ mode }) => {
         },
       }),
     ],
-    base: './',
+    base: '/',
     define: {
       VITE_SERVER_URL: JSON.stringify(env.VITE_SERVER_URL),
     },
