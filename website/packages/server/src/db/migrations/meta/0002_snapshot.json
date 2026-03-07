@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "a1e11694-a633-4270-9678-70c933b1bda3",
-  "prevId": "fbf79042-edb6-4886-bb0a-d721e7a973b4",
+  "id": "51afd732-167f-4f94-b27c-120c0a4272c4",
+  "prevId": "a1e11694-a633-4270-9678-70c933b1bda3",
   "tables": {
     "account": {
       "name": "account",
@@ -157,8 +157,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "userId": {
-          "name": "userId",
+        "referenceId": {
+          "name": "referenceId",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -958,7 +958,7 @@
         "id": {
           "name": "id",
           "type": "text",
-          "primaryKey": true,
+          "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
@@ -993,7 +993,15 @@
       },
       "indexes": {},
       "foreignKeys": {},
-      "compositePrimaryKeys": {},
+      "compositePrimaryKeys": {
+        "subscriptions_userID_id_pk": {
+          "columns": [
+            "userID",
+            "id"
+          ],
+          "name": "subscriptions_userID_id_pk"
+        }
+      },
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
@@ -1405,7 +1413,9 @@
   "_meta": {
     "schemas": {},
     "tables": {},
-    "columns": {}
+    "columns": {
+      "\"apikey\".\"userId\"": "\"apikey\".\"referenceId\""
+    }
   },
   "internal": {
     "indexes": {}
