@@ -1,7 +1,8 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { createDb } from '@/db';
-import { openAPI, apiKey, admin } from 'better-auth/plugins';
+import { apiKey } from "@better-auth/api-key";
+import { openAPI, admin } from 'better-auth/plugins';
 import { Environment } from '@/env';
 import { sendEmail } from '@/email';
 import { waitUntil } from 'cloudflare:workers';
