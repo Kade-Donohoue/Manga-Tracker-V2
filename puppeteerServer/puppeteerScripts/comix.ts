@@ -197,9 +197,7 @@ export async function getManga(
     job.log(logWithTimestamp(`Starting chapter fetch for manga ${mangaId}`));
 
     while (page <= lastPage) {
-      const url =
-        `https://comix.to/api/v2/manga/${mangaId}/chapters` +
-        `?limit=100&page=${page}&order[number]=asc`;
+      const url = `https://comix.to/api/v2/manga/${mangaId}/chapters?limit=100&page=${page}&order[number]=asc`;
 
       console.log(url);
 

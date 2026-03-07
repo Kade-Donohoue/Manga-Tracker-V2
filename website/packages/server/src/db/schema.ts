@@ -226,7 +226,7 @@ export const apikey = sqliteTable('apikey', {
   start: text('start').notNull(),
   prefix: text('prefix').notNull(),
   key: text('key').notNull(),
-  userId: text('userId').notNull(),
+  referenceId: text('referenceId').notNull(),
   refillInterval: integer('refillInterval'), // ms
   refillAmount: integer('refillAmount'),
   lastRefillAt: integer('lastRefillAt', { mode: 'timestamp_ms' }),
