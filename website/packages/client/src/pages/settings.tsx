@@ -371,6 +371,19 @@ function UserAccountSection({ authStatus }: { authStatus: UseAuthStatusInterface
             {user.email}
           </Typography>
         </Box>
+
+        <Button
+          variant="outlined"
+          color="error"
+          sx={{ ml: 'auto' }}
+          onClick={() => {
+            authClient.signOut();
+            // refresh();
+            window.location.replace('/home');
+          }}
+        >
+          Sign Out
+        </Button>
       </Box>
 
       <Divider sx={{ backgroundColor: '#444' }} />
@@ -428,7 +441,7 @@ function UserAccountSection({ authStatus }: { authStatus: UseAuthStatusInterface
             </Typography>
           ) : (
             // null}
-            <div>
+            <Stack spacing={2} maxWidth={420}>
               <TextField
                 size="small"
                 label={hasPassword ? 'Current Password' : 'New Password'}
@@ -444,7 +457,6 @@ function UserAccountSection({ authStatus }: { authStatus: UseAuthStatusInterface
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
               />
-              <br />
               <Button
                 variant="contained"
                 onClick={async () => {
@@ -465,7 +477,7 @@ function UserAccountSection({ authStatus }: { authStatus: UseAuthStatusInterface
               >
                 {hasPassword ? 'Update Password' : 'Set Password'}
               </Button>
-            </div>
+            </Stack>
           )}
         </Stack>
       </Box>
@@ -493,7 +505,14 @@ function UserAccountSection({ authStatus }: { authStatus: UseAuthStatusInterface
               </Box>
 
               {s.id !== session.id && (
-                <Button size="small" color="error" onClick={() => authActions.revokeSession(s.id)}>
+                <Button
+                  size="small"
+                  color="error"
+                  onClick={() => {
+                    authActions.revokeSession(s.token);
+                    refresh();
+                  }}
+                >
                   Revoke
                 </Button>
               )}

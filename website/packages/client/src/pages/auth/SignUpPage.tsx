@@ -170,6 +170,14 @@ export default function SignUpPage() {
           >
             Discord
           </Button>
+
+          <Button
+            variant="outlined"
+            fullWidth
+            onClick={() => authClient.signIn.social({ provider: 'twitter' })}
+          >
+            Twitter
+          </Button>
         </Box>
 
         <Box sx={{ mt: 2, textAlign: 'center' }}>

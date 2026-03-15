@@ -10,8 +10,17 @@ import { scheduled } from './scheduledTasks';
 import adminRouter from './routes/api/admin.routes';
 import userRouter from './routes/api/user.route';
 import notifRouter from './routes/notifs/notif';
+import { MiddlewareHandler } from 'hono';
+import { AppBindings } from './lib/types';
 
 const app = createApp();
+
+export const logging: MiddlewareHandler<AppBindings> = async (c, next) => {
+  console.log('PAth: ', c.req.path);
+  return next();
+};
+
+app.use('*', logging);
 
 const routes = [
   { route: '/api', router: index },
