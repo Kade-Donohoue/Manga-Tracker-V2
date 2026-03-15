@@ -27,6 +27,7 @@ apiRouter.post('*', async (c) => {
 router.route('/api-key', apiRouter);
 
 router.all('*', (c) => {
+  console.log(c.req.path);
   const auth = createAuth(c.env);
   return auth.handler(c.req.raw);
 });
