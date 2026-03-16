@@ -14,6 +14,8 @@ export async function registerServiceWorker() {
     throw new Error('Service workers not supported');
   }
 
+  if (location.pathname.includes('/api')) return console.log('Skipping Worker Registration on API');
+
   return await navigator.serviceWorker.register('/sw.js');
 }
 
@@ -31,10 +33,14 @@ export async function ensurePushSubscription() {
     return null;
   }
 
-  let subscription = await registration.pushManager.getSubscription();
-  console.log(subscription);
+  let subscription;
 
-  if (!subscription) {
+  if (registration) {
+    subscription = await registration.pushManager.getSubscription();
+    console.log(subscription);
+  }
+
+  if (!subscription && registration) {
     const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
     console.log(`Generating Sub with vapid key ${vapidPublicKey}`);
     subscription = await registration.pushManager.subscribe({

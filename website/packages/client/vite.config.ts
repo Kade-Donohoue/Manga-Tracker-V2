@@ -10,6 +10,10 @@ export default defineConfig(({ mode }) => {
       react(),
       VitePWA({
         registerType: 'autoUpdate',
+        injectRegister: false,
+        workbox: {
+          navigateFallbackDenylist: [/^\/api/],
+        },
         includeAssets: ['/favicon.ico', '/robots.txt'],
         manifest: {
           name: 'Tomari, Manga Tracker',

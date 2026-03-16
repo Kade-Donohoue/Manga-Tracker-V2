@@ -116,12 +116,12 @@ export const createAuth = (env: Environment) => {
       google: {
         clientId: env.GOOGLE_CLIENT_ID as string,
         clientSecret: env.GOOGLE_CLIENT_SECRET as string,
-        redirectURI: (env.REDIRECT_URI as string) + '/api/auth/callback/google',
+        // redirectURI: (env.REDIRECT_URI as string) + '/api/auth/callback/google',
       },
       discord: {
         clientId: env.DISCORD_CLIENT_ID as string,
         clientSecret: env.DISCORD_CLIENT_SECRET as string,
-        redirectURI: (env.REDIRECT_URI as string) + '/api/auth/callback/discord',
+        // redirectURI: (env.REDIRECT_URI as string) + '/api/auth/callback/discord',
       },
       twitter: {
         clientId: env.TWITTER_CLIENT_ID as string,
