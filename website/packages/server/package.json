@@ -11,22 +11,22 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@better-auth/api-key": "^1.5.4",
-    "@better-auth/sso": "^1.5.4",
+    "@better-auth/api-key": "^1.5.5",
+    "@better-auth/sso": "^1.5.5",
     "@block65/webcrypto-web-push": "^1.0.2",
     "@hono/zod-validator": "^0.7.6",
-    "better-auth": "^1.5.4",
+    "better-auth": "^1.5.5",
     "drizzle-orm": "^0.45.1",
-    "hono": "^4.12.5",
+    "hono": "^4.12.8",
     "web-push": "^3.6.7",
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260306.1",
-    "@types/node": "^25.3.5",
+    "@cloudflare/workers-types": "^4.20260313.1",
+    "@types/node": "^25.5.0",
     "dotenv": "^17.3.1",
     "drizzle-kit": "^0.31.9",
     "typescript": "^5.9.3",
-    "wrangler": "^4.71.0"
+    "wrangler": "^4.73.0"
   }
 }
