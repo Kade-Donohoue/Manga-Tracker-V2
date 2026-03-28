@@ -178,8 +178,7 @@ export async function getManga(
 
     const title = await page.$eval('div.truncate:nth-child(1)', (el) => el.innerHTML);
 
-    const overViewURL =
-      'https://asurascans.com' + (await page.$eval('div > a.gap-3', (el) => el.href));
+    const overViewURL = await page.$eval('div > a.gap-3', (el) => el.href);
     if (!overViewURL) throw new Error('Manga: Unable to get base URL!');
 
     job.log(logWithTimestamp(overViewURL));
