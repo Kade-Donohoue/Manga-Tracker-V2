@@ -203,7 +203,30 @@ export async function getManga(
 
       job.log(logWithTimestamp(`Fetching page ${page}/${lastPage}`));
 
-      const res = await fetch(url);
+      const res = await fetch(url, {
+        method: 'GET',
+
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+          Accept: 'application/json, text/plain, */*',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Accept-Encoding': 'gzip, deflate, br',
+          Referer: 'https://comix.to/',
+          Connection: 'keep-alive',
+          'Upgrade-Insecure-Requests': '1',
+          'Cache-Control': 'no-cache',
+          Origin: 'https://comix.to',
+          'Sec-Fetch-Site': 'same-origin',
+          'Sec-Fetch-Mode': 'cors',
+          'Sec-Fetch-Dest': 'empty',
+        },
+        credentials: 'include',
+        mode: 'cors',
+        redirect: 'follow',
+        referrer: 'https://comix.to/',
+        referrerPolicy: 'strict-origin-when-cross-origin',
+      });
       if (!res.ok) {
         throw new Error(`Failed to fetch page ${page}`);
       }

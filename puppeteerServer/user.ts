@@ -1,6 +1,6 @@
 import { app } from './app';
 import { checkOpts, fetchData, getOpts } from './types';
-import './mangaGetProc';
+// import './mangaGetProc';
 import config from './config.json';
 import { addMangaBatch, sites } from './puppeteerScripts/sites';
 import { connection } from './connections';

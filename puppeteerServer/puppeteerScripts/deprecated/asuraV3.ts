@@ -1,10 +1,10 @@
-import { createTimestampLogger, match } from '../util';
-import config from '../config.json';
+import { createTimestampLogger, match } from '../../util';
+import config from '../../config.json';
 import sharp from 'sharp';
-import { getBrowser } from '../jobQueue';
-import { CheckResult, fetchData, SiteQueue } from '../types';
+import { getBrowser } from '../../jobQueue';
+import { CheckResult, fetchData, SiteQueue } from '../../types';
 import { Queue, Worker, Job } from 'bullmq';
-import { connection } from '../connections';
+import { connection } from '../../connections';
 
 const Asura = 'asura-site';
 const ENABLED = true;
