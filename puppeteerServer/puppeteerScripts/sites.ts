@@ -4,7 +4,7 @@ import { manganatoSite } from './mangaNato';
 import { batoSite } from './bato';
 import { mangadexSite } from './mangadex';
 import { mangaparkSite } from './mangapark';
-import { asuraSite } from './asuraV3';
+import { asuraSite } from './asuraV4';
 import { mangafireSite } from './mangafire';
 import { FlowProducer, Queue } from 'bullmq';
 import config from '../config.json';
@@ -18,7 +18,7 @@ const allSites: SiteQueue[] = [
   mangaparkSite,
   asuraSite,
   mangafireSite,
-  comixSite,
+  // comixSite,
 ];
 
 export const sites = allSites.filter((s) => s.enabled);

@@ -95,9 +95,25 @@ export async function getManga(
   try {
     page.setDefaultNavigationTimeout(1000); // timeout nav after 1 sec
     page.setRequestInterception(true);
-    await page.setUserAgent(
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0'
-    );
+    const client = await page.target().createCDPSession();
+
+    await client.send('Network.setUserAgentOverride', {
+      userAgent:
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
+      userAgentMetadata: {
+        brands: [
+          { brand: 'Chromium', version: '141' },
+          { brand: 'Google Chrome', version: '141' },
+        ],
+        fullVersion: '141.0.0.0',
+        platform: 'Windows',
+        platformVersion: '10.0.0',
+        architecture: 'x86',
+        model: '',
+        mobile: false,
+      },
+    });
+
     await page.setExtraHTTPHeaders({ 'accept-language': 'en-US,en;q=0.9' });
 
     let allowAllRequests: boolean = false;

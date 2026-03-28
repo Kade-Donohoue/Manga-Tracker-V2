@@ -1,5 +1,12 @@
 [
   {
+    "version": "v4.1.0", 
+    "date": "2026-27-3", 
+    "features": ["Asura Scans New Site!"], 
+    "fixes": [], 
+    "improvements": ["Browser Headers Improved"] 
+  },
+  {
     "version": "v4.0.0", 
     "date": "2026-15-3", 
     "features": [], 
