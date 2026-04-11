@@ -143,7 +143,7 @@ export async function getManga(
       page.setContent(overviewHtml, { waitUntil: 'domcontentloaded' });
 
       const titleSelect = await page.waitForSelector('h1.title');
-      title = await titleSelect?.evaluate((el) => el.textContent, titleSelect);
+      title = (await titleSelect?.evaluate((el) => el.textContent, titleSelect)) || 'Unknown Title';
       console.log(title);
       const photoSelect = await page.waitForSelector('div.poster > div > img', { timeout: 1000 });
       const photo = await photoSelect?.evaluate((el) => el.getAttribute('src'));
@@ -180,7 +180,9 @@ export async function getManga(
     console.warn(`Unable to fetch data for: ${url}`);
     if (config.debug.verboseLogging) console.warn(err);
 
-    if (err.message.startsWith('Manga:')) throw new Error(err.message);
+    if (err instanceof Error) {
+      if (err.message.startsWith('Manga:')) throw new Error(err.message);
+    }
     throw new Error('Unable to fetch Data! maybe invalid Url?');
   } finally {
     if (page && !page.isClosed()) {

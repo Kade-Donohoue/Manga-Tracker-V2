@@ -76,6 +76,7 @@ async function shutdown() {
 
 if (config.debug.memoryLogging) {
   setInterval(async () => {
+    if (!browser) return;
     const contexts = browser.browserContexts();
     let totalPages = 0;
 

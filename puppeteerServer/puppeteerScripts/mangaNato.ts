@@ -175,7 +175,7 @@ export async function getManga(
         overviewUrl: el.href,
       })
     );
-    const mangaName = titleSelect?.title;
+    const mangaName = titleSelect?.title || 'Unknown Title';
     const overviewUrl = titleSelect?.overviewUrl;
 
     const chapApiUrl = overviewUrl.replace('/manga/', '/api/manga/') + '/chapters?limit=-1';
@@ -234,7 +234,7 @@ export async function getManga(
         'div.manga-info-top > div.manga-info-pic > img'
       );
 
-      const photoUrl = await photoElement?.evaluate((el) => el.src);
+      const photoUrl = (await photoElement?.evaluate((el) => el.src)) as string;
 
       job.log(logWithTimestamp('Photo Page Fetched'));
       await job.updateProgress(60);
@@ -275,7 +275,7 @@ export async function getManga(
       console.log(slugList);
     }
 
-    const currIndex = slugList.indexOf(url.split('chapter-').at(-1));
+    const currIndex = slugList.indexOf(url.split('chapter-').at(-1) || '-1');
 
     if (currIndex == -1 && !ignoreIndex) {
       throw new Error('Manga: Unable to find current chapter. Please retry or contact Admin!');
@@ -291,14 +291,16 @@ export async function getManga(
       currentIndex: currIndex,
       images: images,
       specialFetchData: null,
-      sourceId: overviewUrl.split('/').at(-1),
+      sourceId: overviewUrl.split('/').at(-1) || 'Unknown',
     };
   } catch (err) {
     job.log(logWithTimestamp(`Error: ${err}`));
     console.warn('Unable to fetch data for: ' + url);
     if (config.debug.verboseLogging) console.warn(err);
     //ensure only custom error messages gets sent to user
-    if (err.message.startsWith('Manga:')) throw new Error(err.message);
+    if (err instanceof Error) {
+      if (err.message.startsWith('Manga:')) throw new Error(err.message);
+    }
     throw new Error('Unable to fetch Data! maybe invalid Url?');
   } finally {
     if (page && !page.isClosed()) {
