@@ -130,21 +130,26 @@ export async function addMangaBatch(
       });
 
       return {
-        batchId: jobs.job.id,
-        enqueued: jobs.children.map((child) => ({
-          url: child.job.data.url,
-          fetchId: child.job.id,
+        batchId: jobs.job.id as string,
+        enqueued: (jobs.children || []).map((child) => ({
+          url: child.job.data.url as string,
+          fetchId: child.job.id as string,
         })),
         rejected: failures,
       };
-    } else {
-      return {
-        batchId: '-1',
-        enqueued: [],
-        rejected: failures,
-      };
     }
+    return {
+      batchId: '-1',
+      enqueued: [],
+      rejected: failures,
+    };
   } catch (err) {
     console.error(err);
+
+    return {
+      batchId: '-1',
+      enqueued: [],
+      rejected: [],
+    };
   }
 }

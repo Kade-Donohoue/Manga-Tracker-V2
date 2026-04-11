@@ -1,12 +1,17 @@
 {
     "compilerOptions": {
-      "module": "commonjs",
+      "module": "nodenext",
       "resolveJsonModule": true,
       "esModuleInterop": true,
-      "target": "ES2018",
-      "moduleResolution": "node",
+      "target": "esnext",
+      "moduleResolution": "nodenext",
       "sourceMap": true,
-      "outDir": "dist"
+      "outDir": "dist",
+      "types": ["node", "chrome", "firefox-webext-browser"]
     },
-    "lib": ["ES2018"]
+    "exclude": [
+        "puppeteerScripts/deprecated",
+        "node_modules"
+    ]
+    // "lib": ["ES2018"]
 }

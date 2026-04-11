@@ -103,7 +103,7 @@ export async function getManga(
     let title: string = job.data.mangaName;
 
     const match = url.match(/title\/(\d+)[^/]*\/(\d+)/);
-    const [, comicId, currentChapterId] = match;
+    const [, comicId, currentChapterId] = match || [, '', ''];
 
     const response = await fetch('https://mangapark.org/apo/', {
       method: 'POST',
@@ -139,7 +139,7 @@ export async function getManga(
 
     const chapterResults: ComicChapterListResponse = await response.json();
 
-    if (config.debug.verboseLogging) console.log(chapterResults.data.get_comicChapterList);
+    if (config.debug.verboseLogging) console.log(chapterResults.data?.get_comicChapterList);
 
     const chapters = chapterResults.data?.get_comicChapterList;
 
@@ -216,7 +216,9 @@ export async function getManga(
     if (config.debug.verboseLogging) console.warn(err);
 
     //ensure only custom error messages gets sent to user
-    if (err.message.startsWith('Manga:')) throw new Error(err.message);
+    if (err instanceof Error) {
+      if (err.message.startsWith('Manga:')) throw new Error(err.message);
+    }
     throw new Error('Unable to fetch Data! maybe invalid Url?');
   } finally {
     if (page && !page.isClosed()) {

@@ -242,7 +242,7 @@ export async function getManga(
       currentIndex: currIndex,
       images: images,
       specialFetchData: 'Pain Site',
-      sourceId: overViewURL.split('-').at(-1),
+      sourceId: overViewURL.split('-').at(-1) || 'Unknown',
     };
   } catch (err) {
     job.log(logWithTimestamp(`Error: ${err}`));
@@ -250,8 +250,10 @@ export async function getManga(
     // await asuraQueue.rateLimit(10000);
     if (config.debug.verboseLogging) console.warn(err);
 
-    //ensure only custom error messages gets sent to user
-    if (err.message.startsWith('Manga:')) throw new Error(err.message);
+    if (err instanceof Error) {
+      //ensure only custom error messages gets sent to user
+      if (err.message.startsWith('Manga:')) throw new Error(err.message);
+    }
     throw new Error('Unable to fetch Data! maybe invalid Url?');
   } finally {
     if (page && !page.isClosed()) {

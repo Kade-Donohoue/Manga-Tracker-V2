@@ -95,7 +95,7 @@ export async function getManga(
   try {
     job.log(logWithTimestamp('Pulling Chapter Data!'));
 
-    const chapterId = url.match(/\/chapter\/([\w-]+)/)[1];
+    const chapterId = (url.match(/\/chapter\/([\w-]+)/) || [, 'unknown'])[1];
     if (!chapterId)
       throw new Error('Manga: Unable to get Chapter ID. please unsure this url is valid!');
 
@@ -121,7 +121,7 @@ export async function getManga(
     } = await chapterRequest.json();
 
     let mangaId =
-      currChapData.data.relationships.find((relation) => relation.type === 'manga').id || '';
+      currChapData.data.relationships.find((relation) => relation.type === 'manga')?.id || '';
 
     let language = currChapData.data.attributes.translatedLanguage;
 
@@ -151,8 +151,8 @@ export async function getManga(
 
     if (!title) throw new Error('Manga: Unable to get title!');
 
-    let slugList = [];
-    let chapterTestList = [];
+    let slugList: string[] = [];
+    let chapterTestList: string[] = [];
     chapterData.data.forEach((data) => {
       let chapCheckIndex = chapterTestList.indexOf(data.attributes.chapter);
       if (chapCheckIndex != -1) {
@@ -237,7 +237,9 @@ export async function getManga(
     console.warn(`Unable to fetch data for: ${url}`);
     if (config.debug.verboseLogging) console.warn(err);
 
-    if (err.message.startsWith('Manga:')) throw new Error(err.message);
+    if (err instanceof Error) {
+      if (err.message.startsWith('Manga:')) throw new Error(err.message);
+    }
     throw new Error('Unable to fetch Data! maybe invalid Url?');
   } finally {
     // if (page && !page.isClosed()) {
@@ -294,9 +296,9 @@ type mangaDexFeed = {
           type: string;
           related: string;
           attributes: {};
-        }
+        },
       ];
-    }
+    },
   ];
   limit: number;
   offset: number;
@@ -359,9 +361,9 @@ type overViewData = {
               type: string;
               related: string;
               attributes: {};
-            }
+            },
           ];
-        }
+        },
       ];
       state: string;
       version: 1;
@@ -374,7 +376,7 @@ type overViewData = {
         type: string;
         related: string;
         attributes: {};
-      }
+      },
     ];
   };
 };

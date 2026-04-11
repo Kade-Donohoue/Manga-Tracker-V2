@@ -1,3 +1,5 @@
+import { Job } from 'bullmq';
+
 export type fetchData = {
   mangaName: string;
   urlBase: string;
@@ -8,6 +10,19 @@ export type fetchData = {
   specialFetchData: any;
   sourceId: string;
 };
+
+export type autoUpdateJobData = {
+  type: string;
+  url: string;
+  getIcon: boolean;
+  update: boolean;
+  maxCoverIndex: number;
+  maxSavedAt: number;
+  mangaId: string;
+  oldSlugList: string;
+};
+
+export type updateWebsiteJob = Job<autoUpdateJobData, fetchData>;
 
 export type dataType = {
   type: string;

@@ -5,6 +5,7 @@ import { getBrowser } from '../jobQueue';
 import { CheckResult, fetchData, SiteQueue } from '../types';
 import { Queue, Worker, Job } from 'bullmq';
 import { connection } from '../connections';
+import { ElementHandle } from 'puppeteer';
 
 const Mangafire = 'Mangafire-site';
 const ENABLED = true;
@@ -172,7 +173,7 @@ export async function getManga(
     });
 
     const urlBase = url.split(/\/[a-z]{2}\/chapter/i)[0];
-    const mangaId = urlBase.split('.').at(-1);
+    const mangaId = urlBase.split('.').at(-1) as string;
 
     job.log(logWithTimestamp('Starting Optimistic Fetch!'));
     let chapterResp = await fetch(
@@ -183,7 +184,7 @@ export async function getManga(
     );
 
     if (chapterResp.status === 429 || chapterResp.status === 1015) {
-      let retryDelay = (parseInt(chapterResp.headers.get('retry-after')) || 5) * 1000;
+      let retryDelay = (parseInt(chapterResp.headers.get('retry-after') || '60') || 5) * 1000;
       page.removeAllListeners();
       await page.close();
 
@@ -213,7 +214,7 @@ export async function getManga(
       if (!ajaxRequest) throw new Error('Manga: No ajax/read/ request detected!');
 
       const chapterApiUrl = new URL(ajaxRequest.url());
-      const vrf = chapterApiUrl.searchParams.get('vrf');
+      const vrf = chapterApiUrl.searchParams.get('vrf') as string;
       job.log(logWithTimestamp(`Found vrf: ${vrf}`));
 
       specialFetchData = vrf;
@@ -289,7 +290,7 @@ export async function getManga(
         let photoUrls =
           (await page.evaluate(() => {
             return Array.from(document.querySelectorAll('.poster img'))
-              .map((img) => img.getAttribute('src'))
+              .map((img) => img.getAttribute('src') as string)
               .filter((src) => src && !src.includes('no-image')); //Prevents Thier Fallback Image From showing up
           })) ?? [];
 
@@ -297,7 +298,7 @@ export async function getManga(
           job.log(logWithTimestamp('Using Alternate Cover Image Fetch'));
           let overviewResp = await page.goto(urlBase.replace('read', 'manga'));
 
-          const overviewStatus = overviewResp.status();
+          const overviewStatus = overviewResp?.status();
           if (overviewStatus === 1015 || overviewStatus === 429 || overviewStatus === 403) {
             page.removeAllListeners();
             await page.close();
@@ -306,7 +307,9 @@ export async function getManga(
               'MangaFire Rate Limit Hit on Cover Response, consider adjusting base delay if this appears frequently! Skipping Cover Image Fetch'
             );
           } else {
-            const imgElement = await page.waitForSelector('div.poster > div > img');
+            const imgElement = (await page.waitForSelector(
+              'div.poster > div > img'
+            )) as ElementHandle<HTMLImageElement>;
 
             const imgSrc = await imgElement.evaluate((el) => el.getAttribute('src'));
             if (imgSrc) {
@@ -368,7 +371,7 @@ export async function getManga(
       console.log(chapterNumbers);
     }
 
-    const currIndex = chapterNumbers.indexOf(url.split('chapter-').at(-1));
+    const currIndex = chapterNumbers.indexOf(url.split('chapter-').at(-1) || '-1');
 
     if (currIndex == -1 && !ignoreIndex) {
       throw new Error('Manga: Unable to find current chapter. Please retry or contact Admin!');
@@ -392,7 +395,9 @@ export async function getManga(
     if (config.debug.verboseLogging) console.warn(err);
 
     //ensure only custom error messages gets sent to user
-    if (err.message.startsWith('Manga:')) throw new Error(err.message);
+    if (err instanceof Error) {
+      if (err.message.startsWith('Manga:')) throw new Error(err.message);
+    }
     throw new Error('Unable to fetch Data! maybe invalid Url?');
   } finally {
     if (page && !page.isClosed()) {
