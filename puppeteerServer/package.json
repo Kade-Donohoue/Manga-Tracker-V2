@@ -6,6 +6,7 @@
   "dependencies": {
     "bullmq": "^5.73.4",
     "fastify": "^5.8.4",
+    "ioredis": "^5.10.1",
     "puppeteer": "^24.40.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-adblocker": "^2.13.6",

@@ -1,4 +1,4 @@
-import { FlowProducer, Job, Queue, Worker } from 'bullmq';
+import { FlowProducer, Job, Queue, QueueEvents, Worker } from 'bullmq';
 import { resolveSiteForUrl, sites } from './puppeteerScripts/sites';
 import { connection } from './connections';
 import config from './config.json';
@@ -97,7 +97,7 @@ async function updateAllManga() {
           removeOnComplete: false,
           removeOnFail: false,
           failParentOnFailure: false,
-          removeDependencyOnFailure: true,
+          removeDependencyOnFailure: false,
           attempts: 3,
         },
       });
@@ -336,3 +336,22 @@ new Worker(
   },
   { connection }
 );
+
+const queueEvents = new QueueEvents('auto-update');
+
+queueEvents.on('completed', handleChildDone);
+queueEvents.on('failed', handleChildDone);
+
+async function handleChildDone({ jobId }: { jobId: string }) {
+  const job = await Job.fromId(autoUpdateQueue, jobId);
+  if (!job?.parentKey) return;
+
+  const parent = await Job.fromId(autoUpdateQueue, job.parentKey);
+  if (!parent) return;
+
+  const deps = await parent.getDependenciesCount();
+
+  if (deps.unprocessed === 0) {
+    await parent.promote();
+  }
+}

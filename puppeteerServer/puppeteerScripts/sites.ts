@@ -6,10 +6,12 @@ import { mangadexSite } from './mangadex';
 import { mangaparkSite } from './mangapark';
 import { asuraSite } from './asuraV4';
 import { mangafireSite } from './mangafire';
-import { FlowProducer, Queue } from 'bullmq';
+import { FlowProducer, Job, Queue, QueueEvents } from 'bullmq';
 import config from '../config.json';
 import { connection } from '../connections';
 import { comixSite } from './comix';
+import { userQueue } from '../user';
+import { autoUpdateQueue } from '../autoUpdateHandler';
 
 const allSites: SiteQueue[] = [
   manganatoSite,
@@ -18,7 +20,7 @@ const allSites: SiteQueue[] = [
   mangaparkSite,
   asuraSite,
   mangafireSite,
-  // comixSite,
+  comixSite,
 ];
 
 export const sites = allSites.filter((s) => s.enabled);
@@ -108,6 +110,7 @@ export async function addMangaBatch(
           priority: 1,
           removeOnComplete: config.queue.removeCompleted,
           removeOnFail: config.queue.removeFailed,
+          removeDependencyOnFailure: true,
           name: site.name,
           timeout: 30_000,
           attempts: 2,
@@ -125,6 +128,7 @@ export async function addMangaBatch(
           failParentOnFailure: false,
           removeOnComplete: false,
           removeOnFail: false,
+          removeDependencyOnFailure: true,
         },
         children,
       });
