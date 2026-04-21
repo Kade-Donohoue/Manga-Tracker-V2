@@ -138,6 +138,8 @@ export const mangaData = sqliteTable('mangaData', {
   useAltStatCalc: integer('useAltStatCalc', { mode: 'boolean' }).notNull().default(false),
   specialFetchData: text('specialFetchData'),
   sourceId: text('sourceId').unique(),
+  description: text('description').notNull().default(''),
+  author: text('author').notNull().default('Unknown Author'),
 });
 
 export const userCategories = sqliteTable(

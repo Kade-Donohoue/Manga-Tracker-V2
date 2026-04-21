@@ -25,6 +25,7 @@ adminRouter.get('/getAllManga', async (c) => {
       maxSavedAt: max(coverImages.savedAt),
       maxCoverIndex: max(coverImages.coverIndex),
       specialFetchData: mangaData.specialFetchData,
+      author: mangaData.author,
     })
     .from(mangaData)
     .leftJoin(coverImages, eq(coverImages.mangaId, mangaData.mangaId))
@@ -71,6 +72,8 @@ adminRouter.post('/saveManga', zValidator('json', newMangaSchama), async (c) => 
       specialFetchData: newMangaData.specialFetchData,
       updateTime: sql`CURRENT_TIMESTAMP`,
       sourceId: newMangaData.sourceId,
+      author: newMangaData.author,
+      description: newMangaData.description,
     })
     .onConflictDoUpdate({
       target: [mangaData.sourceId],
@@ -82,6 +85,8 @@ adminRouter.post('/saveManga', zValidator('json', newMangaSchama), async (c) => 
         specialFetchData: newMangaData.specialFetchData,
         updateTime: sql`CURRENT_TIMESTAMP`,
         // useAltStatCalc: false,
+        author: newMangaData.author,
+        description: newMangaData.description,
       },
     })
     .returning({ mangaId: mangaData.mangaId });
