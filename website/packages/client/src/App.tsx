@@ -198,20 +198,24 @@ export function RootedApp() {
             zIndex: 10,
           }}
         >
-          {Object.values(routes).map((r) => (
-            <S.Li
-              key={r.path}
-              to={r.path}
-              selected={location.pathname === r.path}
-              sx={{
-                flex: 1,
-                justifyContent: 'center',
-                display: 'flex',
-              }}
-            >
-              <r.icon sx={{ fontSize: 24 }} />
-            </S.Li>
-          ))}
+          {Object.values(routes)
+            .filter(
+              (r) => !r.role || (!isLoading && r.role === user.role) || session?.impersonatedBy
+            )
+            .map((r) => (
+              <S.Li
+                key={r.path}
+                to={r.path}
+                selected={location.pathname === r.path}
+                sx={{
+                  flex: 1,
+                  justifyContent: 'center',
+                  display: 'flex',
+                }}
+              >
+                <r.icon sx={{ fontSize: 24 }} />
+              </S.Li>
+            ))}
         </Box>
       )}
 

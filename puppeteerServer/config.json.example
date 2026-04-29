@@ -30,7 +30,7 @@
     "headlessBrowser": true,
     "remotePuppetDebug": false,
     "remotePuppetDebugPort": 9222,
-    "memoryLogging": flase
+    "memoryLogging": false
   },
   "serverCom": {
     "serverUrl": "enter_url_here",

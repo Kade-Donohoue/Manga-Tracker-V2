@@ -1,5 +1,12 @@
 [
   {
+    "version": "v4.1.1", 
+    "date": "2026-14-4", 
+    "features": [], 
+    "fixes": ["Resolved an edge case that prevented the system from notifying the user about add failures."], 
+    "improvements": ["Puppeteer now uses shared connection!"] 
+  },
+  {
     "version": "v4.1.0", 
     "date": "2026-27-3", 
     "features": ["Asura Scans New Site!"], 
