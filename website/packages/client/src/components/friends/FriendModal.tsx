@@ -39,7 +39,7 @@ type friendManga = {
   mangaId: string;
   urlBase: string;
   slugList: string[];
-  chapterTextList: string[];
+  chapterTextList: string;
 };
 type friendData = {
   recomendations: {
@@ -224,7 +224,7 @@ const FriendModal: React.FC<friendModalProps> = ({ open, onCloseFriend, friend }
                     sx={{ position: 'relative' }}
                   >
                     <CardActionArea
-                      onClick={() => window.open(`${manga.urlBase}/${manga.slugList[0]}`, '_blank')}
+                      onClick={() => window.open(`${manga.urlBase}${manga.slugList[0]}`, '_blank')}
                     >
                       <CardMedia
                         component="img"
@@ -288,7 +288,7 @@ const FriendModal: React.FC<friendModalProps> = ({ open, onCloseFriend, friend }
                     sx={{ position: 'relative' }}
                   >
                     <CardActionArea
-                      onClick={() => window.open(`${manga.urlBase}/${manga.slugList[0]}`, '_blank')}
+                      onClick={() => window.open(`${manga.urlBase}${manga.slugList[0]}`, '_blank')}
                     >
                       <CardMedia
                         component="img"
@@ -385,5 +385,6 @@ const FriendModal: React.FC<friendModalProps> = ({ open, onCloseFriend, friend }
     </Dialog>
   );
 };
+
 
 export default FriendModal;

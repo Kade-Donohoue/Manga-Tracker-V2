@@ -20,7 +20,7 @@ interface ChangeChapterModalProps {
     mangaId: string;
     urlBase: string;
     slugList: string[];
-    chapterTextList: string[];
+    chapterTextList: string;
   } | null;
   friendId: string;
 }
@@ -154,6 +154,7 @@ export default function AddTrackedManga({
 
   if (!manga) return null;
 
+  console.log(manga?.chapterTextList);
   return (
     <Modal
       open={open}
@@ -174,7 +175,7 @@ export default function AddTrackedManga({
           value={newChapter}
           onChange={setChapter}
           options={manga?.chapterTextList
-            .slice()
+            .split(',')
             .reverse()
             .map((text) => ({ value: text, label: text }))}
           styles={customStyles}
