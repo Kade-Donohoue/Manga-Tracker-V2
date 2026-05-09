@@ -1,5 +1,12 @@
 [
   {
+    "version": "v4.2.0", 
+    "date": "2026-9-5", 
+    "features": ["Support For new Comix Site!"], 
+    "fixes": ["Fiexed a bug that could prevent manga from saving on auto updates."], 
+    "improvements": ["Database changes for tracking author and Description for manga (WIP)."] 
+  },
+  {
     "version": "v4.1.1", 
     "date": "2026-14-4", 
     "features": [], 

@@ -97,7 +97,7 @@ async function updateAllManga() {
           removeOnComplete: false,
           removeOnFail: false,
           failParentOnFailure: false,
-          removeDependencyOnFailure: false,
+          removeDependencyOnFailure: true,
           attempts: 3,
         },
       });
@@ -112,6 +112,7 @@ async function updateAllManga() {
       opts: {
         removeOnComplete: false,
         removeOnFail: false,
+        removeDependencyOnFailure: true,
       },
       children,
     });

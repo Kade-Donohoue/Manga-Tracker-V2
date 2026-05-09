@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "51afd732-167f-4f94-b27c-120c0a4272c4",
-  "prevId": "2924ec53-5048-4e57-9459-494a4c056e46",
+  "id": "c2eb642f-a7c4-4456-a10d-6a5dc0a57ac8",
+  "prevId": "51afd732-167f-4f94-b27c-120c0a4272c4",
   "tables": {
     "account": {
       "name": "account",
@@ -641,6 +641,22 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "author": {
+          "name": "author",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'Unknown Author'"
         }
       },
       "indexes": {
@@ -1413,9 +1429,7 @@
   "_meta": {
     "schemas": {},
     "tables": {},
-    "columns": {
-      "\"apikey\".\"userId\"": "\"apikey\".\"referenceId\""
-    }
+    "columns": {}
   },
   "internal": {
     "indexes": {}

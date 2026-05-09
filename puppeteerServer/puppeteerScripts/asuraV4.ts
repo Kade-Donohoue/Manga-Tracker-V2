@@ -178,6 +178,26 @@ export async function getManga(
 
     const title = await page.$eval('div.truncate:nth-child(1)', (el) => el.innerHTML);
 
+    let author = job.data.author || 'Unknown Author';
+    let description = job.data.description || 'No description available';
+
+    if (!author) {
+      try {
+        author = await page.$eval(
+          'div.mt-3:nth-child(7) > div:nth-child(3) > div:nth-child(1) > span:nth-child(2)',
+          (el) => el.innerHTML
+        );
+      } catch {}
+    }
+
+    if (!description) {
+      try {
+        description = await page.$eval('div.text-xs:nth-child(4) > p:nth-child(1)', (el) =>
+          el.innerHTML.replace(/<br\s*\/?>/gi, '\n').trim()
+        );
+      } catch {}
+    }
+
     const overViewURL = await page.$eval('div > a.gap-3', (el) => el.href);
     if (!overViewURL) throw new Error('Manga: Unable to get base URL!');
 
@@ -243,6 +263,8 @@ export async function getManga(
       images: images,
       specialFetchData: 'Pain Site',
       sourceId: overViewURL.split('-').at(-1) || 'Unknown',
+      author: author,
+      description: description,
     };
   } catch (err) {
     job.log(logWithTimestamp(`Error: ${err}`));

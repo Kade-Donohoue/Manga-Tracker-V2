@@ -9,6 +9,8 @@ export type fetchData = {
   images: { image: Buffer<ArrayBufferLike>; index: number }[];
   specialFetchData: any;
   sourceId: string;
+  author: string;
+  description: string;
 };
 
 export type autoUpdateJobData = {
@@ -24,17 +26,17 @@ export type autoUpdateJobData = {
 
 export type updateWebsiteJob = Job<autoUpdateJobData, fetchData>;
 
-export type dataType = {
-  type: string;
-  url: string;
-  mangaId: string;
-  getIcon: boolean;
-  update: boolean;
-  length: number;
-  oldSlugList: string;
-  batchId: number;
-  specialFetchData: any;
-};
+// export type dataType = {
+//   type: string;
+//   url: string;
+//   mangaId: string;
+//   getIcon: boolean;
+//   update: boolean;
+//   length: number;
+//   oldSlugList: string;
+//   batchId: number;
+//   specialFetchData: any;
+// };
 
 export type updateCollector = {
   batchId: number;
@@ -54,6 +56,8 @@ export type updateCollector = {
       newChapterCount: number;
       specialFetchData: any;
       sourceId: string;
+      author: string;
+      description: string;
     }[];
   };
 };
@@ -115,6 +119,8 @@ export type oldMangaData = {
   coverIndexes: number[];
   maxSavedAt: string;
   specialFetchData: any;
+  author: string;
+  description: string;
 };
 
 export type MangaQueueInsertResult = {
