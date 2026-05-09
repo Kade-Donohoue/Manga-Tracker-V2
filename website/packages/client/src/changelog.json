@@ -3,7 +3,7 @@
     "version": "v4.2.1", 
     "date": "2026-9-12", 
     "features": [], 
-    "fixes": ["Corrected Style for recommendation modal friend selection"], 
+    "fixes": ["Corrected Style for recommendation modal friend selection", "Set User Title Text Box now matches other text boxes style!"], 
     "improvements": ["Improved Error Reporting for manga that failed to save. "] 
   },
   {

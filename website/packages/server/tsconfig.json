@@ -12,13 +12,9 @@
     // Cloudflare Workers runtime types
     "lib": ["ES2022", "DOM"],
 
-    // If your server uses Hono JSX:
-    // (safe to leave here even if only used occasionally)
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",
 
-    // Paths / Alias support
-    "baseUrl": "./",
     "paths": {
       "@/*": ["./src/*"]
     },

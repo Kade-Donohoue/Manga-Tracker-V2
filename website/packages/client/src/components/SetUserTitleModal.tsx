@@ -11,6 +11,7 @@ import { toast } from 'react-toastify';
 import { useQueryClient } from '@tanstack/react-query';
 import { fetchPath } from '../vars';
 import { modalStyle } from '../AppStyles';
+import TextField from '@mui/material/TextField';
 
 interface SetUserTitleModalProps {
   open: boolean;
@@ -109,17 +110,26 @@ const SetUserTitleModal: React.FC<SetUserTitleModalProps> = ({ open, onClose, ma
     >
       <Box sx={{ width: '80vw', ...modalStyle }}>
         <label htmlFor="titleInput">Enter New Title</label>
-        <input
+        <TextField
           type="text"
           id="titleInput"
           name="titleInput"
           placeholder="Best Manga in The World! Leave Blank to reset"
-          style={{
+          variant="outlined"
+          size="small"
+          sx={{
             width: '100%',
-            padding: '12px 20px',
-            marginBottom: '8px',
-            borderRadius: '4px',
-            boxSizing: 'border-box',
+            color: 'white',
+            '& .MuiOutlinedInput-root': {
+              '& fieldset': { borderColor: '#ccc' },
+              '&:hover fieldset': { borderColor: '#b3b3b3' },
+              '&.Mui-focused fieldset': { borderColor: '#2684ff' },
+              // padding: '12px 20px',
+              marginBottom: '10px',
+              borderRadius: '4px',
+              boxSizing: 'border-box',
+            },
+            background: 'inherit',
           }}
         />
         <br />

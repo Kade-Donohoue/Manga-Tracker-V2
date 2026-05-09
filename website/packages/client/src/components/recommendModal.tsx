@@ -49,6 +49,10 @@ const customStyles = {
     ...base,
     backgroundColor: state.isSelected ? '#22346e' : state.isFocused ? '#444' : '#2e2e2e',
   }),
+  input: (base: any) => ({
+    ...base,
+    color: 'white !important',
+  }),
 };
 
 const sendRecommendation = async (mangaId: string, friendId: string | undefined) => {
