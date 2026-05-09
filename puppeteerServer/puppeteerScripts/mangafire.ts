@@ -265,6 +265,9 @@ export async function getManga(
     job.log(logWithTimestamp('Chapter Data Fetched'));
     await job.updateProgress(40);
 
+    let author = job.data.author || '';
+    let description = job.data.description || '';
+
     let inputDate = new Date();
     const oneMonthAgo = new Date();
     if (maxSavedAt) {
@@ -388,6 +391,8 @@ export async function getManga(
       images: images,
       specialFetchData: specialFetchData,
       sourceId: mangaId,
+      author: author,
+      description: description,
     };
   } catch (err) {
     job.log(logWithTimestamp(`Error: ${err}`));

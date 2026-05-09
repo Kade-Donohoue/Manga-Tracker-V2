@@ -101,6 +101,8 @@ export async function getManga(
     job.log(logWithTimestamp('Pulling Chapter Data!'));
 
     let title: string = job.data.mangaName;
+    let author = job.data.author || '';
+    let description = job.data.description || '';
 
     const match = url.match(/title\/(\d+)[^/]*\/(\d+)/);
     const [, comicId, currentChapterId] = match || [, '', ''];
@@ -209,6 +211,8 @@ export async function getManga(
       images: images,
       specialFetchData: null,
       sourceId: comicId,
+      author: author,
+      description: description,
     };
   } catch (err) {
     job.log(logWithTimestamp(`Error: ${err}`));

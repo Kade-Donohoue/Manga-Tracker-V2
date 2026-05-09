@@ -143,6 +143,8 @@ export async function getManga(
     const overViewData: overViewData = await mangaRequest.json();
 
     let title = getEnglishTitle(overViewData.data);
+    let author = job.data.author || '';
+    let description = job.data.description || '';
 
     if (language !== 'en') {
       job.log(logWithTimestamp('Not English Appending language'));
@@ -231,6 +233,8 @@ export async function getManga(
       images: images,
       specialFetchData: mangaId + `(${language})`,
       sourceId: mangaId + `(${language})`,
+      author: author,
+      description: description,
     };
   } catch (err) {
     job.log(logWithTimestamp(`Error: ${err}`));

@@ -104,6 +104,10 @@ export async function getManga(
 
     const parts = new URL(url).pathname.split('/').filter(Boolean);
 
+    console.log(parts);
+
+    const overviewUrl = `https://comix.to/title/${parts[1]}/`;
+
     const mangaSegment = parts[1];
     const chapterSegment = parts[2];
 
@@ -113,7 +117,51 @@ export async function getManga(
     job.updateProgress(5);
     job.log(logWithTimestamp('Url Parsed.'));
 
-    const chapters = await fetchAllChapters(mangaId);
+    let specialFetchData = job.data.specialFetchData || '';
+
+    if (!specialFetchData) {
+      job.log(logWithTimestamp('Fetching specialFetchData from network requests'));
+
+      const browser = await getBrowser();
+      page = await browser.newPage();
+
+      let foundUrlParam: string | null = null;
+
+      page.on('request', (req) => {
+        try {
+          const reqUrl = req.url();
+
+          if (reqUrl.includes('/api/v1/manga/') && reqUrl.includes('/chapters')) {
+            const parsed = new URL(reqUrl);
+
+            const urlParam = parsed.searchParams.get('_');
+
+            if (urlParam) {
+              foundUrlParam = urlParam;
+            }
+          }
+        } catch {}
+      });
+
+      await page.goto(overviewUrl, {
+        waitUntil: 'networkidle2',
+        timeout: 30000,
+      });
+
+      await page.waitForFunction(() => window.performance.getEntriesByType('resource').length > 0, {
+        timeout: 10000,
+      });
+
+      if (!foundUrlParam) {
+        throw new Error('Unable to find _url parameter from chapter request');
+      }
+
+      specialFetchData = foundUrlParam;
+
+      job.log(logWithTimestamp(`Found specialFetchData: ${specialFetchData}`));
+    }
+
+    const chapters = await fetchAllChapters(mangaId, specialFetchData);
 
     job.log(logWithTimestamp('Parsing Chapter Data!'));
     const { slugList, chapterTextList } = dedupeChaptersByNumber(chapters);
@@ -130,31 +178,69 @@ export async function getManga(
 
     let images: { image: Buffer<ArrayBufferLike>; index: number }[] = [];
     let title: string = job.data.mangaName || '';
+    let author: string = job.data.author || '';
+    let description: string = job.data.description || '';
     // var iconBuffer:Buffer|null|undefined = null
     if (icon || inputDate < oneMonthAgo) {
-      parts.pop();
-      const overviewResponse = await fetch('https://comix.to/' + parts.join('/'));
-      const overviewHtml = await overviewResponse.text();
-      console.log(overviewHtml);
+      job.log(logWithTimestamp('Loading overview page for title/icon'));
 
-      const browser = await getBrowser();
-      page = await browser.newPage();
+      const overviewUrl = 'https://comix.to/' + parts.slice(0, -1).join('/');
 
-      page.setContent(overviewHtml, { waitUntil: 'domcontentloaded' });
+      if (!page) {
+        const browser = await getBrowser();
+        page = await browser.newPage();
+      }
 
-      const titleSelect = await page.waitForSelector('h1.title');
-      title = (await titleSelect?.evaluate((el) => el.textContent, titleSelect)) || 'Unknown Title';
-      console.log(title);
-      const photoSelect = await page.waitForSelector('div.poster > div > img', { timeout: 1000 });
-      const photo = await photoSelect?.evaluate((el) => el.getAttribute('src'));
+      await page.goto(overviewUrl, {
+        waitUntil: 'domcontentloaded',
+        timeout: 30000,
+      });
 
-      const icon = await page.goto(photo!, { timeout: 10000 });
-      await job.updateProgress(85);
+      const titleSelect = await page.waitForSelector('h1.mpage__title', {
+        timeout: 10000,
+      });
 
-      let iconBuffer = await icon?.buffer();
-      let resizedImage = await sharp(iconBuffer).resize(480, 720).toBuffer();
+      title = (await titleSelect?.evaluate((el) => el.textContent.trim())) || 'Unknown Title';
 
-      images.push({ image: resizedImage, index: 0 });
+      const imageSelect = await page.waitForSelector(
+        'div.mpage__poster > div.poster > img:nth-child(1)',
+        {
+          timeout: 10000,
+        }
+      );
+
+      const imageUrl = await imageSelect?.evaluate((el) => el.getAttribute('src'));
+
+      if (!imageUrl) {
+        throw new Error('Unable to find cover image');
+      }
+
+      job.log(logWithTimestamp('Downloading cover image'));
+
+      const imageResponse = await fetch(imageUrl, {
+        headers: {
+          Referer: overviewUrl,
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        },
+      });
+
+      if (!imageResponse.ok) {
+        throw new Error('Failed to download cover image');
+      }
+
+      const iconBuffer = Buffer.from(await imageResponse.arrayBuffer());
+
+      const resizedImage = await sharp(iconBuffer).resize(480, 720).toBuffer();
+
+      images.push({
+        image: resizedImage,
+        index: 0,
+      });
+
+      job.updateProgress(85);
+
+      job.log(logWithTimestamp('Cover image processed'));
     }
 
     let currIndex = chapterTextList.indexOf(currentChapter);
@@ -167,13 +253,15 @@ export async function getManga(
     await job.updateProgress(100);
     return {
       mangaName: title,
-      urlBase: `https://comix.to/title/${mangaId}/`,
+      urlBase: overviewUrl,
       slugList: slugList.join(','),
       chapterTextList: chapterTextList.join(','),
       currentIndex: currIndex,
       images: images,
-      specialFetchData: mangaId,
+      specialFetchData: specialFetchData,
       sourceId: mangaId,
+      author: author,
+      description: description,
     };
   } catch (err) {
     job.log(logWithTimestamp(`Error: ${err}`));
@@ -191,7 +279,7 @@ export async function getManga(
     }
   }
 
-  async function fetchAllChapters(mangaId: string): Promise<Chapter[]> {
+  async function fetchAllChapters(mangaId: string, specialFetchData: string): Promise<Chapter[]> {
     let page = 1;
     let lastPage = 1;
     const allChapters: Chapter[] = [];
@@ -199,7 +287,7 @@ export async function getManga(
     job.log(logWithTimestamp(`Starting chapter fetch for manga ${mangaId}`));
 
     while (page <= lastPage) {
-      const url = `https://comix.to/api/v2/manga/${mangaId}/chapters?limit=100&page=${page}&order[number]=asc`;
+      const url = `https://comix.to/api/v1/manga/${mangaId}/chapters?limit=100&page=${page}&order[number]=asc&_=${specialFetchData}`;
 
       console.log(url);
 
@@ -230,16 +318,36 @@ export async function getManga(
         referrerPolicy: 'strict-origin-when-cross-origin',
       });
       if (!res.ok) {
+        job.log(logWithTimestamp(`Failed to fetch page ${page}: ${res.status} ${res.statusText}`));
         throw new Error(`Failed to fetch page ${page}`);
       }
 
       const data: ChaptersResponse = await res.json();
       console.log(data);
 
-      const { items, pagination } = data.result;
+      const { items, meta } = data.result;
 
-      lastPage = pagination.last_page;
-      allChapters.push(...items);
+      lastPage = meta.lastPage;
+      allChapters.push(
+        ...items.map((chapter) => ({
+          chapter_id: chapter.id,
+          manga_id: chapter.mangaId,
+          scanlation_group_id: chapter.group?.id ?? 0,
+          is_official: chapter.isOfficial,
+          number: chapter.number,
+          name: chapter.name,
+          language: chapter.language,
+          volume: chapter.volume,
+          votes: chapter.votes,
+          created_at: 0,
+          updated_at: 0,
+          scanlation_group: {
+            scanlation_group_id: chapter.group?.id ?? 0,
+            name: chapter.group?.name ?? '',
+            slug: '',
+          },
+        }))
+      );
 
       const progress = 5 + Math.round(((page - 1) / lastPage) * 50);
 
@@ -249,7 +357,7 @@ export async function getManga(
         logWithTimestamp(
           `Page ${page}/${lastPage} fetched — ` +
             `${items.length} chapters, ` +
-            `${allChapters.length}/${pagination.total} total`
+            `${allChapters.length}/${meta.total} total`
         )
       );
 
@@ -283,7 +391,9 @@ export async function getManga(
 
     const deduped = Array.from(map.values()).sort((a, b) => a.number - b.number);
 
-    const slugList = deduped.map((c) => c.chapter_id.toString());
+    const slugList = deduped.map(
+      (c) => c.chapter_id.toString() + '-chapter-' + c.number.toString()
+    );
     const chapterTextList = deduped.map((c) => c.number.toString());
 
     return { slugList, chapterTextList };
@@ -311,22 +421,43 @@ interface Chapter {
   scanlation_group: ScanlationGroup;
 }
 
-interface Pagination {
-  count: number;
+interface ApiGroup {
+  id: number;
+  name: string;
+}
+
+interface ApiChapter {
+  id: number;
+  mangaId: number;
+  number: number;
+  volume: number;
+  name: string;
+  language: string;
+  isOfficial: boolean;
+  votes: number;
+  createdAtFormatted: string;
+  group: ApiGroup | null;
+  creator: unknown;
+  url: string;
+}
+
+interface Meta {
   total: number;
-  per_page: number;
-  current_page: number;
-  last_page: number;
+  perPage: number;
+  page: number;
+  lastPage: number;
   from: number;
   to: number;
+  hasNext: boolean;
+  hasPrev: boolean;
 }
 
 interface ChaptersResult {
-  items: Chapter[];
-  pagination: Pagination;
+  items: ApiChapter[];
+  meta: Meta;
 }
 
 interface ChaptersResponse {
-  status: number;
+  status: string;
   result: ChaptersResult;
 }

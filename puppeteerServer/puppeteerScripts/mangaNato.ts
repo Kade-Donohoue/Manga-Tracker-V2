@@ -178,6 +178,9 @@ export async function getManga(
     const mangaName = titleSelect?.title || 'Unknown Title';
     const overviewUrl = titleSelect?.overviewUrl;
 
+    let author = job.data.author || '';
+    let description = job.data.description || '';
+
     const chapApiUrl = overviewUrl.replace('/manga/', '/api/manga/') + '/chapters?limit=-1';
     const chapterResponse = await fetch(chapApiUrl);
 
@@ -292,6 +295,8 @@ export async function getManga(
       images: images,
       specialFetchData: null,
       sourceId: overviewUrl.split('/').at(-1) || 'Unknown',
+      author: author,
+      description: description,
     };
   } catch (err) {
     job.log(logWithTimestamp(`Error: ${err}`));

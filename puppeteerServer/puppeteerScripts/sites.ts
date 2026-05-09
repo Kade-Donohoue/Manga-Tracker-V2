@@ -1,7 +1,7 @@
 import type { CheckResult, MangaQueueInsertResult, SiteQueue, SiteResolveResult } from '../types';
 
 import { manganatoSite } from './mangaNato';
-import { batoSite } from './bato';
+// import { batoSite } from './bato';
 import { mangadexSite } from './mangadex';
 import { mangaparkSite } from './mangapark';
 import { asuraSite } from './asuraV4';
@@ -15,7 +15,7 @@ import { autoUpdateQueue } from '../autoUpdateHandler';
 
 const allSites: SiteQueue[] = [
   manganatoSite,
-  batoSite,
+  // batoSite, -- Bato is a dead site. Leaving the code in place in case it ever comes back, but disabling for now.
   mangadexSite,
   mangaparkSite,
   asuraSite,

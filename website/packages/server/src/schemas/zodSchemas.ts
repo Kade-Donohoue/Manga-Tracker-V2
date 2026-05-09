@@ -118,7 +118,7 @@ const newMangaData = z.object({
   currentIndex: z.coerce.number(),
   specialFetchData: z.any().nullable(),
   sourceId: z.string().min(1),
-  author: z.string().min(1),
+  author: z.string().min(0).default('Unknown'),
   description: z.string().default('Unknown'),
 });
 
