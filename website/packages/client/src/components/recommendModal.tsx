@@ -35,18 +35,19 @@ const customStyles = {
     backgroundColor: '#2e2e2e',
     color: '#fff',
   }),
-  singleValue: (base: any, { data }: any) => ({
+  singleValue: (base: any, state: any) => ({
     ...base,
-    color: data.color || 'white',
+    color: 'white',
+    backgroundColor: state.isFocused ? '#444' : '#2e2e2e',
   }),
   menu: (base: any) => ({
     ...base,
     backgroundColor: '#2e2e2e',
     color: 'white',
   }),
-  option: (base: any, { data }: any) => ({
+  option: (base: any, state: any) => ({
     ...base,
-    color: data.color || 'white', // Apply color to options
+    backgroundColor: state.isSelected ? '#22346e' : state.isFocused ? '#444' : '#2e2e2e',
   }),
 };
 
@@ -111,7 +112,7 @@ export default function RecommendModal({ open, onClose, manga }: RecommendModalP
     >
       <Box sx={{ width: '80vw', ...modalStyle }}>
         <h2 id="cat-modal-title" style={{ color: 'white' }}>
-          Select A friend
+          Select A Friend
         </h2>
 
         <Select

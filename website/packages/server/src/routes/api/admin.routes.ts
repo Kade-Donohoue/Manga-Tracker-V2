@@ -3,7 +3,7 @@ import { coverImages, mangaData, mangaStats, user, userData, userStats } from '@
 import { createRouter } from '@/lib/create-app';
 import { requireAuth } from '@/middlewares/require-auth';
 import { requireAdmin } from '@/middlewares/require-admin';
-import { eq, max, sql } from 'drizzle-orm';
+import { desc, eq, max, sql } from 'drizzle-orm';
 import { zValidator } from '@hono/zod-validator';
 import { newMangaSchama, saveImageSchema, updateDataSchema } from '@/schemas/zodSchemas';
 import { chunkArray } from '@/utils';
@@ -26,6 +26,7 @@ adminRouter.get('/getAllManga', async (c) => {
       maxCoverIndex: max(coverImages.coverIndex),
       specialFetchData: mangaData.specialFetchData,
       author: mangaData.author,
+      description: mangaData.description,
     })
     .from(mangaData)
     .leftJoin(coverImages, eq(coverImages.mangaId, mangaData.mangaId))
