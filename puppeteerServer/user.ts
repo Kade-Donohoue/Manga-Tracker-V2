@@ -10,6 +10,16 @@ export const userQueue = new Queue('user-bulk', {
   connection,
 });
 
+async function notifyMangaFailed(fetchId: string) {
+  return fetch(`${config.serverCom.serverUrl}/api/serverReq/data/userMangaFailed/${fetchId}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': config.serverCom.apiKey,
+    },
+  });
+}
+
 new Worker(
   userQueue.name,
   async (job: Job) => {
@@ -38,15 +48,7 @@ new Worker(
 
         console.error(`[user-bulk] Child job ${childJobId} failed:`, value);
 
-        failureRequests.push(
-          fetch(`${config.serverCom.serverUrl}/api/serverReq/data/userMangaFailed/${childJobId}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-api-key': config.serverCom.apiKey,
-            },
-          })
-        );
+        failureRequests.push(notifyMangaFailed(childJobId));
 
         continue;
       }
@@ -64,84 +66,77 @@ new Worker(
 
     await log(`Sending ${pendingSaves.length} manga save requests`);
 
-    const saveRequests = pendingSaves.map(async (manga) => {
-      const res = await fetch(`${config.serverCom.serverUrl}/api/serverReq/data/saveManga`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': config.serverCom.apiKey,
-        },
-        body: JSON.stringify({
-          fetchId: manga.fetchId,
-          newMangaData: manga.data,
-        }),
-      });
+    const saveResults = await Promise.allSettled(
+      pendingSaves.map(async (manga) => {
+        try {
+          const res = await fetch(`${config.serverCom.serverUrl}/api/serverReq/data/saveManga`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': config.serverCom.apiKey,
+            },
+            body: JSON.stringify({
+              fetchId: manga.fetchId,
+              newMangaData: manga.data,
+            }),
+          });
 
-      if (!res.ok) {
-        throw new Error(
-          `saveManga failed ${res.status}, Response: ${JSON.stringify(await res.json())}`
-        );
-      }
+          const text = await res.text();
 
-      return res;
-    });
+          if (!res.ok) {
+            throw new Error(`saveManga failed ${res.status}, Response: ${text}`);
+          }
 
-    const [saveResults, failResults] = await Promise.all([
-      Promise.allSettled(saveRequests),
-      Promise.allSettled(failureRequests),
-    ]);
+          let json: any;
 
-    const successfulSaves = saveResults.filter((r) => r.status === 'fulfilled').length;
+          try {
+            json = JSON.parse(text);
+          } catch {
+            throw new Error(`saveManga invalid JSON response: ${text}`);
+          }
 
-    const failedSaves = saveResults.filter((r) => r.status === 'rejected').length;
+          const mangaId = json.mangaId;
 
-    await log(`Save requests completed. Successful=${successfulSaves}, Failed=${failedSaves}`);
+          if (!mangaId) {
+            throw new Error(`saveManga missing mangaId in response: ${text}`);
+          }
 
-    await log(`Failure notifications completed. Count=${failResults.length}`);
+          return {
+            manga,
+            mangaId,
+            rawResponse: text,
+          };
+        } catch (error) {
+          throw {
+            manga,
+            error,
+          };
+        }
+      })
+    );
 
     const imageRequests: Promise<Response>[] = [];
 
-    for (let i = 0; i < saveResults.length; i++) {
-      const res = saveResults[i];
+    for (const result of saveResults) {
+      if (result.status === 'rejected') {
+        const { manga, error } = result.reason;
 
-      if (res.status !== 'fulfilled') {
-        console.error('[user-bulk] Save failed:', res.reason);
+        console.error('[user-bulk] Save failed:', error);
 
         await log(
-          `Save request failed: ${
-            res.reason instanceof Error ? res.reason.message : String(res.reason)
+          `Save request failed for ${manga.fetchId}: ${
+            error instanceof Error ? error.message : String(error)
           }`
         );
 
+        failureRequests.push(notifyMangaFailed(manga.fetchId));
+
         continue;
       }
 
-      const response = res.value;
-      const text = await response.text();
+      const { manga, mangaId, rawResponse } = result.value;
 
-      await log(`saveManga raw response: ${text}`);
-
-      if (!response.ok) {
-        await log(`saveManga failed HTTP ${response.status}`);
-        continue;
-      }
-
-      let json: any;
-      try {
-        json = JSON.parse(text);
-      } catch (e) {
-        await log(`saveManga invalid JSON response`);
-        continue;
-      }
-
-      const mangaId = json.mangaId ?? json.result?.mangaId ?? json.id;
-
-      if (!mangaId) {
-        await log(`saveManga missing mangaId in response: ${text}`);
-        continue;
-      }
-
-      const manga = pendingSaves[i];
+      await log(`saveManga raw response: ${rawResponse}`);
 
       await log(`Saved manga ${manga.fetchId} -> mangaId=${mangaId}`);
 
@@ -167,23 +162,31 @@ new Worker(
 
     await log(`Sending ${imageRequests.length} image upload requests`);
 
-    const imageResults = await Promise.allSettled(imageRequests);
+    const [imageResults, failResults] = await Promise.all([
+      Promise.allSettled(imageRequests),
+      Promise.allSettled(failureRequests),
+    ]);
+
+    const successfulSaves = saveResults.filter((r) => r.status === 'fulfilled').length;
+
+    const failedSaves = saveResults.filter((r) => r.status === 'rejected').length;
 
     const successfulImages = imageResults.filter((r) => r.status === 'fulfilled').length;
 
     const failedImages = imageResults.filter((r) => r.status === 'rejected').length;
 
+    await log(`Save requests completed. Successful=${successfulSaves}, Failed=${failedSaves}`);
+
+    await log(`Failure notifications completed. Count=${failResults.length}`);
+
     await log(`Image uploads completed. Successful=${successfulImages}, Failed=${failedImages}`);
 
-    const saved = successfulSaves;
-    const failed = failResults.length;
-
-    await log(`Parent job ${job.id} completed. Saved=${saved}, Failed=${failed}`);
+    await log(`Parent job ${job.id} completed. Saved=${successfulSaves}, Failed=${failedSaves}`);
 
     return {
       fetchId: job.id,
-      saved,
-      failed,
+      saved: successfulSaves,
+      failed: failedSaves,
     };
   },
   { connection }

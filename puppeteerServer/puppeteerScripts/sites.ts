@@ -9,7 +9,7 @@ import { mangafireSite } from './mangafire';
 import { FlowProducer, Job, Queue, QueueEvents } from 'bullmq';
 import config from '../config.json';
 import { connection } from '../connections';
-import { comixSite } from './comix';
+import { comixSite } from './comixV2';
 import { userQueue } from '../user';
 import { autoUpdateQueue } from '../autoUpdateHandler';
 
