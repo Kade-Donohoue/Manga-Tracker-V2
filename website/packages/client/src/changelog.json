@@ -4,7 +4,7 @@
     "date": "2026-9-12", 
     "features": [], 
     "fixes": ["Corrected Style for recommendation modal friend selection", "Set User Title Text Box now matches other text boxes style!"], 
-    "improvements": ["Improved Error Reporting for manga that failed to save. "] 
+    "improvements": ["Improved Error Reporting for manga that failed to save. ", "Reimplemented comix to work again!"] 
   },
   {
     "version": "v4.2.0", 
