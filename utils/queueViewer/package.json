@@ -1,8 +1,8 @@
 {
   "main": "app.js",
   "dependencies": {
-    "@bull-board/api": "^6.21.0",
-    "@bull-board/express": "^6.21.0",
+    "@bull-board/api": "^7.0.0",
+    "@bull-board/express": "^7.0.0",
     "bullmq": "^5.73.4",
     "express": "^5.2.1"
   }
