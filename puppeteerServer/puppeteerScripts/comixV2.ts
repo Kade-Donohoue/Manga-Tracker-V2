@@ -165,7 +165,6 @@ export async function getManga(
     const chapterSegment = parts[2];
 
     const mangaId = mangaSegment.split('-')[0];
-    const currentChapter = chapterSegment.split('-chapter-')[1];
 
     job.updateProgress(5);
     job.log(logWithTimestamp('Url Parsed.'));
@@ -177,7 +176,9 @@ export async function getManga(
 
     const chapters: ChapterData[] = [];
 
+    let pageCount = 1;
     while (true) {
+      job.log(logWithTimestamp(`Parsing chapter data from page ${pageCount}`));
       await page.waitForSelector('li.mchap-item');
 
       const pageData = await page.$$eval('li.mchap-item', (items) => {
@@ -209,11 +210,13 @@ export async function getManga(
 
       chapters.push(...pageData);
 
-      const nextButton = await page.$('button.npager__nav:nth-child(6)[aria-label="Next page"]');
+      const nextButton = await page.$('button.npager__nav[aria-label="Next page"]');
 
       if (!nextButton) {
+        job.log(logWithTimestamp('No next page button found. Finished parsing chapters.'));
         break;
       }
+      pageCount++;
 
       await Promise.all([page.waitForResponse((response) => response.ok()), nextButton.click()]);
 
@@ -226,7 +229,10 @@ export async function getManga(
     }
 
     job.log(logWithTimestamp('Parsing Chapter Data!'));
-    const { slugList, chapterTextList } = dedupeChaptersByNumber(chapters);
+    const { slugList, chapterTextList, currentChapterIndex } = dedupeChaptersByNumber(
+      chapters,
+      chapterSegment
+    );
 
     job.updateProgress(60);
     job.log(logWithTimestamp('Chapter Data Parsed! Checking cover Image Status'));
@@ -321,9 +327,16 @@ export async function getManga(
       job.log(logWithTimestamp('Cover image processed'));
     }
 
-    let currIndex = chapterTextList.indexOf(currentChapter);
-
-    if (currIndex == -1 && !ignoreIndex) {
+    job.log(chapters.map((c) => `${c.slug} (${c.chapter}) ====`).join('\n'));
+    if (currentChapterIndex == -1 && !ignoreIndex) {
+      job.log(
+        logWithTimestamp(
+          'Unable to find current chapter in chapter list data: ' +
+            currentChapterIndex +
+            ' - ' +
+            chapterSegment
+        )
+      );
       throw new Error('Manga: unable to find current chapter. Please retry or contact Admin!');
     }
 
@@ -334,7 +347,7 @@ export async function getManga(
       urlBase: overviewUrl,
       slugList: slugList.join(','),
       chapterTextList: chapterTextList.join(','),
-      currentIndex: currIndex,
+      currentIndex: currentChapterIndex,
       images: images,
       specialFetchData: '',
       sourceId: mangaId,
@@ -357,8 +370,10 @@ export async function getManga(
     }
   }
 
-  function dedupeChaptersByNumber(chapters: ChapterData[]) {
+  function dedupeChaptersByNumber(chapters: ChapterData[], currentChapter: string) {
     const best = new Map<number, ChapterData>();
+
+    const currentChapterNumber = chapters.find((c) => c.slug === currentChapter)?.chapter;
 
     for (const chapter of chapters) {
       if ((best.get(chapter.chapter)?.likes ?? -1) < chapter.likes) {
@@ -368,9 +383,15 @@ export async function getManga(
 
     const deduped = [...best.values()].sort((a, b) => a.chapter - b.chapter);
 
+    const slugList = deduped.map((c) => c.slug);
+    const chapterTextList = deduped.map((c) => `${c.chapter}`);
+
+    const currentChapterIndex = deduped.findIndex((c) => c.chapter === currentChapterNumber);
+
     return {
-      slugList: deduped.map((c) => c.slug),
-      chapterTextList: deduped.map((c) => `${c.chapter}`),
+      slugList,
+      chapterTextList,
+      currentChapterIndex,
     };
   }
 }
