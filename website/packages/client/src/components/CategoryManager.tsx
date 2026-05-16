@@ -28,7 +28,7 @@ import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
-import Grid from '@mui/material/GridLegacy';
+import Grid from '@mui/material/Grid';
 import Skeleton from '@mui/material/Skeleton';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
@@ -54,8 +54,10 @@ const SortableItem = ({
 
   return (
     <Box ref={setNodeRef} style={style}>
-      <Grid container alignItems="left" spacing={1} wrap="wrap">
-        <Grid item>
+      <Grid container spacing={1} wrap="wrap">
+        {' '}
+        //alignItems="flex-start"
+        <Grid>
           {
             <IconButton
               sx={{ touchAction: 'none', cursor: 'grab', '&:active': { cursor: 'grabbing' } }}
@@ -65,7 +67,7 @@ const SortableItem = ({
             </IconButton>
           }
         </Grid>
-        <Grid item xs={6} sm={4}>
+        <Grid size={{ xs: 6, sm: 4 }}>
           <TextField
             fullWidth
             size="small"
@@ -74,18 +76,20 @@ const SortableItem = ({
             onChange={(e) => onUpdate({ ...item, label: e.target.value })}
           />
         </Grid>
-        <Grid item>
+        <Grid>
           <TextField
             type="color"
             size="small"
             value={item.color}
             onChange={(e) => onUpdate({ ...item, color: e.target.value })}
             label="Color"
-            InputLabelProps={{ shrink: true }}
+            slotProps={{
+              inputLabel: { shrink: true },
+            }}
             sx={{ width: 80 }}
           />
         </Grid>
-        <Grid item>
+        <Grid>
           <FormControlLabel
             control={
               <Checkbox
@@ -96,7 +100,7 @@ const SortableItem = ({
             label="Stats"
           />
         </Grid>
-        <Grid item>
+        <Grid>
           <FormControlLabel
             control={
               <Checkbox
@@ -107,7 +111,7 @@ const SortableItem = ({
             label="Public"
           />
         </Grid>
-        <Grid item>
+        <Grid>
           {item.value.includes('user:') && (
             <IconButton color="error" onClick={onDelete}>
               <DeleteIcon />
@@ -122,8 +126,10 @@ const SortableItem = ({
 const SortableItemSkeleton = () => {
   return (
     <Box>
-      <Grid container alignItems="left" spacing={1} wrap="wrap">
-        <Grid item>
+      <Grid container spacing={1} wrap="wrap">
+        {' '}
+        //alignItems="flex-start"
+        <Grid>
           <IconButton
             sx={{ touchAction: 'none', cursor: 'grab', '&:active': { cursor: 'grabbing' } }}
             disabled
@@ -131,19 +137,19 @@ const SortableItemSkeleton = () => {
             <DragIndicatorIcon />
           </IconButton>
         </Grid>
-        <Grid item xs={6} sm={4}>
+        <Grid size={{ xs: 6, sm: 4 }}>
           <Skeleton variant="rounded" height={35} />
         </Grid>
-        <Grid item>
+        <Grid>
           <Skeleton variant="rounded" height={35} width={80} />
         </Grid>
-        <Grid item>
+        <Grid>
           <Skeleton variant="rectangular" width={100} height={35} />
         </Grid>
-        <Grid item>
+        <Grid>
           <Skeleton variant="rectangular" width={100} height={35} />
         </Grid>
-        <Grid item>
+        <Grid>
           <IconButton disabled>
             <DeleteIcon />
           </IconButton>
@@ -259,7 +265,7 @@ export function CategoryManager() {
           strategy={verticalListSortingStrategy}
         >
           {categories.map((cat, i) => (
-            <Box key={cat.value} mb={1}>
+            <Box key={cat.value} sx={{ mb: 1 }}>
               <SortableItem
                 item={cat}
                 onUpdate={(updated) => updateCategory(i, updated)}

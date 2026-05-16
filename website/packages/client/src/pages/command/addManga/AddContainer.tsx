@@ -20,10 +20,12 @@ function TabPanel({
   index: number;
   children: React.ReactNode;
 }) {
-  return <div hidden={value !== index}>{value === index && <Box p={2}>{children}</Box>}</div>;
+  return (
+    <div hidden={value !== index}>{value === index && <Box sx={{ p: 2 }}>{children}</Box>}</div>
+  );
 }
 
-export default function addContainer() {
+export default function AddContainer() {
   const [value, setValue] = React.useState(1);
 
   const handleChange = (_event: React.SyntheticEvent, newValue: number) => {
@@ -38,7 +40,13 @@ export default function addContainer() {
         onChange={handleChange}
         centered
         variant="fullWidth"
-        TabIndicatorProps={{ style: { display: 'none' } }}
+        slotProps={{
+          indicator: {
+            sx: {
+              display: 'none',
+            },
+          },
+        }}
       >
         <Tab icon={<SearchIcon />} label="Find Manga" />
         <Tab icon={<PostAddIcon />} label="Add Manga" />

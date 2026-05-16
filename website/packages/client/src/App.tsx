@@ -25,7 +25,7 @@ import { queryClient } from './queryClient';
 import Box from '@mui/material/Box';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import addContainer from './pages/command/addManga/addContainer';
+import AddContainer from './pages/command/addManga/AddContainer';
 import ChangelogModal from './components/ChangelogModal';
 
 import changelogs from './changelog.json';
@@ -40,6 +40,7 @@ import { useAutoPush } from './hooks/useAutoPush';
 import TermsOfService from './pages/policies/tos';
 import PrivacyPolicy from './pages/policies/privacy';
 import CookiePolicy from './pages/policies/cookie';
+import { ComponentType, JSX, ReactNode } from 'react';
 
 interface CenteredPageProps {
   children: React.ReactNode;
@@ -71,14 +72,14 @@ const routes: Record<string, AppRoute> = {
   tracked: {
     path: '/tracked',
     name: 'View Tracked',
-    icon: <ArtTrackIcon />,
+    icon: ArtTrackIcon,
     component: tracked,
   },
   addManga: {
     path: '/addManga',
     name: 'Add Manga',
     icon: AddCircleIcon,
-    component: addContainer,
+    component: AddContainer,
   },
   stats: {
     path: '/stats',

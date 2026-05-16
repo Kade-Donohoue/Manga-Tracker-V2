@@ -24,7 +24,9 @@ function TabPanel({
   index: number;
   children: React.ReactNode;
 }) {
-  return <div hidden={value !== index}>{value === index && <Box p={2}>{children}</Box>}</div>;
+  return (
+    <div hidden={value !== index}>{value === index && <Box sx={{ p: 2 }}>{children}</Box>}</div>
+  );
 }
 
 async function fetchCount(): Promise<{
@@ -69,7 +71,13 @@ export default function friends() {
         onChange={handleChange}
         centered
         variant="fullWidth"
-        TabIndicatorProps={{ style: { display: 'none' } }}
+        slotProps={{
+          indicator: {
+            sx: {
+              display: 'none',
+            },
+          },
+        }}
       >
         <Tab
           icon={

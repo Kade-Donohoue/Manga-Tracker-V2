@@ -141,9 +141,7 @@ export default function AddBookmarksTab() {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Typography variant="h6" mb={1}>
-        Import Bookmarks
-      </Typography>
+      <Typography sx={{ variant: 'h6', mb: 1 }}>Import Bookmarks</Typography>
       <input type="file" onChange={parseJson} style={{ marginBottom: '16px' }} />
       {folders.length > 0 && (
         <>
@@ -181,9 +179,7 @@ export default function AddBookmarksTab() {
           )}
         </>
       )}
-      <Typography variant="h6" mb={1} mt={5}>
-        How To Import Bookmarks
-      </Typography>
+      <Typography sx={{ variant: 'h6', mb: 1, mt: 5 }}>How To Import Bookmarks</Typography>
       <ul>
         <li>Click Choose File. </li>
         <li>

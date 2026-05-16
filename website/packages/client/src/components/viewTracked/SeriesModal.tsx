@@ -235,9 +235,11 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
       onClose={onUnsetManga}
       maxWidth="md"
       fullWidth
-      PaperProps={{
-        sx: {
-          backgroundColor: '#000000',
+      slotProps={{
+        paper: {
+          sx: {
+            backgroundColor: '#000000',
+          },
         },
       }}
     >
@@ -272,7 +274,7 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
       </DialogTitle>
 
       <DialogContent dividers>
-        <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={3}>
+        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 3 }}>
           <Box>
             <ButtonBase
               sx={{
@@ -304,7 +306,7 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
             </ButtonBase>
           </Box>
 
-          <Box flex={1} sx={{ overflowY: 'auto', maxHeight: '60vh' }}>
+          <Box sx={{ flex: 1, sx: { overflowY: 'auto', maxHeight: '60vh' } }}>
             <Typography variant="body1" gutterBottom>
               Click on a chapter or jump to the current/latest chapter:
             </Typography>
@@ -350,11 +352,13 @@ const SeriesModal: React.FC<SeriesModalProps> = ({
                 >
                   <ListItemText
                     primary={`Chapter ${chapter.title}`}
-                    primaryTypographyProps={{
-                      style: {
-                        fontWeight: chapter.url === currentChapterUrl ? 'bold' : 'normal',
-                        color: chapter.url === currentChapterUrl ? '#1976d2' : 'inherit',
-                        fontSize: '14px',
+                    slotProps={{
+                      primary: {
+                        sx: {
+                          fontWeight: chapter.url === currentChapterUrl ? 'bold' : 'normal',
+                          color: chapter.url === currentChapterUrl ? '#1976d2' : 'inherit',
+                          fontSize: '14px',
+                        },
                       },
                     }}
                   />

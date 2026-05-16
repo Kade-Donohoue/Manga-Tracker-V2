@@ -43,7 +43,15 @@ export default function ResetPasswordPage() {
 
   if (success) {
     return (
-      <Box display="flex" justifyContent="center" mt={8} flexDirection="column" alignItems="center">
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          mt: 8,
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}
+      >
         <Typography variant="h6">Password Reset Successful!</Typography>
         <Typography> You can now log in with your new password.</Typography>
       </Box>
@@ -51,13 +59,15 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <Box display="flex" justifyContent="center" mt={8} px={2}>
+    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8, px: 2 }}>
       <Paper sx={{ p: 5, maxWidth: 400, width: '100%', borderRadius: 3, boxShadow: 3 }}>
-        <Typography variant="h5" mb={3} textAlign="center">
-          Reset Password
-        </Typography>
+        <Typography sx={{ variant: 'h5', mb: 3, textAlign: 'center' }}>Reset Password</Typography>
 
-        <Box component="form" onSubmit={handleSubmit} display="flex" gap={2} flexDirection="column">
+        <Box
+          component="form"
+          onSubmit={handleSubmit}
+          sx={{ display: 'flex', gap: 2, flexDirection: 'column' }}
+        >
           <TextField
             label="New Password"
             type="password"

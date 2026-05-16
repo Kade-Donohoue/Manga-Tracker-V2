@@ -7,7 +7,7 @@ import {
   CardActions,
   Button,
   TextField,
-  GridLegacy as Grid,
+  Grid,
   Alert,
   Divider,
 } from '@mui/material';
@@ -80,7 +80,7 @@ export default function AdminTools() {
 
       <Grid container spacing={3}>
         {/* Impersonate */}
-        <Grid item xs={12} md={6}>
+        <Grid sx={{ xs: 12, md: 6 }}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
@@ -131,7 +131,7 @@ export default function AdminTools() {
         </Grid>
 
         {/* Ban / Unban */}
-        <Grid item xs={12} md={6}>
+        <Grid sx={{ xs: 12, md: 6 }}>
           <Card>
             <CardContent>
               <Typography variant="h6">Ban / Unban User</Typography>
@@ -173,7 +173,7 @@ export default function AdminTools() {
         </Grid>
 
         {/* Reports / Placeholder */}
-        <Grid item xs={12}>
+        <Grid sx={{ xs: 12 }}>
           <Card>
             <CardContent>
               <Typography variant="h6">Reports</Typography>
@@ -186,7 +186,7 @@ export default function AdminTools() {
         </Grid>
 
         {/* Navigation Utilities */}
-        <Grid item xs={12}>
+        <Grid sx={{ xs: 12 }}>
           <Card>
             <CardContent>
               {/* <Button onClick={() => navigate('/admin/users')}>User Management</Button>

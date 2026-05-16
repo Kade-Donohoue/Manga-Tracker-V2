@@ -80,8 +80,14 @@ export default function SignInPage() {
             onChange={(e) => setEmail(e.target.value)}
             fullWidth
             required
-            InputProps={{ sx: { color: '#f0f0f0' } }}
-            InputLabelProps={{ sx: { color: '#f0f0f0' } }}
+            slotProps={{
+              input: {
+                sx: { color: '#f0f0f0' },
+              },
+              inputLabel: {
+                sx: { color: '#f0f0f0' },
+              },
+            }}
           />
           <TextField
             label="Password"
@@ -90,8 +96,14 @@ export default function SignInPage() {
             onChange={(e) => setPassword(e.target.value)}
             fullWidth
             required
-            InputProps={{ sx: { color: '#f0f0f0' } }}
-            InputLabelProps={{ sx: { color: '#f0f0f0' } }}
+            slotProps={{
+              input: {
+                sx: { color: '#f0f0f0' },
+              },
+              inputLabel: {
+                sx: { color: '#f0f0f0' },
+              },
+            }}
           />
           <Button type="submit" variant="contained" color="primary" disabled={loading}>
             {loading ? 'Signing in...' : 'Sign In'}

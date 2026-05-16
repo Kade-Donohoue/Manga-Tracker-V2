@@ -14,9 +14,7 @@ export default function FindMangaTab() {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Typography variant="h6" mb={2}>
-        Find Manga
-      </Typography>
+      <Typography sx={{ variant: 'h6', mb: 2 }}>Find Manga</Typography>
       <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
         {mangaSites.map((site) => (
           <Button

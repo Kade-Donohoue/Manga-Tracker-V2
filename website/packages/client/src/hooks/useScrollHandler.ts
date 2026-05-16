@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 export function useScrollHandler(
-  containerRef: React.RefObject<HTMLDivElement>,
+  containerRef: React.RefObject<HTMLDivElement | null>,
   deps: unknown[] = []
 ) {
   const [showScrollButton, setShowScrollButton] = useState(false);

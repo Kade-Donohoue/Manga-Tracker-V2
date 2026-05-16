@@ -17,7 +17,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Card from '@mui/material/Card';
-import Grid from '@mui/material/GridLegacy';
+import Grid from '@mui/material/Grid';
 import CardMedia from '@mui/material/CardMedia';
 import CardActionArea from '@mui/material/CardActionArea';
 import CardContent from '@mui/material/CardContent';
@@ -189,7 +189,7 @@ const FriendModal: React.FC<friendModalProps> = ({ open, onCloseFriend, friend }
   return (
     <Dialog open={open} onClose={onCloseFriend} fullWidth maxWidth="md">
       <DialogTitle>
-        <Box display="flex" alignItems="center" gap={2}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Avatar alt={friend?.userName} src={friend?.imageURl}></Avatar>
           <Typography variant="h6">{friend?.userName}</Typography>
         </Box>
@@ -211,14 +211,14 @@ const FriendModal: React.FC<friendModalProps> = ({ open, onCloseFriend, friend }
         </Grid>
 
         {/* Recommended Manga Section */}
-        <Box mt={4}>
+        <Box sx={{ mt: 4 }}>
           <Typography variant="subtitle1" gutterBottom>
             Incoming Recommendations
           </Typography>
           {friendData.recomendations && friendData?.recomendations.received.length > 0 ? (
             <Grid container spacing={2}>
               {friendData.recomendations.received.map((manga) => (
-                <Grid item xs={12} sm={6} md={3} key={manga.mangaId}>
+                <Grid sx={{ xs: 12, sm: 6, md: 3 }} key={manga.mangaId}>
                   <Card
                     onContextMenu={(e) => handleMenuOpenRec(e, manga)}
                     sx={{ position: 'relative' }}
@@ -275,14 +275,14 @@ const FriendModal: React.FC<friendModalProps> = ({ open, onCloseFriend, friend }
         </Box>
 
         {/* Sent Recommended Manga Section */}
-        <Box mt={4}>
+        <Box sx={{ mt: 4 }}>
           <Typography variant="subtitle1" gutterBottom>
             Outgoing Recommendations
           </Typography>
           {friendData.recomendations && friendData?.recomendations.sent.length > 0 ? (
             <Grid container spacing={2}>
               {friendData.recomendations.sent.map((manga) => (
-                <Grid item xs={12} sm={6} md={3} key={manga.mangaId}>
+                <Grid sx={{ xs: 12, sm: 6, md: 3 }} key={manga.mangaId}>
                   <Card
                     onContextMenu={(e) => handleMenuOpenSent(e, manga)}
                     sx={{ position: 'relative' }}
@@ -385,6 +385,5 @@ const FriendModal: React.FC<friendModalProps> = ({ open, onCloseFriend, friend }
     </Dialog>
   );
 };
-
 
 export default FriendModal;

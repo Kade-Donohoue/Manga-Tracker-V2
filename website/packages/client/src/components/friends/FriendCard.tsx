@@ -98,8 +98,10 @@ export default function FriendCard({
                 anchorEl={anchorEl}
                 open={menuOpen}
                 onClose={handleMenuClose}
-                MenuListProps={{
-                  'aria-labelledby': 'basic-button',
+                slotProps={{
+                  list: {
+                    'aria-labelledby': 'basic-button',
+                  },
                 }}
               >
                 <MenuItem onClick={handleMenuClose}>Open</MenuItem>
