@@ -71,7 +71,7 @@ const routes: Record<string, AppRoute> = {
   tracked: {
     path: '/tracked',
     name: 'View Tracked',
-    icon: ArtTrackIcon,
+    icon: <ArtTrackIcon />,
     component: tracked,
   },
   addManga: {
