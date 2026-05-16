@@ -1,7 +1,14 @@
 [
   {
+    "version": "v4.3.0", 
+    "date": "2026-16-05", 
+    "features": ["Removed Electron app in favor of PWA!"], 
+    "fixes": [""], 
+    "improvements": ["New Button for adding manga on side of view tracked!", "Updated All dependencies!"] 
+  },
+  {
     "version": "v4.2.1", 
-    "date": "2026-9-12", 
+    "date": "2026-9-05", 
     "features": [], 
     "fixes": ["Corrected Style for recommendation modal friend selection", "Set User Title Text Box now matches other text boxes style!"], 
     "improvements": ["Improved Error Reporting for manga that failed to save. ", "Reimplemented comix to work again!"] 

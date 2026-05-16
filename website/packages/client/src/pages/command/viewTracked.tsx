@@ -25,8 +25,10 @@ import { useTheme } from '@mui/material/styles';
 import AddCircleOutlinedIcon from '@mui/icons-material/AddCircleOutlined';
 import KeyboardArrowDown from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUp from '@mui/icons-material/KeyboardArrowUp';
+import AddIcon from '@mui/icons-material/Add';
 import Typography from '@mui/material/Typography';
 import { useUISetting } from '../../hooks/useUiSetting';
+import { width } from '@mui/system/sizing';
 
 const combinedSortOptions: dropdownOption[] = [
   { value: 'mangaName_asc', label: 'Alphabetical (A → Z)' },
@@ -304,6 +306,30 @@ export default function Tracked() {
           </CardActionArea>
         </Card>
 
+        <Box
+          sx={{
+            position: 'fixed',
+            bottom: theme.spacing(16),
+            right: theme.spacing(2),
+            zIndex: 1300,
+          }}
+        >
+          <IconButton
+            color="primary"
+            onClick={() => {
+              setAddOpen(true);
+            }}
+            sx={{
+              bgcolor: '#90caf9',
+              color: 'background.paper',
+              boxShadow: 3,
+              '&:hover': { bgcolor: '#0c81e0' },
+            }}
+          >
+            {<AddIcon sx={{ stroke: 'currentColor', strokeWidth: 1 }} />}
+          </IconButton>
+        </Box>
+
         <Fade in={showScrollButton}>
           <Box
             sx={{
@@ -327,7 +353,11 @@ export default function Tracked() {
                 '&:hover': { bgcolor: '#0c81e0' },
               }}
             >
-              {atBottom ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
+              {atBottom ? (
+                <KeyboardArrowUp sx={{ stroke: 'currentColor', strokeWidth: 1 }} />
+              ) : (
+                <KeyboardArrowDown sx={{ stroke: 'currentColor', strokeWidth: 1 }} />
+              )}
             </IconButton>
           </Box>
         </Fade>
