@@ -14,7 +14,8 @@ import SvgIcon from '@mui/material/SvgIcon';
 interface RecommendModalProps {
   open: boolean;
   onClose: () => void;
-  manga: mangaDetails | null;
+  mangaIds: string[];
+  onSuccess: () => void;
 }
 
 const modalStyle = {
@@ -95,7 +96,12 @@ const sendRecommendation = async (mangaId: string, friendId: string | undefined)
   });
 };
 
-export default function RecommendModal({ open, onClose, manga }: RecommendModalProps) {
+export default function RecommendModal({
+  open,
+  onClose,
+  mangaIds,
+  onSuccess,
+}: RecommendModalProps) {
   const { data: friends, isLoading, isError } = useFriends();
 
   const friendOptions: dropdownOption[] | undefined = friends?.data.map((f) => {
@@ -105,7 +111,7 @@ export default function RecommendModal({ open, onClose, manga }: RecommendModalP
   const [friend, setFriend] = React.useState<dropdownOption | null>();
 
   friends?.data;
-  if (!manga) return <div />;
+  if (!mangaIds || mangaIds.length === 0) return <div />;
 
   return (
     <Modal
@@ -132,7 +138,10 @@ export default function RecommendModal({ open, onClose, manga }: RecommendModalP
 
         <Button
           onClick={() => {
-            sendRecommendation(manga.mangaId, friend?.value);
+            mangaIds.forEach((mangaId) => {
+              sendRecommendation(mangaId, friend?.value);
+            });
+            onSuccess();
             onClose();
           }}
           variant="contained"

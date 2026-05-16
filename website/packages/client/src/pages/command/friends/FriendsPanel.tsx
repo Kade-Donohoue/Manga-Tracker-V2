@@ -48,7 +48,9 @@ export default function FriendsPanel() {
         onCloseFriend={() => setFriendOpen(undefined)}
         friend={data?.data.find((f) => f.userID === friendOpen)}
       />
-      {data?.data.map((friend) => <FriendCard friend={friend} openFriend={setFriendOpen} />)}
+      {data?.data.map((friend) => (
+        <FriendCard friend={friend} openFriend={setFriendOpen} key={friend.userID} />
+      ))}
     </Box>
   );
 }

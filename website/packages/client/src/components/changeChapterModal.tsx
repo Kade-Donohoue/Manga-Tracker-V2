@@ -18,7 +18,7 @@ interface ChangeChapterModalProps {
   open: boolean;
   onClose: () => void;
   mangaInfo: Map<string, mangaDetails> | undefined;
-  mangaId: string;
+  mangaIds: string[];
 }
 
 const modalStyle = {
@@ -59,8 +59,10 @@ export default function ChangeChapterModal({
   open,
   onClose,
   mangaInfo,
-  mangaId,
+  mangaIds,
 }: ChangeChapterModalProps) {
+  const mangaId = mangaIds.length === 1 ? mangaIds[0] : null;
+
   const queryClient = useQueryClient();
   const [newChapter, setChapter] = React.useState<dropdownOption | null>(null);
   const [chapterOptions, setChapterOptions] = React.useState<dropdownOption[]>([]);

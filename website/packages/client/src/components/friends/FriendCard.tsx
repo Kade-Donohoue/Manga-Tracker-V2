@@ -75,7 +75,7 @@ export default function FriendCard({
 
   return (
     <Card sx={{ width: 320, height: 150 }}>
-      <CardActionArea onClick={() => openFriend(friend.userID)}>
+      <CardActionArea onClick={() => openFriend(friend.userID)} component="div">
         <CardHeader
           avatar={
             <Avatar sx={{ bgcolor: 'blue' }} aria-label="User Icon" src={friend.imageURl}>

@@ -56,7 +56,6 @@ const SortableItem = ({
     <Box ref={setNodeRef} style={style}>
       <Grid container spacing={1} wrap="wrap">
         {' '}
-        //alignItems="flex-start"
         <Grid>
           {
             <IconButton
@@ -128,7 +127,6 @@ const SortableItemSkeleton = () => {
     <Box>
       <Grid container spacing={1} wrap="wrap">
         {' '}
-        //alignItems="flex-start"
         <Grid>
           <IconButton
             sx={{ touchAction: 'none', cursor: 'grab', '&:active': { cursor: 'grabbing' } }}

@@ -1,4 +1,4 @@
-import React, { useRef, useState, useMemo } from 'react';
+import React, { useRef, useState, useMemo, useEffect } from 'react';
 import Fuse from 'fuse.js';
 import { dropdownOption, mangaDetails } from '../../types';
 
@@ -23,12 +23,20 @@ import IconButton from '@mui/material/IconButton';
 import { useTheme } from '@mui/material/styles';
 
 import AddCircleOutlinedIcon from '@mui/icons-material/AddCircleOutlined';
-import KeyboardArrowDown from '@mui/icons-material/KeyboardArrowDown';
+import MoveUpIcon from '@mui/icons-material/MoveUp';
+import MoveDownIcon from '@mui/icons-material/MoveDown';
 import KeyboardArrowUp from '@mui/icons-material/KeyboardArrowUp';
 import AddIcon from '@mui/icons-material/Add';
 import Typography from '@mui/material/Typography';
 import { useUISetting } from '../../hooks/useUiSetting';
 import { width } from '@mui/system/sizing';
+import Slide from '@mui/material/Slide';
+import Paper from '@mui/material/Paper';
+import Button from '@mui/material/Button';
+import SpeedDialAction from '@mui/material/SpeedDialAction';
+import SpeedDial from '@mui/material/SpeedDial';
+import DoneAllIcon from '@mui/icons-material/DoneAll';
+import CloseIcon from '@mui/icons-material/Close';
 
 const combinedSortOptions: dropdownOption[] = [
   { value: 'mangaName_asc', label: 'Alphabetical (A → Z)' },
@@ -67,6 +75,10 @@ export default function Tracked() {
     return stored ? JSON.parse(stored) : false;
   });
 
+  const [selectionMode, setSelectionMode] = useState(false);
+
+  const [selectedMangaIds, setSelectedMangaIds] = useState<Set<string>>(() => new Set());
+
   // Save to localStorage on change
   React.useEffect(() => {
     localStorage.setItem('filterOptions', JSON.stringify(filterOptions));
@@ -87,6 +99,8 @@ export default function Tracked() {
   const [removeOpen, setRemoveOpen] = useState(false);
   const [recommendOpen, setRecommendOpen] = useState(false);
   const [coverSelectionOpen, setCoverSelectionOpen] = useState(false);
+
+  const [speedDialOpen, setSpeedDialOpen] = useState(false);
 
   // Context menu state
   const [anchorPosition, setAnchorPosition] = useState<{ top: number; left: number } | null>(null);
@@ -149,7 +163,46 @@ export default function Tracked() {
     setAnchorPosition({ top: event.clientY, left: event.clientX });
   }
 
-  // Handlers for context menu and modals here...
+  function toggleSelect(mangaId: string) {
+    setSelectedMangaIds((prev) => {
+      const next = new Set(prev);
+
+      if (next.has(mangaId)) {
+        next.delete(mangaId);
+      } else {
+        next.add(mangaId);
+      }
+
+      return next;
+    });
+  }
+
+  function clearSelection() {
+    setSelectedMangaIds(new Set());
+    setSelectionMode(false);
+  }
+
+  useEffect(() => {
+    if (selectedMangaIds.size === 0) {
+      setSelectionMode(false);
+    }
+  }, [selectedMangaIds]);
+
+  React.useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key !== 'Escape') return;
+
+      if (selectionMode) {
+        clearSelection();
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectionMode]);
 
   if (isLoading || error || !mangaInfo) {
     return (
@@ -230,6 +283,8 @@ export default function Tracked() {
             }),
           });
         }}
+        clearSelection={clearSelection}
+        selectedMangaIds={Array.from(selectedMangaIds)}
       />
 
       <MangaControls
@@ -268,6 +323,10 @@ export default function Tracked() {
               setModalOpen(true);
             }}
             catOptions={catOptions}
+            selected={selectedMangaIds.has(data.mangaId)}
+            selectionMode={selectionMode}
+            onToggleSelect={() => toggleSelect(data.mangaId)}
+            enableSelectionMode={() => setSelectionMode(true)}
           />
         ))}
         <Card
@@ -306,61 +365,79 @@ export default function Tracked() {
           </CardActionArea>
         </Card>
 
-        <Box
+        <SpeedDial
+          ariaLabel="tracked-actions"
           sx={{
             position: 'fixed',
-            bottom: theme.spacing(16),
-            right: theme.spacing(2),
+            bottom: theme.spacing(8),
+            right: theme.spacing(1),
             zIndex: 1300,
           }}
+          open={speedDialOpen}
+          onOpen={() => setSpeedDialOpen(true)}
+          onClose={() => setSpeedDialOpen(false)}
+          icon={
+            <KeyboardArrowUp
+              sx={{
+                transition: 'transform 220ms cubic-bezier(0.4, 0, 0.2, 1)',
+                transform: speedDialOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+              }}
+            />
+          }
+          FabProps={{
+            color: selectionMode ? 'secondary' : 'primary',
+          }}
+          hidden={selectionMode}
         >
-          <IconButton
-            color="primary"
+          <SpeedDialAction
+            icon={<AddIcon />}
+            slotProps={{
+              tooltip: {
+                title: 'Add Manga',
+              },
+            }}
             onClick={() => {
               setAddOpen(true);
             }}
-            sx={{
-              bgcolor: '#90caf9',
-              color: 'background.paper',
-              boxShadow: 3,
-              '&:hover': { bgcolor: '#0c81e0' },
-            }}
-          >
-            {<AddIcon sx={{ stroke: 'currentColor', strokeWidth: 1 }} />}
-          </IconButton>
-        </Box>
+          />
 
-        <Fade in={showScrollButton}>
-          <Box
-            sx={{
-              position: 'fixed',
-              bottom: theme.spacing(8),
-              right: theme.spacing(2),
-              zIndex: 1300,
+          <SpeedDialAction
+            icon={selectionMode ? <CloseIcon /> : <DoneAllIcon />}
+            onClick={() => {
+              if (selectionMode) {
+                clearSelection();
+              } else {
+                setSelectionMode(true);
+              }
             }}
-          >
-            <IconButton
-              color="primary"
+            slotProps={{
+              tooltip: {
+                title: 'Select',
+              },
+            }}
+          />
+
+          {showScrollButton && (
+            <SpeedDialAction
+              icon={atBottom ? <MoveUpIcon /> : <MoveDownIcon />}
+              slotProps={{
+                tooltip: {
+                  title: atBottom ? 'Scroll to Top' : 'Scroll to Bottom',
+                },
+              }}
               onClick={() => {
                 const el = containerRef.current;
+
                 if (!el) return;
-                el.scrollTo({ top: atBottom ? 0 : el.scrollHeight, behavior: 'smooth' });
+
+                el.scrollTo({
+                  top: atBottom ? 0 : el.scrollHeight,
+                  behavior: 'smooth',
+                });
               }}
-              sx={{
-                bgcolor: '#90caf9',
-                color: 'background.paper',
-                boxShadow: 3,
-                '&:hover': { bgcolor: '#0c81e0' },
-              }}
-            >
-              {atBottom ? (
-                <KeyboardArrowUp sx={{ stroke: 'currentColor', strokeWidth: 1 }} />
-              ) : (
-                <KeyboardArrowDown sx={{ stroke: 'currentColor', strokeWidth: 1 }} />
-              )}
-            </IconButton>
-          </Box>
-        </Fade>
+            />
+          )}
+        </SpeedDial>
 
         <MangaContextMenu
           anchorPosition={anchorPosition}
@@ -401,6 +478,59 @@ export default function Tracked() {
           }}
         />
       </Box>
+
+      <Slide direction="up" in={selectionMode && selectedMangaIds.size > 0}>
+        <Paper
+          elevation={8}
+          sx={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 1400,
+
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+
+            px: 2,
+            py: 1.5,
+
+            borderTopLeftRadius: 16,
+            borderTopRightRadius: 16,
+
+            bgcolor: 'background.paper',
+            borderTop: '1px solid',
+            borderColor: 'divider',
+          }}
+        >
+          <Typography variant="subtitle1">{selectedMangaIds.size} selected</Typography>
+
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 1,
+              flexWrap: 'wrap',
+            }}
+          >
+            <Button variant="contained" onClick={() => setCatOpen(true)}>
+              Category
+            </Button>
+
+            <Button variant="contained" onClick={() => setRecommendOpen(true)}>
+              Recommend
+            </Button>
+
+            <Button variant="contained" color="error" onClick={() => setRemoveOpen(true)}>
+              Remove
+            </Button>
+
+            <Button variant="outlined" onClick={clearSelection}>
+              Cancel
+            </Button>
+          </Box>
+        </Paper>
+      </Slide>
     </div>
   );
 }

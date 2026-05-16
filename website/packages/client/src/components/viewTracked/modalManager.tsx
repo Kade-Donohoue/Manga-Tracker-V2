@@ -31,9 +31,11 @@ interface ModalManagerProps {
   handleCatOpen: () => void;
   handleChapterOpen: () => void;
   handleModalClose: () => Promise<void>;
+  clearSelection: () => void;
 
   coverSelectionOpen: boolean;
   setCoverSelectionOpen: (open: boolean) => void;
+  selectedMangaIds: string[];
 }
 
 const ModalManager: React.FC<ModalManagerProps> = ({
@@ -59,7 +61,12 @@ const ModalManager: React.FC<ModalManagerProps> = ({
   handleModalClose,
   coverSelectionOpen,
   setCoverSelectionOpen,
+  selectedMangaIds,
+  clearSelection,
 }) => {
+  const effectiveIds =
+    selectedMangaIds.length > 0 ? selectedMangaIds : currentMangaId ? [currentMangaId] : [];
+
   return (
     <div className="mangaOverviewModal" id="overviewModal">
       <SeriesModal
@@ -74,35 +81,40 @@ const ModalManager: React.FC<ModalManagerProps> = ({
       <ChangeCategoryModal
         open={catOpen}
         onClose={() => setCatOpen(false)}
-        mangaId={currentMangaId || ''}
+        mangaIds={effectiveIds}
+        onSuccess={() => clearSelection()}
       />
       <SetUserTitleModal
         open={titleOpen}
         onClose={() => setTitleOpen(false)}
-        mangaId={currentMangaId || ''}
+        mangaId={effectiveIds[0] || ''}
       />
       <RecommendModal
         open={recommendOpen}
         onClose={() => setRecommendOpen(false)}
-        manga={mangaInfo?.get(currentMangaId || '') ?? null}
+        mangaIds={effectiveIds}
+        onSuccess={() => clearSelection()}
       />
       <ChangeChapterModal
         open={chapterOpen}
         onClose={() => setChapterOpen(false)}
         mangaInfo={mangaInfo}
-        mangaId={currentMangaId || ''}
+        mangaIds={effectiveIds}
       />
       <ConfirmRemovalModal
         open={removeOpen}
         onClose={() => setRemoveOpen(false)}
-        mangaId={currentMangaId || ''}
+        mangaIds={effectiveIds}
+        afterRemove={() => {
+          clearSelection();
+        }}
       />
       <AddMangaModal open={addOpen} onClose={() => setAddOpen(false)} />
       <SelectCoverModal
         open={coverSelectionOpen}
         onClose={() => setCoverSelectionOpen(false)}
         mangaInfo={mangaInfo}
-        mangaId={currentMangaId || ''}
+        mangaId={effectiveIds[0] || ''}
       />
     </div>
   );

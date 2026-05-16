@@ -221,14 +221,18 @@ const FriendModal: React.FC<friendModalProps> = ({ open, onCloseFriend, friend }
                 <Grid sx={{ xs: 12, sm: 6, md: 3 }} key={manga.mangaId}>
                   <Card
                     onContextMenu={(e) => handleMenuOpenRec(e, manga)}
-                    sx={{ position: 'relative' }}
+                    sx={{
+                      position: 'relative',
+                      width: 280,
+                      borderRadius: 2,
+                      overflow: 'visible',
+                    }}
                   >
                     <CardActionArea
                       onClick={() => window.open(`${manga.urlBase}${manga.slugList[0]}`, '_blank')}
                     >
                       <CardMedia
                         component="img"
-                        height="180"
                         image={
                           `${import.meta.env.VITE_IMG_URL}/${manga.mangaId}/${0}` ||
                           'mangaNotFoundImage.png'
@@ -285,14 +289,18 @@ const FriendModal: React.FC<friendModalProps> = ({ open, onCloseFriend, friend }
                 <Grid sx={{ xs: 12, sm: 6, md: 3 }} key={manga.mangaId}>
                   <Card
                     onContextMenu={(e) => handleMenuOpenSent(e, manga)}
-                    sx={{ position: 'relative' }}
+                    sx={{
+                      position: 'relative',
+                      width: 280,
+                      borderRadius: 2,
+                      overflow: 'visible',
+                    }}
                   >
                     <CardActionArea
                       onClick={() => window.open(`${manga.urlBase}${manga.slugList[0]}`, '_blank')}
                     >
                       <CardMedia
                         component="img"
-                        height="180"
                         image={
                           `${import.meta.env.VITE_IMG_URL}/${manga.mangaId}/${0}` ||
                           'mangaNotFoundImage.png'

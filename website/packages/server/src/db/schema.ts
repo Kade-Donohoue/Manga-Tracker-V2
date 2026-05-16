@@ -224,6 +224,7 @@ export const recommendations = sqliteTable(
 
 export const apikey = sqliteTable('apikey', {
   id: text('id').primaryKey(),
+  configId: text('config_id').notNull().default('default'),
   name: text('name').notNull(),
   start: text('start').notNull(),
   prefix: text('prefix').notNull(),
