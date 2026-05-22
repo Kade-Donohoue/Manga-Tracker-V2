@@ -4,7 +4,7 @@ import { coverImages, friends, mangaData, user, userCategories, userData } from 
 import { createRouter } from '@/lib/create-app';
 import { User } from 'better-auth';
 import { zValidator } from '@hono/zod-validator';
-import { updateUserCategoriesSchema } from '@/schemas/zodSchemas';
+import { isTrackingMangaSchema, updateUserCategoriesSchema } from '@/schemas/zodSchemas';
 import { getLiveUserStats } from '@/utils';
 
 const pullRouter = createRouter();
@@ -206,6 +206,37 @@ pullRouter.post('/sharedFriends/:mangaId', async (c) => {
     console.error('Error:', err);
     return c.json({ message: 'An unknown error occurred' }, 500);
   }
+});
+
+pullRouter.post('/isTracking', zValidator('json', isTrackingMangaSchema), async (c) => {
+  const db = createDb(c.env);
+  const currentUser: User = c.get('user');
+
+  const { sourceId } = c.req.valid('json');
+
+  const trackedRaw = await db
+    .select({
+      mangaId: userData.mangaId,
+      currentIndex: userData.currentIndex,
+      currentChap: userData.currentChap,
+      slugList: mangaData.slugList,
+    })
+    .from(userData)
+    .innerJoin(mangaData, eq(userData.mangaId, mangaData.mangaId))
+    .where(and(eq(userData.userID, currentUser.id), eq(mangaData.sourceId, sourceId)))
+    .get();
+
+  const tracked = trackedRaw
+    ? {
+        ...trackedRaw,
+        slugList: trackedRaw.slugList.split(',').map((slug) => slug.trim()),
+      }
+    : null;
+
+  return c.json({
+    tracking: !!tracked,
+    tracked: tracked,
+  });
 });
 
 export default pullRouter;

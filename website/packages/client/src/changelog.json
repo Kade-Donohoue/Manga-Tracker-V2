@@ -2,7 +2,7 @@
   {
     "version": "v4.3.0", 
     "date": "2026-16-05", 
-    "features": ["Removed Electron app in favor of PWA!"], 
+    "features": ["Removed Electron app in favor of PWA!", "Experimental Extension for tracking and updating Manga!"], 
     "fixes": [""], 
     "improvements": ["New Button for adding manga on side of view tracked!", "Updated All dependencies!"] 
   },

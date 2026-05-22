@@ -150,3 +150,7 @@ export const updateData = z.array(
 export const updateDataSchema = z.object({
   newData: updateData,
 });
+
+export const isTrackingMangaSchema = z.object({
+  sourceId: z.string().min(1),
+});
