@@ -8,12 +8,16 @@ export default function PrivacyPolicy() {
         Privacy Policy
       </Typography>
 
-      <Typography paragraph>Last Updated: 2/22/2026</Typography>
+      <Typography component="p" sx={{ mb: 2 }}>
+        Last Updated: 2/22/2026
+      </Typography>
 
       <Typography variant="h6" sx={{ mt: 3 }}>
         1. Information We Collect
       </Typography>
-      <Typography paragraph>When you create an account, we collect:</Typography>
+      <Typography component="p" sx={{ mb: 2 }}>
+        When you create an account, we collect:
+      </Typography>
       <ul>
         <li>Username</li>
         <li>Email address</li>
@@ -24,7 +28,7 @@ export default function PrivacyPolicy() {
       <Typography variant="h6" sx={{ mt: 3 }}>
         2. Push Notifications
       </Typography>
-      <Typography paragraph>
+      <Typography component="p" sx={{ mb: 2 }}>
         If you enable notifications, we store a push subscription linked to your account. This is
         used solely to send notifications related to your tracked content.
       </Typography>
@@ -32,7 +36,9 @@ export default function PrivacyPolicy() {
       <Typography variant="h6" sx={{ mt: 3 }}>
         3. Cookies & Local Storage
       </Typography>
-      <Typography paragraph>We use cookies and browser storage to:</Typography>
+      <Typography component="p" sx={{ mb: 2 }}>
+        We use cookies and browser storage to:
+      </Typography>
       <ul>
         <li>Maintain login sessions</li>
         <li>Remember preferences</li>
@@ -42,7 +48,7 @@ export default function PrivacyPolicy() {
       <Typography variant="h6" sx={{ mt: 3 }}>
         4. Third-Party Services
       </Typography>
-      <Typography paragraph>
+      <Typography component="p" sx={{ mb: 2 }}>
         We use third-party authentication providers such as Google and Discord. These providers may
         collect data according to their own privacy policies.
       </Typography>
@@ -50,7 +56,7 @@ export default function PrivacyPolicy() {
       <Typography variant="h6" sx={{ mt: 3 }}>
         5. Data Storage & Security
       </Typography>
-      <Typography paragraph>
+      <Typography component="p" sx={{ mb: 2 }}>
         Data is stored securely using Cloudflare infrastructure. We take reasonable measures to
         protect your information.
       </Typography>
@@ -58,7 +64,7 @@ export default function PrivacyPolicy() {
       <Typography variant="h6" sx={{ mt: 3 }}>
         6. Data Deletion
       </Typography>
-      <Typography paragraph>
+      <Typography component="p" sx={{ mb: 2 }}>
         You may request deletion of your account and associated data at any time. Upon deletion,
         your stored data will be permanently removed.
       </Typography>
@@ -66,7 +72,7 @@ export default function PrivacyPolicy() {
       <Typography variant="h6" sx={{ mt: 3 }}>
         7. Changes
       </Typography>
-      <Typography paragraph>
+      <Typography component="p" sx={{ mb: 2 }}>
         We may update this policy from time to time. Continued use of the service after changes
         constitutes acceptance of the updated policy.
       </Typography>

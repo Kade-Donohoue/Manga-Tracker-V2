@@ -198,11 +198,11 @@ export async function getManga(
 
     console.log(chapterData);
 
-    const slugList = chapterData.data.chapters.map((chap) =>
-      chap.chapter_slug.replace('chapter-', '')
-    );
+    const chapterList = chapterData.data.chapters.reverse();
 
-    const chapterTextList = chapterData.data.chapters.map((chap) => String(chap.chapter_num));
+    const slugList = chapterList.map((chap) => chap.chapter_slug.replace('chapter-', ''));
+
+    const chapterTextList = chapterList.map((chap) => String(chap.chapter_num));
 
     if (slugList.length <= 0)
       throw new Error('Manga: Issue fetching chapters! Please Contact and Admin!');

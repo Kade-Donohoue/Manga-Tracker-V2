@@ -18,7 +18,7 @@ interface ChangeChapterModalProps {
   open: boolean;
   onClose: () => void;
   mangaInfo: Map<string, mangaDetails> | undefined;
-  mangaId: string;
+  mangaIds: string[];
 }
 
 const modalStyle = {
@@ -59,8 +59,10 @@ export default function ChangeChapterModal({
   open,
   onClose,
   mangaInfo,
-  mangaId,
+  mangaIds,
 }: ChangeChapterModalProps) {
+  const mangaId = mangaIds.length === 1 ? mangaIds[0] : null;
+
   const queryClient = useQueryClient();
   const [newChapter, setChapter] = React.useState<dropdownOption | null>(null);
   const [chapterOptions, setChapterOptions] = React.useState<dropdownOption[]>([]);
@@ -195,7 +197,15 @@ export default function ChangeChapterModal({
           <h3 id="chap-modal-title" style={{ color: 'white' }}>
             Jump To
           </h3>
-          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ maxWidth: '100%' }}>
+          <Stack
+            direction="row"
+            spacing={1}
+            useFlexGap
+            sx={{
+              flexWrap: 'wrap',
+              maxWidth: '100%',
+            }}
+          >
             <Button
               variant="outlined"
               onClick={() => setChapter(chapterOptions.at(-1) ?? null)}

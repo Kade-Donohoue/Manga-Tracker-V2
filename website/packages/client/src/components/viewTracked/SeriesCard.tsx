@@ -15,12 +15,17 @@ import Stack from '@mui/material/Stack';
 import Chip from '@mui/material/Chip';
 import LinearProgress from '@mui/material/LinearProgress';
 import { useUISetting } from '../../hooks/useUiSetting';
+import Checkbox from '@mui/material/Checkbox';
 
 interface Props {
   data: mangaDetails;
   handleContextMenu: (e: React.MouseEvent, mangaId: string) => void;
   openMangaOverview: (mangaId: string) => void;
   catOptions: categoryOption[] | undefined;
+  selected: boolean;
+  selectionMode: boolean;
+  onToggleSelect: () => void;
+  enableSelectionMode: () => void;
 }
 
 export default function SeriesCard({
@@ -28,6 +33,10 @@ export default function SeriesCard({
   handleContextMenu,
   openMangaOverview,
   catOptions,
+  selected,
+  selectionMode,
+  onToggleSelect,
+  enableSelectionMode,
 }: Props) {
   const [progressBarEnabled] = useUISetting('progressBarEnabled', true);
   const [compactCardsEnabled] = useUISetting('compactCardsEnabled', false);
@@ -89,11 +98,27 @@ export default function SeriesCard({
         overflow: 'visible',
         position: 'relative',
         bgcolor: 'background.paper',
+        outline: selected ? '3px solid #90caf9' : undefined,
+        opacity: selectionMode && !selected ? 0.7 : 1,
+        transform: selected ? 'scale(0.98)' : undefined,
       }}
       onContextMenu={(e) => handleContextMenu(e, data.mangaId)}
     >
       <CardActionArea
-        onClick={() => openMangaOverview(data.mangaId)}
+        onClick={(e) => {
+          console.log(e.ctrlKey, selectionMode);
+          if (e.shiftKey || e.ctrlKey || selectionMode) {
+            if (!selectionMode) {
+              enableSelectionMode();
+            }
+
+            onToggleSelect();
+
+            return;
+          }
+
+          openMangaOverview(data.mangaId);
+        }}
         onAuxClick={(e) => handleAuxClick(e, data.mangaId)}
         sx={{ display: 'block', textAlign: 'left' }}
       >
@@ -195,6 +220,20 @@ export default function SeriesCard({
             )}
           </Stack>
         </CardContent>
+
+        {selectionMode && (
+          <Checkbox
+            checked={selected}
+            sx={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
+              zIndex: 2,
+              bgcolor: 'rgba(0,0,0,0.5)',
+              borderRadius: '50%',
+            }}
+          />
+        )}
       </CardActionArea>
     </Card>
   );

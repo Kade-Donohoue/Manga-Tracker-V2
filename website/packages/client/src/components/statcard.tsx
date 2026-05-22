@@ -1,6 +1,6 @@
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
-import Grid from '@mui/material/GridLegacy';
+import Grid from '@mui/material/Grid';
 import Skeleton from '@mui/material/Skeleton';
 import Typography from '@mui/material/Typography';
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
@@ -23,7 +23,7 @@ export const StatCard = ({
   const isDown = diff < 0;
 
   return (
-    <Grid item xs="auto" sm="auto" md="auto" lg="auto">
+    <Grid sx={{ xs: 'auto', sm: 'auto', md: 'auto', lg: 'auto' }}>
       <Card
         elevation={2}
         sx={{
@@ -40,14 +40,22 @@ export const StatCard = ({
           mx: 'auto',
         }}
       >
-        <Box textAlign="center" width="100%">
+        <Box sx={{ textAlign: 'center', width: '100%' }}>
           <Box
-            display="flex"
-            justifyContent="center"
-            alignItems="center"
-            sx={{ position: 'relative', mb: 0.5 }}
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              position: 'relative',
+              mb: 0.5,
+            }}
           >
-            <Box display="inline-block" position="relative">
+            <Box
+              sx={{
+                display: 'inline-block',
+                position: 'relative',
+              }}
+            >
               <Typography variant="h4" component="div" gutterBottom>
                 {hasValue ? (
                   value!.toLocaleString()

@@ -75,7 +75,7 @@ export default function FriendCard({
 
   return (
     <Card sx={{ width: 320, height: 150 }}>
-      <CardActionArea onClick={() => openFriend(friend.userID)}>
+      <CardActionArea onClick={() => openFriend(friend.userID)} component="div">
         <CardHeader
           avatar={
             <Avatar sx={{ bgcolor: 'blue' }} aria-label="User Icon" src={friend.imageURl}>
@@ -98,8 +98,10 @@ export default function FriendCard({
                 anchorEl={anchorEl}
                 open={menuOpen}
                 onClose={handleMenuClose}
-                MenuListProps={{
-                  'aria-labelledby': 'basic-button',
+                slotProps={{
+                  list: {
+                    'aria-labelledby': 'basic-button',
+                  },
                 }}
               >
                 <MenuItem onClick={handleMenuClose}>Open</MenuItem>

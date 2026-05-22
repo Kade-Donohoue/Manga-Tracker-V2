@@ -12,14 +12,14 @@ import Button from '@mui/material/Button';
 interface ConfirmRemovalDialogProps {
   open: boolean;
   onClose: () => void;
-  mangaId: string;
+  mangaIds: string[];
   afterRemove?: () => void; // optional callback after successful removal
 }
 
 export default function ConfirmRemovalModal({
   open,
   onClose,
-  mangaId,
+  mangaIds,
   afterRemove,
 }: ConfirmRemovalDialogProps) {
   const queryClient = useQueryClient();
@@ -44,6 +44,7 @@ export default function ConfirmRemovalModal({
       });
 
       if (reply.ok) {
+        afterRemove?.();
         toast.update(notif, {
           render: 'Manga Successfully Removed!',
           type: 'success',
@@ -94,7 +95,9 @@ export default function ConfirmRemovalModal({
         </Button>
         <Button
           onClick={async () => {
-            await removeManga(mangaId);
+            for (const mangaId of mangaIds) {
+              await removeManga(mangaId);
+            }
             onClose();
           }}
           sx={{ color: '#ffffff' }}

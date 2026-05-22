@@ -77,9 +77,7 @@ export default function AddMangaTab() {
 
   return (
     <Box sx={{ width: '100%', p: 2 }}>
-      <Typography variant="h6" mb={1}>
-        Enter Manga URL(s)
-      </Typography>
+      <Typography sx={{ variant: 'h6', mb: 1 }}>Enter Manga URL(s)</Typography>
 
       <input
         id="chapURL"

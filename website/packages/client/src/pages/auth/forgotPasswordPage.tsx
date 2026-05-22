@@ -32,11 +32,19 @@ export default function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" mt={8} flexDirection="column">
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          mt: 8,
+          flexDirection: 'column',
+        }}
+      >
         <Typography variant="h6" gutterBottom>
           Reset Link Sent
         </Typography>
-        <Typography textAlign="center">
+        <Typography sx={{ textAlign: 'center' }}>
           If an account exists for <strong>{email}</strong>, a reset link has been sent. Check your
           inbox and spam folder.
         </Typography>
@@ -50,21 +58,25 @@ export default function ForgotPasswordPage() {
 
   return (
     <Box
-      display="flex"
-      justifyContent="center"
-      alignItems="center"
-      mt={8}
-      flexDirection="column"
-      px={2}
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        mt: 8,
+        flexDirection: 'column',
+        px: 2,
+      }}
     >
       <Paper sx={{ p: 5, maxWidth: 400, width: '100%', borderRadius: 3, boxShadow: 3 }}>
-        <Typography variant="h5" mb={3} textAlign="center">
-          Forgot Password
-        </Typography>
+        <Typography sx={{ variant: 'h5', mb: 3, textAlign: 'center' }}>Forgot Password</Typography>
 
         <Divider sx={{ mb: 3 }} />
 
-        <Box component="form" onSubmit={handleSubmit} display="flex" gap={2} flexDirection="column">
+        <Box
+          component="form"
+          onSubmit={handleSubmit}
+          sx={{ display: 'flex', gap: 2, flexDirection: 'column' }}
+        >
           <TextField
             label="Email"
             type="email"

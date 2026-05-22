@@ -15,7 +15,8 @@ import CancelIcon from '@mui/icons-material/Cancel';
 interface ChangeCategoryModalProps {
   open: boolean;
   onClose: () => void;
-  mangaId: string;
+  mangaIds: string[];
+  onSuccess: () => void;
 }
 
 const modalStyle = {
@@ -51,7 +52,12 @@ const customStyles = {
   }),
 };
 
-export default function ChangeCategoryModal({ open, onClose, mangaId }: ChangeCategoryModalProps) {
+export default function ChangeCategoryModal({
+  open,
+  onClose,
+  mangaIds,
+  onSuccess,
+}: ChangeCategoryModalProps) {
   const queryClient = useQueryClient();
 
   const { data: catOptions, isLoading, isError } = useUserCategories();
@@ -63,25 +69,28 @@ export default function ChangeCategoryModal({ open, onClose, mangaId }: ChangeCa
   const changeUserCatMutation = useMutation({
     mutationFn: async () => {
       if (!newCat) throw new Error('No Category Selected!');
-      if (!mangaId) throw new Error('No manga selected.');
+      mangaIds.forEach(async (mangaId) => {
+        if (!mangaId) throw new Error('No manga selected.');
 
-      const response = await fetch(`${fetchPath}/api/data/update/changeMangaCat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          mangaId: mangaId,
-          newCat: newCat.value,
-        }),
+        const response = await fetch(`${fetchPath}/api/data/update/changeMangaCat`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            mangaId: mangaId,
+            newCat: newCat.value,
+          }),
+        });
+
+        if (!response.ok) {
+          const data: { message?: string } = await response.json();
+          throw new Error(data.message ?? 'Failed to update category.');
+        }
+
+        onSuccess();
+        return newCat.value; // Return new category value for use in onSuccess
       });
-
-      if (!response.ok) {
-        const data: { message?: string } = await response.json();
-        throw new Error(data.message ?? 'Failed to update category.');
-      }
-
-      return newCat.value; // Return new category value for use in onSuccess
     },
     onMutate: () => {
       const toastId = toast.loading('Changing Category!');
@@ -110,7 +119,7 @@ export default function ChangeCategoryModal({ open, onClose, mangaId }: ChangeCa
     },
   });
 
-  if (!mangaId) return null;
+  if (!mangaIds || mangaIds.length === 0) return null;
 
   return (
     <Modal
@@ -121,7 +130,9 @@ export default function ChangeCategoryModal({ open, onClose, mangaId }: ChangeCa
     >
       <Box sx={{ width: '80vw', ...modalStyle }}>
         <h2 id="cat-modal-title" style={{ color: 'white' }}>
-          Choose a new Category
+          {mangaIds.length > 1
+            ? `Change Category for ${mangaIds.length} Manga`
+            : 'Choose a new Category'}
         </h2>
 
         <Select

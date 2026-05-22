@@ -76,7 +76,7 @@ export default function Stats() {
       <Typography variant="h6" gutterBottom>
         Your Statistics
       </Typography>
-      <Grid container spacing={2} justifyContent="flex-start">
+      <Grid container spacing={2} sx={{ justifyContent: 'flex-start' }}>
         <StatCard label="Chapters Read" value={userStats.readChapters} />
         <StatCard label="Chapters Unread" value={userStats.chaptersUnread} />
         <StatCard label="Tracked Manga" value={userStats.readManga} />
@@ -92,7 +92,7 @@ export default function Stats() {
       <Typography variant="h6" sx={{ mt: 3 }} gutterBottom>
         Global Statistics
       </Typography>
-      <Grid container spacing={2} justifyContent="flex-start">
+      <Grid container spacing={2} sx={{ justifyContent: 'flex-start' }}>
         <StatCard label="Tracked Manga" value={globalStats.mangaCount} />
         <StatCard label="Tracked Chapters" value={globalStats.trackedChapters} />
         <StatCard label="New Manga (Month)" value={globalStats.newManga} />

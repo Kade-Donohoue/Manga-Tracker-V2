@@ -70,7 +70,7 @@ export default function ChangelogModal({ changelogs }: ChangelogModalProps) {
         <Divider sx={{ mb: 2 }} />
 
         <Box key={changelogs[0].version} sx={{ mb: 3 }}>
-          <Typography variant="subtitle1" fontWeight="bold">
+          <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
             <Typography component="span">{changelogs[0].date}</Typography>
           </Typography>
 

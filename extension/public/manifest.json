@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "Tomari, Manga Tracker",
+  "version": "0.1.0",
+  "description": "Tracks manga reading progress on supported sites.",
+  "permissions": ["storage"],
+  "host_permissions": ["<all_urls>"],
+
+  "background": {
+    "service_worker": "background.js"
+  },
+
+  "icons": {
+    "512": "icon-512.png"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icon-512.png"
+  },
+
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "tomari-manga-tracker@kdonohoue.com",
+      "strict_min_version": "120.0"
+    }
+  }
+}

@@ -89,8 +89,14 @@ export default function SignUpPage() {
             onChange={(e) => setName(e.target.value)}
             fullWidth
             required
-            InputProps={{ sx: { color: '#f0f0f0' } }}
-            InputLabelProps={{ sx: { color: '#f0f0f0' } }}
+            slotProps={{
+              input: {
+                sx: { color: '#f0f0f0' },
+              },
+              inputLabel: {
+                sx: { color: '#f0f0f0' },
+              },
+            }}
           />
           <TextField
             label="Email"
@@ -99,8 +105,14 @@ export default function SignUpPage() {
             onChange={(e) => setEmail(e.target.value)}
             fullWidth
             required
-            InputProps={{ sx: { color: '#f0f0f0' } }}
-            InputLabelProps={{ sx: { color: '#f0f0f0' } }}
+            slotProps={{
+              input: {
+                sx: { color: '#f0f0f0' },
+              },
+              inputLabel: {
+                sx: { color: '#f0f0f0' },
+              },
+            }}
           />
           <TextField
             label="Password"
@@ -109,8 +121,14 @@ export default function SignUpPage() {
             onChange={(e) => setPassword(e.target.value)}
             fullWidth
             required
-            InputProps={{ sx: { color: '#f0f0f0' } }}
-            InputLabelProps={{ sx: { color: '#f0f0f0' } }}
+            slotProps={{
+              input: {
+                sx: { color: '#f0f0f0' },
+              },
+              inputLabel: {
+                sx: { color: '#f0f0f0' },
+              },
+            }}
           />
           <TextField
             label="Confirm Password"
@@ -119,8 +137,14 @@ export default function SignUpPage() {
             onChange={(e) => setConfirmPassword(e.target.value)}
             fullWidth
             required
-            InputProps={{ sx: { color: '#f0f0f0' } }}
-            InputLabelProps={{ sx: { color: '#f0f0f0' } }}
+            slotProps={{
+              input: {
+                sx: { color: '#f0f0f0' },
+              },
+              inputLabel: {
+                sx: { color: '#f0f0f0' },
+              },
+            }}
           />
           <FormControlLabel
             control={

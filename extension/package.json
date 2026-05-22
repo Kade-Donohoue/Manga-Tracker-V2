@@ -1,0 +1,17 @@
+{
+  "name": "manga-tracker-extension",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite build --mode development --watch",
+    "build:chrome": "vite build --mode production && cp public/manifest.json dist/manifest.json",
+    "build:firefox": "vite build --mode production && cp public/manifest.firefox.json dist/manifest.json",
+    "build": "pnpm build:chrome"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.233",
+    "typescript": "^5.5.0",
+    "vite": "^5.4.0"
+  }
+}

@@ -8,9 +8,11 @@ export default function CookiePolicy() {
         Cookie Policy
       </Typography>
 
-      <Typography paragraph>Last Updated: 2/22/2026</Typography>
+      <Typography component="p" sx={{ mb: 2 }}>
+        Last Updated: 2/22/2026
+      </Typography>
 
-      <Typography paragraph>
+      <Typography component="p" sx={{ mb: 2 }}>
         We use cookies and similar technologies to operate and improve our service.
       </Typography>
 
@@ -23,7 +25,7 @@ export default function CookiePolicy() {
         <li>Push subscription storage for notifications</li>
       </ul>
 
-      <Typography paragraph>
+      <Typography component="p" sx={{ mb: 2 }}>
         Disabling cookies may prevent certain features from functioning properly.
       </Typography>
     </Box>

@@ -351,7 +351,7 @@ function UserAccountSection({ authStatus }: { authStatus: UseAuthStatusInterface
   return (
     <Stack spacing={3}>
       {/* Header */}
-      <Box display="flex" alignItems="center" gap={2}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Avatar
           src={user.image ?? `https://api.dicebear.com/7.x/thumbs/svg?seed=${user.id}`}
           sx={{ width: 64, height: 64, cursor: 'pointer' }}
@@ -394,8 +394,8 @@ function UserAccountSection({ authStatus }: { authStatus: UseAuthStatusInterface
           Profile
         </Typography>
 
-        <Stack spacing={2} maxWidth={420}>
-          <Box display="flex" alignItems="center" gap={1}>
+        <Stack spacing={2} sx={{ maxWidth: 420 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <TextField
               size="small"
               label="Username"
@@ -409,19 +409,36 @@ function UserAccountSection({ authStatus }: { authStatus: UseAuthStatusInterface
             </IconButton>
           </Box>
 
-          <TextField size="small" label="User ID" value={user.id} InputProps={{ readOnly: true }} />
+          <TextField
+            size="small"
+            label="User ID"
+            value={user.id}
+            slotProps={{
+              input: {
+                readOnly: true,
+              },
+            }}
+          />
           <TextField
             size="small"
             label="Email"
             value={user.email}
-            InputProps={{ readOnly: true }}
+            slotProps={{
+              input: {
+                readOnly: true,
+              },
+            }}
           />
 
           <TextField
             size="small"
             label="Account Created"
             value={user.createdAt.toDateString()}
-            InputProps={{ readOnly: true }}
+            slotProps={{
+              input: {
+                readOnly: true,
+              },
+            }}
           />
         </Stack>
       </Box>
@@ -434,14 +451,14 @@ function UserAccountSection({ authStatus }: { authStatus: UseAuthStatusInterface
           Security
         </Typography>
 
-        <Stack spacing={2} maxWidth={420}>
+        <Stack spacing={2} sx={{ maxWidth: 420 }}>
           {!hasPassword ? (
             <Typography variant="body2" sx={{ opacity: 0.7 }}>
               You signed in with SSO. You can set a password to log in directly without SSO.
             </Typography>
           ) : (
             // null}
-            <Stack spacing={2} maxWidth={420}>
+            <Stack spacing={2} sx={{ maxWidth: 420 }}>
               <TextField
                 size="small"
                 label={hasPassword ? 'Current Password' : 'New Password'}
@@ -492,8 +509,11 @@ function UserAccountSection({ authStatus }: { authStatus: UseAuthStatusInterface
 
         <Stack spacing={1}>
           {sessions.map((s) => (
-            <Box key={s.id} display="flex" justifyContent="space-between" alignItems="center">
-              <Box display="flex" alignItems="center" gap={1}>
+            <Box
+              key={s.id}
+              sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Typography variant="body2" sx={{ opacity: 0.7 }}>
                   {s.userAgent ?? 'Unknown device'}
                 </Typography>
