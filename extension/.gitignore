@@ -3,3 +3,4 @@
 !.env.example
 /dist*
 /node_modules
+/build*

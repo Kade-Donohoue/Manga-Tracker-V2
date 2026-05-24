@@ -4,7 +4,13 @@
   "version": "0.1.0",
   "description": "Tracks manga reading progress on supported sites.",
   "permissions": ["storage"],
-  "host_permissions": ["<all_urls>"],
+  "host_permissions": [
+  "*://*.mangafire.to/*",
+  "*://*.manganato.gg/*",
+  "*://*.asurascans.com/*",
+  "*://*.mangadex.org/*",
+  "*://*.comix.to/*"
+],
 
   "background": {
     "service_worker": "background.js"
@@ -16,7 +22,12 @@
 
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
+      "matches": [
+  "*://*.mangafire.to/*",
+  "*://*.manganato.gg/*",
+  "*://*.asurascans.com/*",
+  "*://*.mangadex.org/*",
+  "*://*.comix.to/*"],
       "js": ["content.js"],
       "run_at": "document_idle"
     }

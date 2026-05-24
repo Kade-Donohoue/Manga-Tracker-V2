@@ -1,7 +1,20 @@
 const PREFIX = '[MangaTracker]';
 
-let popupEnabled = true;
 let toastRoot: ShadowRoot | null = null;
+
+async function getLogging() {
+  return new Promise<boolean>((resolve) => {
+    chrome.storage.local.get('loggingEnabled', (data) => {
+      resolve(Boolean(data.loggingEnabled));
+    });
+  });
+}
+
+async function setLogging(v: boolean) {
+  return new Promise<void>((resolve) => {
+    chrome.storage.local.set({ loggingEnabled: v }, () => resolve());
+  });
+}
 
 function initToastRoot() {
   if (typeof document === 'undefined') return null;
@@ -23,6 +36,7 @@ function initToastRoot() {
         document.body.appendChild(host);
         obs.disconnect();
       }
+      0;
     });
     obs.observe(document.documentElement, { childList: true, subtree: true });
   } else {
@@ -91,14 +105,16 @@ function log(type: 'info' | 'warn' | 'error' | 'debug', message: string, args: u
 
   console[type === 'debug' ? 'debug' : type](full, ...args);
 
-  if (popupEnabled) {
-    showPopup(popupMessage, type);
-  }
+  getLogging().then((enabled) => {
+    if (enabled) {
+      showPopup(popupMessage, type);
+    }
+  });
 }
 
 export const logger = {
   setPopupEnabled(v: boolean) {
-    popupEnabled = v;
+    setLogging(v);
   },
 
   info(msg: string, ...args: unknown[]) {
