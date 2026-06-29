@@ -101,15 +101,51 @@ export async function getLiveUserStats(
     .where(and(eq(userStats.userID, userID), gte(userStats.timestamp, baseStats.updatedAt)))
     .get();
 
-  const newMangaStats = await db
+  // const newMangaStats = await db
+  //   .select({
+  //     chapCount: sql<number>`SUM(CASE WHEN ${mangaStats.type} = 'chapCount' THEN ${mangaStats.value} ELSE 0 END)`,
+  //     mangaCount: sql<number>`SUM(CASE WHEN ${mangaStats.type} = 'mangaCount' THEN ${mangaStats.value} ELSE 0 END)`,
+  //   })
+  //   .from(mangaStats)
+  //   .innerJoin(userData, eq(mangaStats.mangaId, userData.mangaId))
+  //   .where(and(gte(mangaStats.timestamp, baseStats.updatedAt), eq(userData.userID, userID)))
+  //   .get();
+
+  const currentTotals = await db
     .select({
-      chapCount: sql<number>`SUM(CASE WHEN ${mangaStats.type} = 'chapCount' THEN ${mangaStats.value} ELSE 0 END)`,
-      mangaCount: sql<number>`SUM(CASE WHEN ${mangaStats.type} = 'mangaCount' THEN ${mangaStats.value} ELSE 0 END)`,
+      readChapters: sql<number>`
+      SUM(
+        CASE
+          WHEN ${mangaData.useAltStatCalc}
+            THEN COALESCE(${userData.currentIndex}, -1) + 1
+          ELSE COALESCE(${userData.currentChap}, 0)
+        END
+      )
+    `,
+      trackedChapters: sql<number>`
+      SUM(
+        CASE
+          WHEN ${mangaData.useAltStatCalc}
+            THEN CASE
+              WHEN ${mangaData.slugList} IS NULL OR ${mangaData.slugList} = ''
+                THEN 0
+              ELSE LENGTH(${mangaData.slugList})
+                   - LENGTH(REPLACE(${mangaData.slugList}, ',', ''))
+                   + 1
+            END
+          ELSE COALESCE(${mangaData.latestChapterText}, 0)
+        END
+      )
+    `,
     })
-    .from(mangaStats)
-    .innerJoin(userData, eq(mangaStats.mangaId, userData.mangaId))
-    .where(and(gte(mangaStats.timestamp, baseStats.updatedAt), eq(userData.userID, userID)))
+    .from(userData)
+    .innerJoin(mangaData, eq(userData.mangaId, mangaData.mangaId))
+    .where(eq(userData.userID, userID))
     .get();
+
+  const readChapters = currentTotals?.readChapters ?? 0;
+  const trackedChapters = currentTotals?.trackedChapters ?? 0;
+  const chaptersUnread = trackedChapters - readChapters;
 
   const globalStatsRow = await db
     .select({
@@ -136,15 +172,14 @@ export async function getLiveUserStats(
   const userReadMonth = baseStats.pastMonthReads + (newUserStats?.chapsRead ?? 0);
 
   const liveStats: LiveUserStats = {
-    readChapters: baseStats.totalCurrentChapters + (newUserStats?.chapsRead ?? 0),
-    trackedChapters: baseStats.totalLatestChapters + (newMangaStats?.chapCount ?? 0),
-    chaptersUnread:
-      baseStats.backlog + (newMangaStats?.chapCount ?? 0) - (newUserStats?.chapsRead ?? 0),
+    readChapters,
+    trackedChapters,
+    chaptersUnread,
     readThisMonth: userReadMonth,
     unreadManga: unreadCount?.count ?? 0,
     readManga: trackedManga.length,
     averagePerDay: userReadMonth / 30,
-    priorAveragePerDay: (snapshot[2]?.pastMonthReads ?? 0) / 30,
+    priorAveragePerDay: (snapshot[1]?.pastMonthReads ?? 0) / 30,
   };
 
   return { userStats: liveStats, globalStats: globalStats };

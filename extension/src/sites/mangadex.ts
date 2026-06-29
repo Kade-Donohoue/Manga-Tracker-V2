@@ -30,6 +30,9 @@ export const mangadexAdapter: SiteAdapter = {
     let triggered = false;
     let startTime = Date.now();
     let highestPageSeen = 0;
+    let currentChapter = location.pathname.split('/').at(1) ?? location.pathname;
+
+    const getCurrentChapterId = () => location.pathname.split('/').at(1) ?? location.pathname;
 
     const parse = (text: string) => {
       const normalized = text.replace(/\s+/g, ' ').trim();
@@ -45,6 +48,17 @@ export const mangadexAdapter: SiteAdapter = {
       }
 
       return null;
+    };
+
+    const resetTracker = (newChapter: string) => {
+      logger.info('mangadex: chapter changed, resetting tracker', {
+        previousChapter: currentChapter,
+        newChapter,
+      });
+      currentChapter = newChapter;
+      triggered = false;
+      startTime = Date.now();
+      highestPageSeen = 0;
     };
 
     const waitForPageCounter = async (timeout = 15000): Promise<Element | null> => {
@@ -92,6 +106,11 @@ export const mangadexAdapter: SiteAdapter = {
     }
 
     const handler = () => {
+      const latestChapter = getCurrentChapterId();
+      if (latestChapter !== currentChapter) {
+        resetTracker(latestChapter);
+      }
+
       if (triggered) return;
 
       const text = element.textContent?.trim() ?? '';

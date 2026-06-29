@@ -20,13 +20,15 @@ export const mangafireAdapter: SiteAdapter = {
   createTracker: async (onComplete) => {
     const currentSel = 'b.current-page';
     const totalSel = 'b.total-page';
+    const chapterSel = 'b.current-number';
 
-    logger.info('mangafire: createTracker initialized', { currentSel, totalSel });
+    logger.info('mangafire: createTracker initialized', { currentSel, totalSel, chapterSel });
 
     const currentEl = await waitForElement(currentSel);
     const totalEl = await waitForElement(totalSel);
+    const chapterEl = await waitForElement(chapterSel);
 
-    if (!currentEl || !totalEl) {
+    if (!currentEl || !totalEl || !chapterEl) {
       logger.warn('mangafire: failed to locate page elements');
 
       return {
@@ -39,23 +41,41 @@ export const mangafireAdapter: SiteAdapter = {
     let triggered = false;
     let startTime = Date.now();
     let highestSeen = 0;
+    let currentChapter = chapterEl.textContent?.trim() ?? '';
 
     const parseNum = (el: Element) => Number(el.textContent?.trim() ?? '0');
 
+    const resetTracker = (newChapter: string) => {
+      logger.info('mangafire: chapter changed, resetting tracker state', {
+        previousChapter: currentChapter,
+        newChapter,
+      });
+      currentChapter = newChapter;
+      triggered = false;
+      startTime = Date.now();
+      highestSeen = 0;
+    };
+
     const handler = () => {
+      const chapterText = chapterEl.textContent?.trim() ?? '';
+      if (!chapterText) return;
+
+      if (chapterText !== currentChapter) {
+        resetTracker(chapterText);
+      }
+
       if (triggered) return;
 
       const current = parseNum(currentEl);
       const total = parseNum(totalEl);
 
-      logger.debug('mangafire: page counters', { current, total });
+      logger.debug('mangafire: page counters', { currentChapter, current, total });
 
       if (Number.isNaN(current) || Number.isNaN(total) || total <= 0) return;
 
       if (current > highestSeen) highestSeen = current;
 
       const reachedEnd = current >= total && highestSeen >= total - 1;
-
       if (!reachedEnd) return;
 
       const timeSpent = Date.now() - startTime;
@@ -63,15 +83,12 @@ export const mangafireAdapter: SiteAdapter = {
 
       if (timeSpent < minimumTimeMs) {
         logger.warn('mangafire: reached end too quickly', { timeSpent, minimumTimeMs });
-
         return;
       }
 
       triggered = true;
 
       onComplete({ timeSpent, currentPage: current, totalPages: total });
-
-      observer?.disconnect();
     };
 
     return {
@@ -86,7 +103,6 @@ export const mangafireAdapter: SiteAdapter = {
           characterData: true,
         });
 
-        // run initial check
         handler();
       },
 

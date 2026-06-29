@@ -37,6 +37,7 @@ import admin from './pages/admin/admin';
 import ForgotPasswordPage from './pages/auth/forgotPasswordPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import { useAutoPush } from './hooks/useAutoPush';
+import { useServiceWorkerUpdate } from './hooks/useServiceWorkerUpdate';
 import TermsOfService from './pages/policies/tos';
 import PrivacyPolicy from './pages/policies/privacy';
 import CookiePolicy from './pages/policies/cookie';
@@ -114,6 +115,8 @@ export function RootedApp() {
   const location = useLocation();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { isLoggedIn, isLoading, session, user } = useAuthStatus();
+
+  useServiceWorkerUpdate();
 
   return (
     <S.SiteWrapper>

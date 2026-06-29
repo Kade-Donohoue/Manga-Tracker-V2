@@ -36,6 +36,13 @@
       "when": 1778964093133,
       "tag": "0004_amazing_annihilus",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1782697036268,
+      "tag": "0005_many_vindicator",
+      "breakpoints": true
     }
   ]
 }

@@ -3,8 +3,13 @@ import { createRouter } from '@/lib/create-app';
 import { requireAuth } from '@/middlewares/require-auth';
 import { User } from 'better-auth';
 import { zValidator } from '@hono/zod-validator';
-import { addMangaSchema, addRecomendedSchema, addStatusSchema } from '@/schemas/zodSchemas';
-import { recommendations, userData } from '@/db/schema';
+import {
+  addMangaSchema,
+  addRecomendedSchema,
+  addStatusSchema,
+  addUserRequestSchema,
+} from '@/schemas/zodSchemas';
+import { recommendations, userData, userRequests } from '@/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { error } from 'console';
 
@@ -152,6 +157,46 @@ addRouter.post('/recomended', zValidator('json', addRecomendedSchema), async (c)
   }
 
   return new Response(JSON.stringify({ message: 'Success!' }), { status: 200 });
+});
+
+addRouter.post('/request', zValidator('json', addUserRequestSchema), async (c) => {
+  const db = createDb(c.env);
+  const currentUser: User = c.get('user');
+  const { mangaIds, type, notes } = c.req.valid('json');
+
+  if (!mangaIds?.length) {
+    return new Response(JSON.stringify({ message: 'No mangaIds provided' }), { status: 400 });
+  }
+
+  const rows: Array<{
+    requestID: string;
+    userID: string;
+    mangaId: string;
+    type: 'altStats' | 'updateCoverImage' | 'fullUpdate' | 'linkSites';
+    submittedTime: number;
+    status: 'pending';
+    notes?: string;
+  }> = mangaIds.map((mangaId) => ({
+    requestID: crypto.randomUUID(),
+    userID: currentUser.id,
+    mangaId,
+    type,
+    submittedTime: Date.now(),
+    status: 'pending',
+    notes,
+  }));
+
+  const insertResult = await db.insert(userRequests).values(rows).run();
+
+  if (!insertResult.success) {
+    return new Response(JSON.stringify({ message: 'Unable to submit request contact support!' }), {
+      status: 500,
+    });
+  }
+
+  return new Response(JSON.stringify({ message: 'Request submitted successfully!' }), {
+    status: 200,
+  });
 });
 
 export default addRouter;

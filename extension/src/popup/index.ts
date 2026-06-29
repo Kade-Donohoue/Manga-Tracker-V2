@@ -34,15 +34,32 @@ async function setPaused(v: boolean) {
   });
 }
 
+async function getLogging() {
+  return new Promise<boolean>((resolve) => {
+    chrome.storage.local.get('loggingEnabled', (data) => {
+      resolve(Boolean(data.loggingEnabled));
+    });
+  });
+}
+
+async function setLogging(v: boolean) {
+  return new Promise<void>((resolve) => {
+    chrome.storage.local.set({ loggingEnabled: v }, () => resolve());
+  });
+}
+
 async function init() {
   const pauseBtn = document.getElementById('togglePause') as HTMLButtonElement;
   const actionBtn = document.getElementById('actionButton') as HTMLButtonElement;
+  const loggerBtn = document.getElementById('toggleLogging') as HTMLButtonElement;
   const pageInfoEl = document.getElementById('pageInfo')!;
   const pausedStatus = document.getElementById('pausedStatus')!;
 
   let tab = await queryActiveTab();
   const paused = await getPaused();
   updatePausedUI(paused, pausedStatus, pauseBtn);
+  const logging = await getLogging();
+  updateLoggingUI(logging, loggerBtn);
 
   if (!tab || !tab.id) {
     pageInfoEl.textContent = 'No active tab';
@@ -87,6 +104,15 @@ async function init() {
     // notify content script to start/stop trackers
     await sendToTab(tab!.id!, { type: 'TRACKING_PAUSED_CHANGED', payload: { paused: newVal } });
   };
+
+  loggerBtn.onclick = async () => {
+    console.log(await getLogging());
+    const newVal = !(await getLogging());
+    console.log('Setting logging to', newVal);
+    await setLogging(newVal);
+
+    updateLoggingUI(newVal, loggerBtn);
+  };
 }
 
 function updatePausedUI(paused: boolean, el: HTMLElement, btn: HTMLButtonElement) {
@@ -98,6 +124,14 @@ function updatePausedUI(paused: boolean, el: HTMLElement, btn: HTMLButtonElement
     el.className = 'status off';
     el.textContent = 'Running';
     btn.textContent = 'Pause tracking';
+  }
+}
+
+function updateLoggingUI(logging: boolean, btn: HTMLButtonElement) {
+  if (logging) {
+    btn.textContent = 'Disable Logging';
+  } else {
+    btn.textContent = 'Enable Logging';
   }
 }
 

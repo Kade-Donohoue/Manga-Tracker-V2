@@ -9,10 +9,26 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       VitePWA({
-        registerType: 'autoUpdate',
-        injectRegister: false,
+        registerType: 'prompt',
+        injectRegister: 'auto',
         workbox: {
           navigateFallbackDenylist: [/^\/api/],
+          runtimeCaching: [
+            {
+              urlPattern: /^https:\/\/.*/i,
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'remote-cache',
+                expiration: {
+                  maxEntries: 50,
+                  maxAgeSeconds: 60 * 60 * 24, // 24 hours
+                },
+              },
+            },
+          ],
+          cleanupOutdatedCaches: true,
+          skipWaiting: true,
+          clientsClaim: true,
         },
         includeAssets: ['/favicon.ico', '/robots.txt'],
         manifest: {

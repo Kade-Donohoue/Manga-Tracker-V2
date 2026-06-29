@@ -14,6 +14,7 @@ interface MangaContextMenuProps {
   onMarkRead: () => void;
   onRecommend: () => void;
   onChangeCover: () => void;
+  onUserRequest: () => void;
 }
 
 const MangaContextMenu: React.FC<MangaContextMenuProps> = ({
@@ -26,6 +27,7 @@ const MangaContextMenu: React.FC<MangaContextMenuProps> = ({
   onMarkRead,
   onRecommend,
   onChangeCover,
+  onUserRequest,
 }) => {
   return (
     <Menu
@@ -42,6 +44,7 @@ const MangaContextMenu: React.FC<MangaContextMenuProps> = ({
       <MenuItem onClick={onChangeCategory}>Change Category</MenuItem>
       <MenuItem onClick={onChangeCover}>Change Cover Image</MenuItem>
       <MenuItem onClick={onRecommend}>Recommend</MenuItem>
+      <MenuItem onClick={onUserRequest}>Send Request to Admin</MenuItem>
       <MenuItem onClick={onRemove} sx={{ color: 'error.main' }}>
         Remove
       </MenuItem>

@@ -101,7 +101,7 @@ export async function getManga(
 
   try {
     let allowAllRequests: boolean = false;
-    const allowRequests = ['comix'];
+    const allowRequests = ['comix', 'challenges.cloudflare.com'];
     const forceAllow = ['/api/v1'];
     const blockRequests = [
       '.css',
@@ -121,13 +121,15 @@ export async function getManga(
 
       const u = request.url();
 
-      if (/\/api\/v1\/manga\/[^\/]+\/chapters/.test(u)) {
-        const newUrl = new URL(u);
-        newUrl.searchParams.set('limit', '100');
-        newUrl.searchParams.set('order[number]', 'asc');
-        request.continue({ url: newUrl.toString() });
-        return;
-      }
+      // console.log('Request URL:', u);
+      // if (/\/api\/v1\/manga\/[^\/]+\/chapters/.test(u)) {
+      //   console.log('Modifying request to include limit and order parameters:', u);
+      //   const newUrl = new URL(u);
+      //   newUrl.searchParams.set('limit', '100');
+      //   newUrl.searchParams.set('order[number]', 'asc');
+      //   request.continue({ url: newUrl.toString() });
+      //   return;
+      // }
 
       if (match(u, forceAllow)) {
         request.continue();
@@ -179,7 +181,7 @@ export async function getManga(
     let pageCount = 1;
     while (true) {
       job.log(logWithTimestamp(`Parsing chapter data from page ${pageCount}`));
-      await page.waitForSelector('li.mchap-item');
+      await page.waitForSelector('li.mchap-item', { timeout: 5000 });
 
       const pageData = await page.$$eval('li.mchap-item', (items) => {
         return items.map((item) => {

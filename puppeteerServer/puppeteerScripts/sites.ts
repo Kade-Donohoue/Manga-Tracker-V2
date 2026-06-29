@@ -26,7 +26,7 @@ const allSites: SiteQueue[] = [
 export const sites = allSites.filter((s) => s.enabled);
 
 const flowProducer = new FlowProducer({
-  connection,
+  connection
 });
 
 export function resolveSiteForUrl(url: string): SiteResolveResult {

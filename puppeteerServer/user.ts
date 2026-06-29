@@ -8,6 +8,9 @@ import { Queue, Worker, Job } from 'bullmq';
 
 export const userQueue = new Queue('user-bulk', {
   connection,
+  defaultJobOptions: {
+    removeOnComplete: 50,
+  },
 });
 
 async function notifyMangaFailed(fetchId: string) {

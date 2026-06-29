@@ -1,9 +1,17 @@
 import { createDb } from '@/db';
-import { coverImages, mangaData, mangaStats, user, userData, userStats } from '@/db/schema';
+import {
+  coverImages,
+  mangaData,
+  mangaStats,
+  user,
+  userData,
+  userRequests,
+  userStats,
+} from '@/db/schema';
 import { createRouter } from '@/lib/create-app';
 import { requireAuth } from '@/middlewares/require-auth';
 import { requireAdmin } from '@/middlewares/require-admin';
-import { desc, eq, max, sql } from 'drizzle-orm';
+import { desc, eq, inArray, max, sql } from 'drizzle-orm';
 import { zValidator } from '@hono/zod-validator';
 import { newMangaSchama, saveImageSchema, updateDataSchema } from '@/schemas/zodSchemas';
 import { chunkArray } from '@/utils';
@@ -34,6 +42,37 @@ adminRouter.get('/getAllManga', async (c) => {
     .all();
 
   return c.json({ data: rows });
+});
+
+adminRouter.get('/getMangas/:mangaIds', async (c) => {
+  const db = createDb(c.env);
+  const mangaIds = c.req.param('mangaIds').split(',').filter(Boolean);
+
+  if (mangaIds.length === 0) {
+    return c.json({ error: 'No manga IDs provided' }, 400);
+  }
+
+  const mangas = await db
+    .select({
+      urlBase: mangaData.urlBase,
+      slugList: mangaData.slugList,
+      mangaId: mangaData.mangaId,
+      mangaName: mangaData.mangaName,
+      maxSavedAt: max(coverImages.savedAt),
+      maxCoverIndex: max(coverImages.coverIndex),
+      specialFetchData: mangaData.specialFetchData,
+    })
+    .from(mangaData)
+    .leftJoin(coverImages, eq(coverImages.mangaId, mangaData.mangaId))
+    .where(inArray(mangaData.mangaId, mangaIds))
+    .groupBy(mangaData.mangaId)
+    .all();
+
+  if (mangas.length === 0) {
+    return c.json({ error: 'Manga not found' }, 404);
+  }
+
+  return c.json({ data: mangas }, 200);
 });
 
 adminRouter.post('/saveManga', zValidator('json', newMangaSchama), async (c) => {
@@ -236,6 +275,55 @@ adminRouter.post('/updateManga', zValidator('json', updateDataSchema), async (c)
   }
 
   return c.json({ success: true, updated: newData.length });
+});
+
+adminRouter.get('/getUserRequests', async (c) => {
+  const db = createDb(c.env);
+
+  const requests = await db.select().from(userRequests).all();
+
+  return c.json({ requests }, 200);
+});
+
+adminRouter.post('/changeRequestStatus/:requestId', async (c) => {
+  const db = createDb(c.env);
+  const requestId = c.req.param('requestId');
+  const { newStatus } = await c.req.json();
+
+  if (!['pending', 'inProgress', 'completed', 'denied'].includes(newStatus)) {
+    return c.json({ error: 'Invalid status' }, 400);
+  }
+
+  const updateResult = await db
+    .update(userRequests)
+    .set({ status: newStatus })
+    .where(eq(userRequests.requestID, requestId))
+    .returning()
+    .all();
+
+  if (updateResult.length === 0) {
+    return c.json({ error: 'Request not found' }, 404);
+  }
+
+  return c.json({ message: 'Status updated', updatedRequest: updateResult[0] }, 200);
+});
+
+adminRouter.post('/enableAltStatCalc/:mangaId', async (c) => {
+  const db = createDb(c.env);
+  const mangaId = c.req.param('mangaId');
+
+  const updateResult = await db
+    .update(mangaData)
+    .set({ useAltStatCalc: true })
+    .where(eq(mangaData.mangaId, mangaId))
+    .returning()
+    .all();
+
+  if (updateResult.length === 0) {
+    return c.json({ error: 'Manga not found' }, 404);
+  }
+
+  return c.json({ message: 'Alt stat calculation enabled', updatedManga: updateResult[0] }, 200);
 });
 
 export default adminRouter;

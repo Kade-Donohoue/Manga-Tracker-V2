@@ -5,9 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite build --mode development --watch",
-    "build:chrome": "vite build --mode production && cp public/manifest.json dist/manifest.json",
-    "build:firefox": "vite build --mode production && cp public/manifest.firefox.json dist/manifest.json",
-    "build": "pnpm build:chrome"
+
+    "build:chrome": "rm -rf dist && vite build --mode production && rm -f dist/manifest.json dist/manifest.firefox.json && cp public/manifest.json dist/manifest.json",
+
+    "build:firefox": "rm -rf dist && vite build --mode production && rm -f dist/manifest.json dist/manifest.firefox.json && cp public/manifest.firefox.json dist/manifest.json",
+
+    "build": "pnpm build:chrome",
+
+    "build:all": "rm -rf build && mkdir -p build/chrome build/firefox && pnpm build:chrome && cp -r dist/* build/chrome && pnpm build:firefox && cp -r dist/* build/firefox && cd build/chrome && zip -r ../tomari-chrome-extension.zip . && cd ../firefox && zip -r ../tomari-firefox-extension.zip ."
   },
   "devDependencies": {
     "@types/chrome": "^0.0.233",

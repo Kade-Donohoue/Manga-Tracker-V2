@@ -9,6 +9,7 @@ import { mangaDetails } from '../../types';
 import RecommendModal from '../recommendModal';
 import SetUserTitleModal from '../SetUserTitleModal';
 import SelectCoverModal from './SelectCoverModal';
+import UserRequestModal from '../UserRequst';
 
 interface ModalManagerProps {
   modalOpen: boolean;
@@ -35,6 +36,8 @@ interface ModalManagerProps {
 
   coverSelectionOpen: boolean;
   setCoverSelectionOpen: (open: boolean) => void;
+  userRequestOpen: boolean;
+  setUserRequestOpen: (open: boolean) => void;
   selectedMangaIds: string[];
 }
 
@@ -53,6 +56,8 @@ const ModalManager: React.FC<ModalManagerProps> = ({
   setRecommendOpen,
   removeOpen,
   setRemoveOpen,
+  userRequestOpen,
+  setUserRequestOpen,
   currentMangaId,
   mangaInfo,
   handleRemoveOpen,
@@ -115,6 +120,11 @@ const ModalManager: React.FC<ModalManagerProps> = ({
         onClose={() => setCoverSelectionOpen(false)}
         mangaInfo={mangaInfo}
         mangaId={effectiveIds[0] || ''}
+      />
+      <UserRequestModal
+        open={userRequestOpen}
+        onClose={() => setUserRequestOpen(false)}
+        mangaIds={effectiveIds}
       />
     </div>
   );

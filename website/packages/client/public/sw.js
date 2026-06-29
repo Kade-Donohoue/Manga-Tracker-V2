@@ -34,7 +34,18 @@ self.addEventListener('install', event => {
 
 self.addEventListener('activate', event => {
   console.log('[SW] Activating');
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    Promise.all([
+      self.clients.claim(),
+      caches.keys().then(cacheNames => {
+        return Promise.all(
+          cacheNames.map(cacheName => {
+            return caches.delete(cacheName);
+          })
+        );
+      })
+    ])
+  );
 });
 
 self.addEventListener('push', event => {
@@ -67,6 +78,18 @@ self.addEventListener('notificationclick', event => {
       if (clients.openWindow) return clients.openWindow('/');
     })
   );
+});
+
+self.addEventListener('controllerchange', () => {
+  console.log('[SW] Controller changed - new version activated');
+  self.clients.matchAll({ includeUncontrolled: true }).then(clients => {
+    clients.forEach(client => {
+      client.postMessage({
+        type: 'SKIP_WAITING_CONFIRMED',
+        message: 'New version available. Reload to update.',
+      });
+    });
+  });
 });
 
 self.clients.matchAll({ includeUncontrolled: true }).then(clients => {
