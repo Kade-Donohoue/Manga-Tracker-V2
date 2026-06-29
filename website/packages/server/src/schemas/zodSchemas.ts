@@ -110,6 +110,12 @@ export const addRecomendedSchema = z.object({
   userCat: z.string(),
 });
 
+export const addUserRequestSchema = z.object({
+  mangaIds: z.array(z.uuid()).min(1),
+  type: z.enum(['altStats', 'updateCoverImage', 'fullUpdate', 'linkSites']),
+  notes: z.string().max(200).optional(),
+});
+
 const newMangaData = z.object({
   mangaName: z.string().min(1),
   urlBase: z.string(),

@@ -39,6 +39,18 @@ export async function getBrowser() {
     });
     if (config.debug.verboseLogging) console.log('Stated Puppeteer!');
   }
+
+  browser.on('targetcreated', async (target) => {
+    if (target.type() !== 'page') return;
+
+    const page = await target.page();
+    if (!page) return;
+
+    await page.evaluateOnNewDocument(() => {
+      window.open = () => null;
+    });
+  });
+
   return browser;
 }
 

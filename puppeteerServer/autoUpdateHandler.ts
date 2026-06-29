@@ -11,6 +11,9 @@ const flowProducer = new FlowProducer({
 
 export const autoUpdateQueue = new Queue('bulk-parent', {
   connection,
+  defaultJobOptions: {
+    removeOnComplete: 36,
+  },
 });
 
 export function startAutoUpdate() {

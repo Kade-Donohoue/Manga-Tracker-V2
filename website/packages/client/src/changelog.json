@@ -1,5 +1,12 @@
 [
   {
+    "version": "v4.4.0", 
+    "date": "2026-28-06", 
+    "features": ["Admin Requests!"], 
+    "fixes": ["Comix Scraping now works again!"], 
+    "improvements": ["Improved Extension on some sites!", "Client should update faster now!"] 
+  },
+  {
     "version": "v4.3.0", 
     "date": "2026-16-05", 
     "features": ["Removed Electron app in favor of PWA!", "Experimental Extension for tracking and updating Manga!"], 

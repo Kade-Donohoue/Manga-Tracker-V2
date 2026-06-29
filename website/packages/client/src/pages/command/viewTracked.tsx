@@ -99,6 +99,7 @@ export default function Tracked() {
   const [removeOpen, setRemoveOpen] = useState(false);
   const [recommendOpen, setRecommendOpen] = useState(false);
   const [coverSelectionOpen, setCoverSelectionOpen] = useState(false);
+  const [userRequestOpen, setUserRequestOpen] = useState(false);
 
   const [speedDialOpen, setSpeedDialOpen] = useState(false);
 
@@ -264,6 +265,8 @@ export default function Tracked() {
         setRecommendOpen={setRecommendOpen}
         coverSelectionOpen={coverSelectionOpen}
         setCoverSelectionOpen={setCoverSelectionOpen}
+        userRequestOpen={userRequestOpen}
+        setUserRequestOpen={setUserRequestOpen}
         currentMangaId={currentMangaId}
         mangaInfo={mangaInfo}
         handleRemoveOpen={() => setRemoveOpen(true)}
@@ -474,6 +477,10 @@ export default function Tracked() {
           }}
           onChangeCover={() => {
             setCoverSelectionOpen(true);
+            setAnchorPosition(null);
+          }}
+          onUserRequest={() => {
+            setUserRequestOpen(true);
             setAnchorPosition(null);
           }}
         />

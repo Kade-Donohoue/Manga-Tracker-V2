@@ -10,9 +10,11 @@ import {
   Grid,
   Alert,
   Divider,
+  Stack,
 } from '@mui/material';
 import { authClient, useAuthStatus } from '../../hooks/useAuthStatus'; // adjust import
 import { useNavigate } from 'react-router-dom';
+import { fetchPath } from '../../vars';
 
 export default function AdminTools() {
   const navigate = useNavigate();
@@ -26,6 +28,20 @@ export default function AdminTools() {
   const [banUserId, setBanUserId] = React.useState('');
   const [banReason, setBanReason] = React.useState('');
   const [banFeedback, setBanFeedback] = React.useState<string | null>(null);
+  interface UserRequestItem {
+    requestID: string;
+    userID: string;
+    mangaId: string;
+    type: string;
+    submittedTime: number;
+    status: string;
+    notes?: string;
+  }
+
+  const [requests, setRequests] = React.useState<UserRequestItem[]>([]);
+  const [requestsLoading, setRequestsLoading] = React.useState(false);
+  const [requestActionLoading, setRequestActionLoading] = React.useState<string | null>(null);
+  const [requestFeedback, setRequestFeedback] = React.useState<string | null>(null);
 
   const handleImpersonate = async () => {
     try {
@@ -71,6 +87,113 @@ export default function AdminTools() {
       setBanFeedback('Error unbanning user');
     }
   };
+
+  const loadRequests = async () => {
+    setRequestsLoading(true);
+    setRequestFeedback(null);
+
+    try {
+      const response = await fetch(`${fetchPath}/api/serverReq/data/getUserRequests`);
+      if (!response.ok) {
+        throw new Error('Unable to fetch user requests');
+      }
+      const json = (await response.json()) as { requests?: UserRequestItem[] };
+      setRequests(json.requests || []);
+    } catch (err) {
+      console.error(err);
+      setRequestFeedback('Failed to load user requests.');
+    } finally {
+      setRequestsLoading(false);
+    }
+  };
+
+  const handleRequestAction = async (requestId: string, action: 'approve' | 'reject') => {
+    setRequestActionLoading(requestId);
+    setRequestFeedback(null);
+
+    const requestItem = requests.find((r) => r.requestID === requestId);
+    if (!requestItem) {
+      setRequestFeedback('Request not found');
+      setRequestActionLoading(null);
+      return;
+    }
+
+    try {
+      if (action === 'approve') {
+        // type-specific admin actions
+        if (requestItem.type === 'altStats') {
+          const resp = await fetch(
+            `${fetchPath}/api/serverReq/data/enableAltStatCalc/${requestItem.mangaId}`,
+            { method: 'POST' }
+          );
+          if (!resp.ok) {
+            const body = await resp.json().catch(() => ({}));
+            const msg =
+              typeof body === 'object' && body && 'message' in body
+                ? (body as any).message
+                : undefined;
+            throw new Error(msg || 'Failed to enable alt stat calc');
+          }
+        }
+
+        // mark request completed
+        const changeResp = await fetch(
+          `${fetchPath}/api/serverReq/data/changeRequestStatus/${requestId}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ newStatus: 'completed' }),
+          }
+        );
+
+        if (!changeResp.ok) {
+          const body = await changeResp.json().catch(() => ({}));
+          const msg =
+            typeof body === 'object' && body && 'message' in body
+              ? (body as any).message
+              : undefined;
+          throw new Error(msg || 'Failed to update status');
+        }
+
+        setRequests((prev) =>
+          prev.map((r) => (r.requestID === requestId ? { ...r, status: 'completed' } : r))
+        );
+        setRequestFeedback('Request approved successfully.');
+      } else {
+        const changeResp = await fetch(
+          `${fetchPath}/api/serverReq/data/changeRequestStatus/${requestId}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ newStatus: 'denied' }),
+          }
+        );
+
+        if (!changeResp.ok) {
+          const body = await changeResp.json().catch(() => ({}));
+          const msg =
+            typeof body === 'object' && body && 'message' in body
+              ? (body as any).message
+              : undefined;
+          throw new Error(msg || 'Failed to update status');
+        }
+
+        setRequests((prev) =>
+          prev.map((r) => (r.requestID === requestId ? { ...r, status: 'denied' } : r))
+        );
+        setRequestFeedback('Request rejected successfully.');
+      }
+    } catch (err) {
+      console.error(err);
+      setRequestFeedback((err as Error).message || 'Unable to update request status.');
+    } finally {
+      setRequestActionLoading(null);
+    }
+  };
+
+  React.useEffect(() => {
+    loadRequests();
+  }, []);
 
   return (
     <Box sx={{ p: 4, minHeight: '100vh', backgroundColor: '#121212', color: '#f0f0f0' }}>
@@ -172,20 +295,84 @@ export default function AdminTools() {
           </Card>
         </Grid>
 
-        {/* Reports / Placeholder */}
+        {/* User Requests */}
         <Grid sx={{ xs: 12 }}>
           <Card>
             <CardContent>
-              <Typography variant="h6">Reports</Typography>
+              <Typography variant="h6">User Requests</Typography>
               <Divider sx={{ my: 2 }} />
-              <Typography variant="body2">
-                Flagged content or reported users will show here.
-              </Typography>
+
+              {requestFeedback && (
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  {requestFeedback}
+                </Alert>
+              )}
+
+              {requestsLoading ? (
+                <Typography variant="body2">Loading requests…</Typography>
+              ) : requests.length === 0 ? (
+                <Typography variant="body2">No requests found.</Typography>
+              ) : (
+                <Stack spacing={2}>
+                  {requests.map((request) => (
+                    <Box
+                      key={request.requestID}
+                      sx={{
+                        p: 2,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        borderRadius: 1,
+                      }}
+                    >
+                      <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                        {request.type} request
+                      </Typography>
+                      <Typography variant="body2">Request ID: {request.requestID}</Typography>
+                      <Typography variant="body2">User ID: {request.userID}</Typography>
+                      <Typography variant="body2">Manga ID: {request.mangaId}</Typography>
+                      <Typography variant="body2" sx={{ mb: 1 }}>
+                        Status: {request.status}
+                      </Typography>
+                      <Typography variant="body2" sx={{ mb: 1 }}>
+                        Submitted: {new Date(request.submittedTime).toLocaleString()}
+                      </Typography>
+                      {request.notes && (
+                        <Typography variant="body2" sx={{ mb: 1 }}>
+                          Notes: {request.notes}
+                        </Typography>
+                      )}
+                      {request.status === 'pending' ? (
+                        <Stack direction="row" spacing={1}>
+                          <Button
+                            size="small"
+                            variant="contained"
+                            onClick={() => handleRequestAction(request.requestID, 'approve')}
+                            disabled={requestActionLoading === request.requestID}
+                          >
+                            Approve
+                          </Button>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            color="error"
+                            onClick={() => handleRequestAction(request.requestID, 'reject')}
+                            disabled={requestActionLoading === request.requestID}
+                          >
+                            Reject
+                          </Button>
+                        </Stack>
+                      ) : (
+                        <Typography variant="body2">No actions available</Typography>
+                      )}
+                    </Box>
+                  ))}
+                </Stack>
+              )}
             </CardContent>
           </Card>
         </Grid>
 
-        {/* Navigation Utilities */}
+        {/* Reports / Placeholder */}
         <Grid sx={{ xs: 12 }}>
           <Card>
             <CardContent>

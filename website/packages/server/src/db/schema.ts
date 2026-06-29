@@ -222,6 +222,27 @@ export const recommendations = sqliteTable(
   (table) => [unique('recommend_Unique').on(table.recommenderId, table.receiverId, table.mangaId)]
 );
 
+export const userRequests = sqliteTable(
+  'userRequests',
+  {
+    requestID: text('requestID'),
+    userID: text('userID')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    mangaId: text('mangaId').notNull(),
+    type: text('type', {
+      enum: ['altStats', 'updateCoverImage', 'fullUpdate', 'linkSites'],
+    }).notNull(),
+    submittedTime: integer('submittedTime').notNull(),
+    completedTime: integer('completedTime'),
+    status: text('status', {
+      enum: ['pending', 'inProgress', 'completed', 'denied'],
+    }).notNull(),
+    notes: text('notes'),
+  },
+  (table) => [primaryKey({ columns: [table.userID, table.requestID] })]
+);
+
 export const apikey = sqliteTable('apikey', {
   id: text('id').primaryKey(),
   configId: text('config_id').notNull().default('default'),
