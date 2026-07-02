@@ -4,13 +4,7 @@ import { logger } from '../shared/logger';
 
 export const asuraAdapter: SiteAdapter = {
   matches: (url) => url.hostname.includes('asurascans.com') && url.pathname.includes('/chapter/'),
-
-  getSourceId: () => {
-    const match = location.pathname.match(/^\/comics\/.+-([a-zA-Z0-9]+)\/chapter\//);
-
-    const id = match?.[1];
-    return id ?? location.pathname;
-  },
+  getSourceId: () => location.pathname.split('/')[2] ?? location.pathname,
   getSiteName: () => 'asura',
   getChapterId: () => location.pathname.split('/').at(-1) ?? location.pathname,
 

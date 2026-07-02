@@ -15,7 +15,7 @@ binding = "DB"
 database_name = "db-name-here"
 database_id = "db-id"
 remote = true
-migrations_dir = "drizzle/migrations"
+migrations_dir = "src/db/migrations"
 
 [[r2_buckets]]
 binding = "IMG"

@@ -262,7 +262,7 @@ export async function getManga(
       currentIndex: currIndex,
       images: images,
       specialFetchData: 'Pain Site',
-      sourceId: overViewURL.split('-').at(-1) || 'Unknown',
+      sourceId: overViewURL.split('/').at(-1) || 'Unknown',
       author: author,
       description: description,
     };
