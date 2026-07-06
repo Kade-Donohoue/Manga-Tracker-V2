@@ -5,7 +5,7 @@ import { manganatoSite } from './mangaNato';
 import { mangadexSite } from './mangadex';
 import { mangaparkSite } from './mangapark';
 import { asuraSite } from './asuraV4';
-import { mangafireSite } from './mangafire';
+import { mangafireSite } from './mangafireV2';
 import { FlowProducer, Job, Queue, QueueEvents } from 'bullmq';
 import config from '../config.json';
 import { connection } from '../connections';
@@ -26,7 +26,7 @@ const allSites: SiteQueue[] = [
 export const sites = allSites.filter((s) => s.enabled);
 
 const flowProducer = new FlowProducer({
-  connection
+  connection,
 });
 
 export function resolveSiteForUrl(url: string): SiteResolveResult {

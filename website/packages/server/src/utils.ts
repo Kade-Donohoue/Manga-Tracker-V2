@@ -9,6 +9,7 @@ import {
   userData,
   userStats,
 } from '@/db/schema';
+import { UpdateData } from './schemas/zodSchemas';
 
 export function friendPairCondition(
   a: string,
@@ -191,4 +192,58 @@ export function base64UrlEncode(str: string) {
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=+$/, '');
+}
+
+const MAX_SQL_SIZE = 90 * 1024; // Leave ~10KB safety margin
+const MAX_VARIABLES = 95;
+const MANGA_DATA_PARAMS = 12;
+
+export function estimateRowSize(m: UpdateData): number {
+  // Rough estimate of the SQL generated for this row.
+  // Better to overestimate than underestimate.
+  return (
+    400 + // SQL syntax / placeholders / overhead
+    (m.mangaName?.length ?? 0) +
+    (m.urlBase?.length ?? 0) +
+    (m.slugList?.length ?? 0) +
+    (m.chapterTextList?.length ?? 0) +
+    (m.specialFetchData?.length ?? 0)
+  );
+}
+
+export function chunkByEstimatedSize<T>(items: T[], estimate: (item: T) => number) {
+  const chunks: T[][] = [];
+  let current: T[] = [];
+  let currentSize = 0;
+  let currentVariables = 0;
+
+  const flush = () => {
+    if (current.length) {
+      chunks.push(current);
+      current = [];
+      currentSize = 0;
+      currentVariables = 0;
+    }
+  };
+
+  for (const item of items) {
+    const size = estimate(item);
+
+    if (
+      current.length &&
+      (currentSize + size > MAX_SQL_SIZE || currentVariables + MANGA_DATA_PARAMS > MAX_VARIABLES)
+    ) {
+      flush();
+    }
+
+    current.push(item);
+    currentSize += size;
+    currentVariables += MANGA_DATA_PARAMS;
+  }
+
+  if (current.length) {
+    chunks.push(current);
+  }
+
+  return chunks;
 }

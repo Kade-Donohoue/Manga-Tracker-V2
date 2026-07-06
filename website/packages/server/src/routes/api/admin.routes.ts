@@ -14,7 +14,7 @@ import { requireAdmin } from '@/middlewares/require-admin';
 import { desc, eq, inArray, max, sql } from 'drizzle-orm';
 import { zValidator } from '@hono/zod-validator';
 import { newMangaSchama, saveImageSchema, updateDataSchema } from '@/schemas/zodSchemas';
-import { chunkArray } from '@/utils';
+import { chunkArray, chunkByEstimatedSize, estimateRowSize } from '@/utils';
 
 const adminRouter = createRouter();
 
@@ -225,8 +225,7 @@ adminRouter.post('/updateManga', zValidator('json', updateDataSchema), async (c)
   const { newData } = c.req.valid('json');
 
   // Safe batch size based on your table size
-  const BATCH_SIZE = 10;
-  const batches = chunkArray(newData, BATCH_SIZE);
+  const batches = chunkByEstimatedSize(newData, estimateRowSize);
 
   for (const batch of batches) {
     await db

@@ -153,6 +153,8 @@ export const updateData = z.array(
   })
 );
 
+export type UpdateData = z.infer<typeof updateData>[number];
+
 export const updateDataSchema = z.object({
   newData: updateData,
 });
