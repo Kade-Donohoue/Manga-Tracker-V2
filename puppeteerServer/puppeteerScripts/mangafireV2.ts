@@ -181,7 +181,6 @@ export async function getManga(
       request.continue();
     });
 
-    const urlBase = url.split('/').splice(0, -1).join('/'); // remove chapter-# from url
     const mangaId = url.match(/\/title\/([a-zA-Z0-9]+)-/)?.[1];
 
     if (!mangaId) throw new Error('Manga: Unable to get Manga ID!');
@@ -257,7 +256,7 @@ export async function getManga(
     await job.updateProgress(100);
     return {
       mangaName: mangaName,
-      urlBase: urlBase,
+      urlBase: 'https://mangafire.to' + titleData.data.url + '/',
       slugList: chapterData.slugList.join(','),
       chapterTextList: chapterData.chapterTextList.join(','),
       currentIndex: currIndex,
