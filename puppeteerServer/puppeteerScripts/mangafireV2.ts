@@ -32,7 +32,7 @@ function check(url: string): CheckResult {
   }
 
   const match = u.pathname.match(
-    /^\/(?:read\/[^/]+\/[^/]+\/chapter-\d+(?:\.\d+)?|title\/[^/]+\/\d+)$/i
+    /^\/(?:read\/[^/]+\/[^/]+\/chapter-\d+(?:\.\d+)?|title\/[^/]+\/\d+)$|\/title\/[^/]+\/chapter\/[^/]+/i
   );
 
   if (!match) {
@@ -40,7 +40,7 @@ function check(url: string): CheckResult {
       ok: false,
       stage: 2,
       reason:
-        'Path must match /read/{slug}.{id}/{lang}/chapter-{chapterNum} or /title/{id}-{slug}/{chapterId}',
+        'Path must match /read/{slug}.{id}/{lang}/chapter-{chapterNum} or /title/{id}-{slug}/{chapterId} or /title/{id}-{slug}/chapter/{chapterId}',
     };
   }
 
