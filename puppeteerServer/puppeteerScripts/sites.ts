@@ -17,7 +17,7 @@ const allSites: SiteQueue[] = [
   manganatoSite,
   // batoSite, -- Bato is a dead site. Leaving the code in place in case it ever comes back, but disabling for now.
   mangadexSite,
-  mangaparkSite,
+  // mangaparkSite, --dead
   asuraSite,
   mangafireSite,
   comixSite,
