@@ -8,6 +8,7 @@ import {
   foreignKey,
   unique,
   customType,
+  index,
 } from 'drizzle-orm/sqlite-core';
 
 export const user = sqliteTable('user', {
@@ -62,7 +63,7 @@ export const account = sqliteTable('account', {
     .references(() => user.id, { onDelete: 'cascade' }),
   accessToken: text('access_token'),
   refreshToken: text('refresh_token'),
-  idToken: text('id_token'),
+  idToken: text('id_token'), 
   accessTokenExpiresAt: integer('access_token_expires_at', { mode: 'timestamp' }),
   refreshTokenExpiresAt: integer('refresh_token_expires_at', { mode: 'timestamp' }),
   scope: text('scope'),
@@ -113,7 +114,9 @@ export const userData = sqliteTable(
     userID: text('userID')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
-    mangaId: text('mangaId').notNull(),
+    mangaId: text('mangaId')
+      .notNull()
+      .references(() => mangaData.mangaId, { onDelete: 'cascade' }),
     userTitle: text('userTitle'),
     currentIndex: integer('currentIndex').notNull(),
     currentChap: text('currentChap').notNull(),
@@ -172,7 +175,10 @@ export const coverImages = sqliteTable(
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`),
   }),
-  (table) => [unique('coverImage_Unique').on(table.mangaId, table.coverIndex)]
+  (table) => [
+    unique('coverImage_Unique').on(table.mangaId, table.coverIndex),
+    index('coverImage_SavedAt_Index').on(table.savedAt, table.mangaId, table.coverIndex),
+  ]
 );
 
 export const userStats = sqliteTable('userStats', {
@@ -183,7 +189,9 @@ export const userStats = sqliteTable('userStats', {
   timestamp: text('timestamp')
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
-  mangaId: text('mangaId').notNull(),
+  mangaId: text('mangaId')
+    .notNull()
+    .references(() => mangaData.mangaId),
   userID: text('userID')
     .notNull()
     .references(() => user.id),
@@ -209,7 +217,9 @@ export const recommendations = sqliteTable(
     recommenderId: text('recommenderId')
       .notNull()
       .references(() => user.id),
-    mangaId: text('mangaId').notNull(),
+    mangaId: text('mangaId')
+      .notNull()
+      .references(() => mangaData.mangaId),
     receiverId: text('receiverId')
       .notNull()
       .references(() => user.id),
@@ -229,7 +239,9 @@ export const userRequests = sqliteTable(
     userID: text('userID')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
-    mangaId: text('mangaId').notNull(),
+    mangaId: text('mangaId')
+      .notNull()
+      .references(() => mangaData.mangaId),
     type: text('type', {
       enum: ['altStats', 'updateCoverImage', 'fullUpdate', 'linkSites'],
     }).notNull(),
@@ -277,7 +289,9 @@ export const apikey = sqliteTable('apikey', {
 export const dailyUserStats = sqliteTable(
   'dailyUserStats',
   {
-    userID: text('userID').notNull(),
+    userID: text('userID')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
     date: text('date').notNull(), // YYYY-MM-DD
     totalCurrentChapters: real('totalCurrentChapters').notNull(),
     totalLatestChapters: real('totalLatestChapters').notNull(),
@@ -322,7 +336,9 @@ export const subscriptions = sqliteTable(
   'subscriptions',
   {
     id: text('id').notNull(),
-    userID: text('userID').notNull(),
+    userID: text('userID')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
     endpoint: text('endpoint').notNull(),
     expirationTime: integer('expirationTime'),
     keys: customJsonb<{
