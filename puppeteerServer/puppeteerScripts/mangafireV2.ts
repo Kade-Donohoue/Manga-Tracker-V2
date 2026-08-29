@@ -189,7 +189,15 @@ export async function getManga(
     if (!chapterData) throw new Error('Manga: Unable to fetch Chapter List!');
 
     const titleDataResp = await fetch(
-      signMangafireUrl(`https://mangafire.to/api/titles/${mangaId}`)
+      signMangafireUrl(`https://mangafire.to/api/titles/${mangaId}`),
+      {
+        headers: {
+          Accept: 'application/json',
+          Referer: `https://mangafire.to/title/${mangaId}`,
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        },
+      }
     );
 
     const titleData: MangaResponse = await titleDataResp.json();
@@ -301,7 +309,15 @@ async function getChapterList(
       const chapterResp = await fetch(
         signMangafireUrl(
           `https://mangafire.to/api/titles/${siteMangaId}/chapters?language=en&sort=number&order=asc&limit=200&page=${currentPage}`
-        )
+        ),
+        {
+          headers: {
+            Accept: 'application/json',
+            Referer: `https://mangafire.to/title/${siteMangaId}`,
+            'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+          },
+        }
       );
 
       const chapterData: ChapterResponse = await chapterResp.json();
