@@ -154,29 +154,43 @@ export async function getManga(
     });
 
     job.log(logWithTimestamp('Starting Loading Chapter'));
-    await page.goto(url, { waitUntil: 'networkidle0', timeout: 10 * 1000 });
+
+    const overviewUrl = url.split('/chapter/')[0];
+    await page.goto(overviewUrl, { waitUntil: 'networkidle0', timeout: 10 * 1000 });
+
     await job.updateProgress(20);
     job.log(logWithTimestamp('Chapter Loaded, starting retrial of overview URL and chapterData'));
 
-    await page.click('div.select-none');
+    // await page.click('div.select-none');
 
-    await page.click('div.relative > button.w-full');
+    // await page.click('div.relative > button.w-full');
 
-    const rawData = await page.$$eval('div.absolute:nth-child(2) a', (anchors) =>
-      anchors
-        .map((a) => ({
-          href: a.href,
-          text: a.innerText.trim().match(/\d+(\.\d+)?/g)?.[0] || 'Unknown',
-        }))
-        .reverse()
+    const rawData = await page.$$eval(
+      'astro-island[component-url*="ChapterListReact"] a[href*="/chapter/"]',
+      (anchors) =>
+        anchors
+          .filter((a) => !a.innerText.includes('EARLY ACCESS'))
+          .map((a) => {
+            const text = a.innerText.trim();
+            const href = a.href;
+
+            const chapter = text.match(/^Chapter\s+([0-9.]+)/i)?.[1] || 'Unknown';
+            const id = href.match(/\/chapter\/([^/?#]+)$/)?.[1] || 'Unknown';
+
+            return {
+              href: id,
+              text: chapter,
+            };
+          })
+          .reverse()
     );
 
-    const chapterNumList = rawData.map((chapter) => chapter.href.split('/').at(-1));
-    const chapterTextData = rawData.map((chapter) => chapter.text.replace('Chapter', '').trim());
+    const chapterNumList = rawData.map((chapter) => chapter.href);
+    const chapterTextData = rawData.map((chapter) => chapter.text);
 
     await job.updateProgress(30);
 
-    const title = await page.$eval('div.truncate:nth-child(1)', (el) => el.innerHTML);
+    const title = await page.evaluate(() => document.title.split('|')[0].trim());
 
     let author = job.data.author || 'Unknown Author';
     let description = job.data.description || 'No description available';
@@ -230,8 +244,10 @@ export async function getManga(
     if (icon || inputDate < oneMonthAgo) {
       job.log(logWithTimestamp('Starting Icon Fetch'));
 
-      const photoSelect = await page.waitForSelector('img.rounded-lg', { timeout: 1000 });
-      const photo = await photoSelect?.evaluate((el) => el.getAttribute('src'));
+      const photo = await page.$eval(
+        '#desktop-cover-container img',
+        (img) => (img as HTMLImageElement).src
+      );
 
       // console.log(photo)
       job.log(logWithTimestamp('Going to Photo'));
@@ -247,7 +263,7 @@ export async function getManga(
     job.log(logWithTimestamp('Data fetched'));
     await job.updateProgress(80);
 
-    const currIndex = chapterNumList.indexOf(url.split('/chapter/').at(-1));
+    const currIndex = chapterNumList.indexOf(url.split('/chapter/').at(-1) || '');
 
     if (currIndex == -1 && !ignoreIndex) {
       throw new Error('Manga: unable to find current chapter. Please retry or contact Admin!');
