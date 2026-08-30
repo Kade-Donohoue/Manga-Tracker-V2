@@ -185,8 +185,18 @@ export async function getManga(
           .reverse()
     );
 
+    job.log(logWithTimestamp('Chapter List Fetched' + JSON.stringify(rawData)));
+
     const chapterNumList = rawData.map((chapter) => chapter.href);
     const chapterTextData = rawData.map((chapter) => chapter.text);
+
+    job.log(
+      logWithTimestamp('Chapter List Fetched' + JSON.stringify([chapterNumList, chapterTextData]))
+    );
+
+    const comicSlug = new URL(url).pathname.split('/').filter(Boolean)[1];
+
+    const sourceId = comicSlug.split('-').pop() || 'Unknown';
 
     await job.updateProgress(30);
 
@@ -272,13 +282,13 @@ export async function getManga(
     await job.updateProgress(100);
     return {
       mangaName: title,
-      urlBase: overViewURL + '/chapter/',
+      urlBase: `https://asurascans.com/comics/${comicSlug}/chapter/`,
       slugList: chapterNumList.join(','),
       chapterTextList: chapterTextData.join(','),
       currentIndex: currIndex,
       images: images,
       specialFetchData: 'Pain Site',
-      sourceId: overViewURL.split('/').at(-1) || 'Unknown',
+      sourceId: sourceId,
       author: author,
       description: description,
     };
