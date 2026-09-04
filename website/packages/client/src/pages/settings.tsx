@@ -29,7 +29,7 @@ import {
   authActions,
   UseAuthStatusInterface,
 } from '../hooks/useAuthStatus';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router';
 import { toast } from 'react-toastify';
 import TextField from '@mui/material/TextField';
 import Stack from '@mui/material/Stack';
