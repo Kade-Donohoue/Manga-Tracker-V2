@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Sorted Jobs</title>
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -11,131 +12,1215 @@
       background-color: #121212;
       color: #e0e0e0;
     }
+
     a {
       color: #90caf9;
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 20px;
       background-color: #1e1e1e;
     }
-    table, th, td {
+
+    table,
+    th,
+    td {
       border: 1px solid #333;
     }
-    th, td {
+
+    th,
+    td {
       padding: 10px;
       text-align: left;
     }
+
     th {
       background-color: #2c2c2c;
+      user-select: none;
     }
+
+    th.sortable,
+    th.sortable-stat {
+      cursor: pointer;
+    }
+
+    th.sortable:hover,
+    th.sortable-stat:hover {
+      background-color: #383838;
+    }
+
+    .sort-indicator {
+      margin-left: 5px;
+      color: #90caf9;
+    }
+
     .loading {
       font-size: 18px;
       font-weight: bold;
       text-align: center;
     }
+
+    .queue {
+      font-size: 0.9em;
+      color: #aaa;
+    }
+
+    .status-completed {
+      color: #81c784;
+    }
+
+    .status-failed {
+      color: #e57373;
+    }
+
+    .view-link {
+      white-space: nowrap;
+    }
+
+    /* ==============================
+       Filter Controls
+       ============================== */
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      align-items: center;
+    }
+
+    .filter-button {
+      background-color: #2c2c2c;
+      color: #e0e0e0;
+      border: 1px solid #444;
+      padding: 9px 14px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .filter-button:hover {
+      background-color: #383838;
+    }
+
+    .filter-button.active {
+      background-color: #1976d2;
+      border-color: #1976d2;
+      color: white;
+    }
   </style>
 </head>
-<body>
-  <h1>Sorted Jobs</h1>
-  <a href="/admin/queues">DashBoard</a>
-  <div class="loading" id="loading">Loading jobs...</div>
 
-  <!-- Stats Table -->
+<body>
+
+  <h1>Sorted Jobs</h1>
+
+  <a href="/admin/queues">Dashboard</a>
+
+  <div class="loading" id="loading">
+    Loading jobs...
+  </div>
+
+
+  <!-- ============================= -->
+  <!-- Controls -->
+  <!-- ============================= -->
+
+  <div class="controls" id="controls" style="display:none;">
+
+    <button
+      id="toggle-batches"
+      class="filter-button"
+      type="button"
+    >
+      Hide Batches / Auto Update
+    </button>
+
+  </div>
+
+
+  <!-- ============================= -->
+  <!-- Completed Jobs Stats -->
+  <!-- ============================= -->
+
   <h2>Completed Jobs Stats by Type</h2>
+
   <table id="stats-table" style="display:none;">
     <thead>
       <tr>
-        <th>Job Type</th>
-        <th>Average Process Time (ms)</th>
-        <th>Min Process Time (ms)</th>
-        <th>Max Process Time (ms)</th>
+
+        <th
+          class="sortable-stat"
+          data-column="type"
+        >
+          Job Type
+          <span class="sort-indicator"></span>
+        </th>
+
+        <th
+          class="sortable-stat"
+          data-column="avg"
+        >
+          Average Process Time (ms)
+          <span class="sort-indicator"></span>
+        </th>
+
+        <th
+          class="sortable-stat"
+          data-column="min"
+        >
+          Min Process Time (ms)
+          <span class="sort-indicator"></span>
+        </th>
+
+        <th
+          class="sortable-stat"
+          data-column="max"
+        >
+          Max Process Time (ms)
+          <span class="sort-indicator"></span>
+        </th>
+
       </tr>
     </thead>
+
     <tbody></tbody>
   </table>
 
+
+  <!-- ============================= -->
   <!-- Jobs Table -->
+  <!-- ============================= -->
+
   <table id="jobs-table" style="display:none;">
     <thead>
       <tr>
-        <th>Job ID</th>
-        <th>Job Name</th>
-        <th>Job Type</th>
-        <th>Process Time (ms)</th>
-        <th>Status</th>
+
+        <th
+          class="sortable"
+          data-column="id"
+        >
+          Job ID
+          <span class="sort-indicator"></span>
+        </th>
+
+        <th
+          class="sortable"
+          data-column="queueName"
+        >
+          Queue
+          <span class="sort-indicator"></span>
+        </th>
+
+        <th
+          class="sortable"
+          data-column="name"
+        >
+          Job Name
+          <span class="sort-indicator"></span>
+        </th>
+
+        <th
+          class="sortable"
+          data-column="jobType"
+        >
+          Job Type
+          <span class="sort-indicator"></span>
+        </th>
+
+        <th
+          class="sortable"
+          data-column="processTime"
+        >
+          Process Time (ms)
+          <span class="sort-indicator"></span>
+        </th>
+
+        <th
+          class="sortable"
+          data-column="status"
+        >
+          Status
+          <span class="sort-indicator"></span>
+        </th>
+
+        <th>
+          View
+        </th>
+
       </tr>
     </thead>
+
     <tbody></tbody>
   </table>
 
+
   <script>
-    async function fetchJobs() {
-      try {
-        const response = await fetch('/admin/api/sorted-jobs');
-        const jobs = await response.json();
 
-        const tableBody = document.querySelector('#jobs-table tbody');
-        tableBody.innerHTML = '';
+    /* ==========================================
+       Global Job Data
+       ========================================== */
 
-        const stats = {}; // { type: { total: 0, count: 0, min: x, max: y } }
+    let jobs = [];
 
-        jobs.forEach(job => {
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${job.id}</td>
-            <td>${job.name}</td>
-            <td><a href="${job.data.url}"><div>${job.data.type}</div></a></td>
-            <td>${job.processTime !== null ? job.processTime : 'N/A'}</td>
-            <td>${job.status}</td>
-          `;
-          tableBody.appendChild(row);
+    /*
+     * Whether User Batch / Auto Update jobs
+     * should be hidden.
+     */
+    let hideBatches = false;
 
-          if (job.status === 'completed' && job.processTime != null && job.data?.type) {
-            const type = job.data.type;
-            const time = job.processTime;
 
-            if (!stats[type]) {
-              stats[type] = { total: 0, count: 0, min: time, max: time };
-            }
+    /* ==========================================
+       Jobs Table Sorting
+       ========================================== */
 
-            stats[type].total += time;
-            stats[type].count++;
-            stats[type].min = Math.min(stats[type].min, time);
-            stats[type].max = Math.max(stats[type].max, time);
-          }
-        });
+    let currentSortColumn = 'processTime';
+    let currentSortDirection = 'desc';
 
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('jobs-table').style.display = 'table';
 
-        // Populate stats table
-        const statsBody = document.querySelector('#stats-table tbody');
-        statsBody.innerHTML = '';
+    /* ==========================================
+       Stats Table Sorting
+       ========================================== */
 
-        for (const [type, data] of Object.entries(stats)) {
-          const avg = (data.total / data.count).toFixed(2);
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${type}</td>
-            <td>${avg}</td>
-            <td>${data.min}</td>
-            <td>${data.max}</td>
-          `;
-          statsBody.appendChild(row);
-        }
+    let stats = [];
 
-        if (Object.keys(stats).length > 0) {
-          document.getElementById('stats-table').style.display = 'table';
-        }
-      } catch (error) {
-        console.error('Error fetching jobs:', error);
-        document.getElementById('loading').innerText = 'Failed to load jobs.';
+    let currentStatsSortColumn = 'avg';
+    let currentStatsSortDirection = 'desc';
+
+
+    /* ==========================================
+       HTML Escaping
+       ========================================== */
+
+    function escapeHtml(value) {
+
+      if (
+        value === null ||
+        value === undefined
+      ) {
+        return '';
       }
+
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+
     }
 
-    window.onload = fetchJobs;
+
+    /* ==========================================
+       Determine Job Type
+       ========================================== */
+
+    function getJobType(job) {
+
+      /*
+       * Prefer explicit job type.
+       */
+
+      if (job.data?.type) {
+        return job.data.type;
+      }
+
+      if (job.data?.jobType) {
+        return job.data.jobType;
+      }
+
+
+      /*
+       * Fall back to BullMQ job name.
+       *
+       * Example:
+       *
+       * Auto Update at Aug 14, 2026, 8:58 PM
+       *
+       * becomes:
+       *
+       * Auto Update
+       */
+
+      if (typeof job.name === 'string') {
+
+        const atIndex =
+          job.name.indexOf(' at ');
+
+        if (atIndex !== -1) {
+
+          return job.name.substring(
+            0,
+            atIndex
+          );
+
+        }
+
+        return job.name;
+
+      }
+
+
+      return 'Unknown';
+
+    }
+
+
+    /* ==========================================
+       Check Whether Job Is Batch / Auto Update
+       ========================================== */
+
+    function isBatchOrAutoUpdate(job) {
+
+      const jobType =
+        getJobType(job)
+          .trim()
+          .toLowerCase();
+
+
+      return (
+        jobType === 'user batch' ||
+        jobType === 'auto update'
+      );
+
+    }
+
+
+    /* ==========================================
+       Get Visible Jobs
+       ========================================== */
+
+    function getVisibleJobs() {
+
+      if (!hideBatches) {
+        return jobs;
+      }
+
+      return jobs.filter(
+        job => !isBatchOrAutoUpdate(job)
+      );
+
+    }
+
+
+    /* ==========================================
+       Jobs Table Sort Value
+       ========================================== */
+
+    function getSortValue(
+      job,
+      column
+    ) {
+
+      switch (column) {
+
+        case 'id':
+          return job.id ?? '';
+
+        case 'queueName':
+          return job.queueName ?? '';
+
+        case 'name':
+          return job.name ?? '';
+
+        case 'jobType':
+          return getJobType(job);
+
+        case 'processTime':
+          return job.processTime ?? null;
+
+        case 'status':
+          return job.status ?? '';
+
+        default:
+          return '';
+
+      }
+
+    }
+
+
+    /* ==========================================
+       Sort Jobs
+       ========================================== */
+
+    function sortJobs() {
+
+      jobs.sort((a, b) => {
+
+        const aValue =
+          getSortValue(
+            a,
+            currentSortColumn
+          );
+
+        const bValue =
+          getSortValue(
+            b,
+            currentSortColumn
+          );
+
+
+        /*
+         * Jobs without a process time
+         * always go to the bottom.
+         */
+
+        if (
+          aValue === null ||
+          aValue === undefined
+        ) {
+
+          if (
+            bValue === null ||
+            bValue === undefined
+          ) {
+            return 0;
+          }
+
+          return 1;
+
+        }
+
+
+        if (
+          bValue === null ||
+          bValue === undefined
+        ) {
+
+          return -1;
+
+        }
+
+
+        let result;
+
+
+        if (
+          currentSortColumn ===
+          'processTime'
+        ) {
+
+          result =
+            Number(aValue) -
+            Number(bValue);
+
+        } else {
+
+          result =
+            String(aValue).localeCompare(
+              String(bValue),
+              undefined,
+              {
+                numeric: true,
+                sensitivity: 'base'
+              }
+            );
+
+        }
+
+
+        return currentSortDirection === 'asc'
+          ? result
+          : -result;
+
+      });
+
+    }
+
+
+    /* ==========================================
+       Update Jobs Sort Indicators
+       ========================================== */
+
+    function updateSortIndicators() {
+
+      document
+        .querySelectorAll(
+          'th.sortable'
+        )
+        .forEach(th => {
+
+          const indicator =
+            th.querySelector(
+              '.sort-indicator'
+            );
+
+          const column =
+            th.dataset.column;
+
+
+          if (
+            column ===
+            currentSortColumn
+          ) {
+
+            indicator.textContent =
+              currentSortDirection === 'asc'
+                ? '▲'
+                : '▼';
+
+          } else {
+
+            indicator.textContent = '';
+
+          }
+
+        });
+
+    }
+
+
+    /* ==========================================
+       Render Jobs
+       ========================================== */
+
+    function renderJobs() {
+
+      const tableBody =
+        document.querySelector(
+          '#jobs-table tbody'
+        );
+
+
+      tableBody.innerHTML = '';
+
+
+      const visibleJobs =
+        getVisibleJobs();
+
+
+      visibleJobs.forEach(job => {
+
+        const jobType =
+          getJobType(job);
+
+
+        const jobUrl =
+          job.data?.url ?? null;
+
+
+        const processTime =
+          job.processTime !== null &&
+          job.processTime !== undefined
+            ? job.processTime
+            : null;
+
+
+        /*
+         * Bull Board URL.
+         */
+
+        const viewUrl =
+          `/admin/queues/queue/${encodeURIComponent(
+            job.queueName ?? ''
+          )}/${encodeURIComponent(
+            job.id ?? ''
+          )}`;
+
+
+        const row =
+          document.createElement('tr');
+
+
+        row.innerHTML = `
+
+          <td>
+            ${escapeHtml(job.id)}
+          </td>
+
+          <td class="queue">
+            ${escapeHtml(
+              job.queueName ??
+              'Unknown'
+            )}
+          </td>
+
+          <td>
+            ${escapeHtml(
+              job.name ??
+              'Unknown'
+            )}
+          </td>
+
+          <td>
+            ${
+              jobUrl
+                ? `
+                  <a
+                    href="${escapeHtml(jobUrl)}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    ${escapeHtml(jobType)}
+                  </a>
+                `
+                : escapeHtml(jobType)
+            }
+          </td>
+
+          <td>
+            ${
+              processTime !== null
+                ? processTime
+                : 'N/A'
+            }
+          </td>
+
+          <td
+            class="status-${escapeHtml(
+              job.status
+            )}"
+          >
+            ${escapeHtml(
+              job.status
+            )}
+          </td>
+
+          <td class="view-link">
+            <a href="${viewUrl}">
+              View
+            </a>
+          </td>
+
+        `;
+
+
+        tableBody.appendChild(row);
+
+      });
+
+
+      updateSortIndicators();
+
+    }
+
+
+    /* ==========================================
+       Jobs Table Sorting Setup
+       ========================================== */
+
+    function setupSorting() {
+
+      document
+        .querySelectorAll(
+          '#jobs-table th.sortable'
+        )
+        .forEach(th => {
+
+          th.addEventListener(
+            'click',
+            () => {
+
+              const column =
+                th.dataset.column;
+
+
+              if (
+                column ===
+                currentSortColumn
+              ) {
+
+                currentSortDirection =
+                  currentSortDirection === 'asc'
+                    ? 'desc'
+                    : 'asc';
+
+              } else {
+
+                currentSortColumn =
+                  column;
+
+                currentSortDirection =
+                  'asc';
+
+              }
+
+
+              sortJobs();
+              renderJobs();
+
+            }
+          );
+
+        });
+
+    }
+
+
+    /* ==========================================
+       Build Stats
+       ========================================== */
+
+    function buildStats() {
+
+      const grouped = {};
+
+
+      /*
+       * Stats use the same filter as the
+       * jobs table.
+       */
+
+      const visibleJobs =
+        getVisibleJobs();
+
+
+      visibleJobs.forEach(job => {
+
+        const jobType =
+          getJobType(job);
+
+        const processTime =
+          job.processTime;
+
+
+        if (
+          job.status === 'completed' &&
+          processTime !== null &&
+          processTime !== undefined &&
+          jobType !== 'Unknown'
+        ) {
+
+          if (!grouped[jobType]) {
+
+            grouped[jobType] = {
+
+              type: jobType,
+
+              total: 0,
+
+              count: 0,
+
+              min: Number(processTime),
+
+              max: Number(processTime)
+
+            };
+
+          }
+
+
+          grouped[jobType].total +=
+            Number(processTime);
+
+
+          grouped[jobType].count++;
+
+
+          grouped[jobType].min =
+            Math.min(
+              grouped[jobType].min,
+              Number(processTime)
+            );
+
+
+          grouped[jobType].max =
+            Math.max(
+              grouped[jobType].max,
+              Number(processTime)
+            );
+
+        }
+
+      });
+
+
+      stats =
+        Object.values(grouped)
+          .map(stat => ({
+
+            type: stat.type,
+
+            avg:
+              stat.total /
+              stat.count,
+
+            min: stat.min,
+
+            max: stat.max,
+
+            count: stat.count
+
+          }));
+
+    }
+
+
+    /* ==========================================
+       Sort Stats
+       ========================================== */
+
+    function sortStats() {
+
+      stats.sort((a, b) => {
+
+        const aValue =
+          a[currentStatsSortColumn];
+
+        const bValue =
+          b[currentStatsSortColumn];
+
+
+        let result;
+
+
+        if (
+          currentStatsSortColumn ===
+          'type'
+        ) {
+
+          result =
+            String(aValue).localeCompare(
+              String(bValue),
+              undefined,
+              {
+                numeric: true,
+                sensitivity: 'base'
+              }
+            );
+
+        } else {
+
+          result =
+            Number(aValue) -
+            Number(bValue);
+
+        }
+
+
+        return currentStatsSortDirection === 'asc'
+          ? result
+          : -result;
+
+      });
+
+    }
+
+
+    /* ==========================================
+       Update Stats Sort Indicators
+       ========================================== */
+
+    function updateStatsSortIndicators() {
+
+      document
+        .querySelectorAll(
+          'th.sortable-stat'
+        )
+        .forEach(th => {
+
+          const indicator =
+            th.querySelector(
+              '.sort-indicator'
+            );
+
+          const column =
+            th.dataset.column;
+
+
+          if (
+            column ===
+            currentStatsSortColumn
+          ) {
+
+            indicator.textContent =
+              currentStatsSortDirection === 'asc'
+                ? '▲'
+                : '▼';
+
+          } else {
+
+            indicator.textContent = '';
+
+          }
+
+        });
+
+    }
+
+
+    /* ==========================================
+       Render Stats
+       ========================================== */
+
+    function renderStats() {
+
+      buildStats();
+
+      sortStats();
+
+
+      const statsBody =
+        document.querySelector(
+          '#stats-table tbody'
+        );
+
+
+      statsBody.innerHTML = '';
+
+
+      stats.forEach(stat => {
+
+        const row =
+          document.createElement('tr');
+
+
+        row.innerHTML = `
+
+          <td>
+            ${escapeHtml(stat.type)}
+          </td>
+
+          <td>
+            ${stat.avg.toFixed(2)}
+          </td>
+
+          <td>
+            ${stat.min}
+          </td>
+
+          <td>
+            ${stat.max}
+          </td>
+
+        `;
+
+
+        statsBody.appendChild(row);
+
+      });
+
+
+      updateStatsSortIndicators();
+
+
+      if (
+        stats.length > 0
+      ) {
+
+        document.getElementById(
+          'stats-table'
+        ).style.display =
+          'table';
+
+      } else {
+
+        document.getElementById(
+          'stats-table'
+        ).style.display =
+          'none';
+
+      }
+
+    }
+
+
+    /* ==========================================
+       Stats Table Sorting Setup
+       ========================================== */
+
+    function setupStatsSorting() {
+
+      document
+        .querySelectorAll(
+          '#stats-table th.sortable-stat'
+        )
+        .forEach(th => {
+
+          th.addEventListener(
+            'click',
+            () => {
+
+              const column =
+                th.dataset.column;
+
+
+              if (
+                column ===
+                currentStatsSortColumn
+              ) {
+
+                currentStatsSortDirection =
+                  currentStatsSortDirection === 'asc'
+                    ? 'desc'
+                    : 'asc';
+
+              } else {
+
+                currentStatsSortColumn =
+                  column;
+
+                currentStatsSortDirection =
+                  'asc';
+
+              }
+
+
+              sortStats();
+              renderStats();
+
+            }
+          );
+
+        });
+
+    }
+
+
+    /* ==========================================
+       Batch / Auto Update Toggle
+       ========================================== */
+
+    function setupBatchToggle() {
+
+      const button =
+        document.getElementById(
+          'toggle-batches'
+        );
+
+
+      button.addEventListener(
+        'click',
+        () => {
+
+          hideBatches =
+            !hideBatches;
+
+
+          if (hideBatches) {
+
+            button.textContent =
+              'Show Batches / Auto Update';
+
+            button.classList.add(
+              'active'
+            );
+
+          } else {
+
+            button.textContent =
+              'Hide Batches / Auto Update';
+
+            button.classList.remove(
+              'active'
+            );
+
+          }
+
+
+          /*
+           * Re-render both tables using
+           * the new filter.
+           */
+
+          renderJobs();
+
+          renderStats();
+
+        }
+      );
+
+    }
+
+
+    /* ==========================================
+       Fetch Jobs
+       ========================================== */
+
+    async function fetchJobs() {
+
+      try {
+
+        const response =
+          await fetch(
+            '/admin/api/sorted-jobs'
+          );
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            `HTTP ${response.status}`
+          );
+
+        }
+
+
+        jobs =
+          await response.json();
+
+
+        /*
+         * Initial jobs sort:
+         * Process time, highest first.
+         */
+
+        sortJobs();
+
+
+        renderJobs();
+
+        renderStats();
+
+
+        document.getElementById(
+          'loading'
+        ).style.display =
+          'none';
+
+
+        document.getElementById(
+          'controls'
+        ).style.display =
+          'flex';
+
+
+        document.getElementById(
+          'jobs-table'
+        ).style.display =
+          'table';
+
+
+      } catch (error) {
+
+        console.error(
+          'Error fetching jobs:',
+          error
+        );
+
+
+        document.getElementById(
+          'loading'
+        ).innerText =
+          'Failed to load jobs.';
+
+      }
+
+    }
+
+
+    /* ==========================================
+       Page Load
+       ========================================== */
+
+    window.addEventListener(
+      'load',
+      () => {
+
+        setupSorting();
+
+        setupStatsSorting();
+
+        setupBatchToggle();
+
+        fetchJobs();
+
+      }
+    );
+
   </script>
+
 </body>
 </html>

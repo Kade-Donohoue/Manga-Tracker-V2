@@ -1,27 +1,56 @@
 const express = require('express');
-const { BullMQAdapter } = require('@bull-board/api/bullMQAdapter');
-const { createBullBoard } = require('@bull-board/api');
-const { ExpressAdapter } = require('@bull-board/express');
-const { Queue } = require('bullmq');
 const path = require('path');
 
-const connection = { host: '127.0.0.1', port: 6379 };
+const { Queue } = require('bullmq');
+const { createBullBoard } = require('@bull-board/api');
+const { BullMQAdapter } = require('@bull-board/api/bullMQAdapter');
+const { ExpressAdapter } = require('@bull-board/express');
 
-const queueNames = ['Manganato-site','Mangadex-site','Mangapark-site','asura-site','Mangafire-site', 'auto-update', 'user-bulk', 'comix-site']
-const baseQueues = queueNames.map(queueName => new Queue(queueName, { connection }))
+const app = express();
+
+const connection = {
+  host: '127.0.0.1',
+  port: 6379,
+};
+
+const queueNames = [
+  'Manganato-site',
+  'Mangadex-site',
+  'Mangapark-site',
+  'asura-site',
+  'Mangafire-site',
+  'auto-update',
+  'user-bulk',
+  'comix-site',
+];
+
+// Create BullMQ queues
+const baseQueues = queueNames.map(
+  (queueName) => new Queue(queueName, { connection })
+);
+
+// Keep the queues available for the custom APIs
+const queueMap = new Map(
+  baseQueues.map((queue) => [queue.name, queue])
+);
+
+// -----------------------------------------------------------------------------
+// Bull Board
+// -----------------------------------------------------------------------------
 
 const serverAdapter = new ExpressAdapter();
+
 serverAdapter.setBasePath('/admin/queues');
 
-const queues = baseQueues.map((queue, idx) => {
+const queues = baseQueues.map((queue) => {
   const adapter = new BullMQAdapter(queue);
 
-  // Optional: format job name with queue info
-  adapter.setFormatter('name', (job) => `${job.name}`);
+  // Format job name
+  adapter.setFormatter('name', (job) => job.name);
 
-  // Custom sanitize job.data
+  // Sanitize job.data
   adapter.setFormatter('data', (data) => {
-    if (data?.images) {
+    if (data?.images && Array.isArray(data.images)) {
       return {
         ...data,
         images: data.images.map((img) => ({
@@ -30,118 +59,169 @@ const queues = baseQueues.map((queue, idx) => {
         })),
       };
     }
+
     return data;
   });
 
-  // Custom sanitize job.returnValue
-  adapter.setFormatter('returnValue', (rv) => {
-    if (rv?.images) {
+  // Sanitize job.returnValue
+  adapter.setFormatter('returnValue', (returnValue) => {
+    if (returnValue?.images && Array.isArray(returnValue.images)) {
       return {
-        ...rv,
-        images: rv.images.map((img) => ({
+        ...returnValue,
+        images: returnValue.images.map((img) => ({
           ...img,
           image: `[Image data: ${img.image?.data?.length ?? 0} bytes]`,
         })),
       };
     }
-    return rv;
+
+    return returnValue;
   });
 
   return adapter;
 });
 
-
-// Create the Bull Board instance
 createBullBoard({
   queues,
   serverAdapter,
+  options: {
+    uiConfig: {
+      boardTitle: 'Manga Tracker Queue Viewer',
+      hideDocsLink: true,
+      miscLinks: [
+        {
+          text: 'View Sorted Jobs',
+          url: '/admin/sorted-jobs',
+        },
+        {
+          text: 'Search by Manga ID',
+          url: '/admin/search-manga',
+        },
+      ],
+    },
+  },
+
 });
 
-const app = express();
+// -----------------------------------------------------------------------------
+// Custom API - Sorted Jobs
+// -----------------------------------------------------------------------------
 
-// Custom API to fetch jobs sorted by processing time
 app.get('/admin/api/sorted-jobs', async (req, res) => {
   try {
-    const jobs = [...await getQueue.getJobs(['completed', 'failed']), ...await getComickQueue.getJobs(['completed', 'failed'])];
+    const jobs = [];
 
-    const jobsWithProcessTime = jobs.map(job => {
-      const processTime = job.finishedOn ? job.finishedOn - job.processedOn : null;
+    for (const queue of baseQueues) {
+      const queueJobs = await queue.getJobs([
+        'completed',
+        'failed',
+      ]);
+
+      jobs.push(...queueJobs);
+    }
+
+    const jobsWithProcessTime = jobs.map((job) => {
+      const processTime =
+        job.finishedOn && job.processedOn
+          ? job.finishedOn - job.processedOn
+          : null;
+
       return {
         id: job.id,
+        queueName: job.queueName,
         name: job.name,
         data: job.data,
         processTime,
-        status: job.isCompleted() ? 'completed' : 'failed',
+        processedOn: job.processedOn,
+        finishedOn: job.finishedOn,
+        status: job.failedReason ? 'failed' : 'completed',
       };
     });
 
-    const sortedJobs = jobsWithProcessTime.sort((a, b) => {
-      if (a.processTime === null) return 1;
-      if (b.processTime === null) return -1;
-      return a.processTime - b.processTime;
-    }).reverse(); // Reverse the sorted jobs to get the most recent first
+    const sortedJobs = jobsWithProcessTime
+      .sort((a, b) => {
+        if (a.processTime === null) return 1;
+        if (b.processTime === null) return -1;
+
+        return a.processTime - b.processTime;
+      })
+      .reverse();
 
     res.json(sortedJobs);
   } catch (error) {
     console.error('Error fetching sorted jobs:', error);
-    res.status(500).json({ error: 'Failed to fetch sorted jobs' });
+
+    res.status(500).json({
+      error: 'Failed to fetch sorted jobs',
+    });
   }
 });
 
-// Serve the static HTML file for /admin/sorted-jobs UI
+// -----------------------------------------------------------------------------
+// Sorted Jobs UI
+// -----------------------------------------------------------------------------
+
 app.get('/admin/sorted-jobs', (req, res) => {
   res.sendFile(path.join(__dirname, 'sorted-jobs.html'));
 });
 
-// Middleware to inject the button into the Bull Board dashboard
-app.use('/admin/queues', (req, res, next) => {
-  const originalSend = res.send;
-  res.send = function (body) {
-    const modifiedBody = body.toString().replace(
-      '</body>',
-        `<div style="position: fixed; bottom: 50px; left: 10px; z-index:9999; display:flex; flex-direction: column; gap:10px;">
-           <a href="/admin/sorted-jobs" style="background-color:#007bff;color:white;padding:10px 15px;text-decoration:none;border-radius:5px;">
-            View Sorted Jobs
-            </a>
-            <a href="/admin/search-manga" style="background-color:#28a745;color:white;padding:10px 15px;text-decoration:none;border-radius:5px;">
-              Search by Manga ID
-            </a>
-       </div></body>`
-    );
-    originalSend.call(this, modifiedBody);
-  };
-  next();
-});
+// -----------------------------------------------------------------------------
+// Search Manga UI
+// -----------------------------------------------------------------------------
 
-// Serve the search UI
 app.get('/admin/search-manga', (req, res) => {
   res.sendFile(path.join(__dirname, 'search-manga.html'));
 });
 
+// -----------------------------------------------------------------------------
+// Custom API - Jobs by Manga ID
+// -----------------------------------------------------------------------------
 
 app.get('/admin/api/jobs-by-mangaId', async (req, res) => {
   try {
     const { mangaId } = req.query;
+
     if (!mangaId) {
-      return res.status(400).json({ error: 'mangaId query parameter is required' });
+      return res.status(400).json({
+        error: 'mangaId query parameter is required',
+      });
     }
 
-    const jobStates = ['waiting', 'active', 'completed', 'failed', 'delayed'];
-
-    const jobs = [
-      ...(await getQueue.getJobs(jobStates)),
-      ...(await getComickQueue.getJobs(jobStates)),
+    const jobStates = [
+      'waiting',
+      'active',
+      'completed',
+      'failed',
+      'delayed',
     ];
 
+    const jobs = [];
+
+    // Search every configured queue
+    for (const queue of baseQueues) {
+      const queueJobs = await queue.getJobs(jobStates);
+      jobs.push(...queueJobs);
+    }
+
+    const mangaIdString = mangaId.toString();
+
     const filtered = jobs
-      .filter(job => job.data?.mangaId?.toString() === mangaId.toString())
-      .map(job => ({
+      .filter(
+        (job) =>
+          job.data?.mangaId?.toString() === mangaIdString
+      )
+      .map((job) => ({
         id: job.id,
+        queueName: job.queueName,
         name: job.name,
         data: job.data,
+
         status: job.finishedOn
-          ? (job.failedReason ? 'failed' : 'completed')
+          ? job.failedReason
+            ? 'failed'
+            : 'completed'
           : 'pending',
+
         processedOn: job.processedOn,
         finishedOn: job.finishedOn,
       }));
@@ -149,14 +229,26 @@ app.get('/admin/api/jobs-by-mangaId', async (req, res) => {
     res.json(filtered);
   } catch (error) {
     console.error('Error fetching jobs by mangaId:', error);
-    res.status(500).json({ error: 'Failed to fetch jobs' });
+
+    res.status(500).json({
+      error: 'Failed to fetch jobs',
+    });
   }
 });
 
+// -----------------------------------------------------------------------------
+// Bull Board Router
+// -----------------------------------------------------------------------------
 
-// Use the Bull Board adapter's router
 app.use('/admin/queues', serverAdapter.getRouter());
 
-app.listen(5911, () => {
-  console.log('Bull Board is running on port 5911');
+// -----------------------------------------------------------------------------
+// Start server
+// -----------------------------------------------------------------------------
+
+const PORT = 5911;
+
+app.listen(PORT, () => {
+  console.log(`Bull Board is running on port ${PORT}`);
+  console.log(`Dashboard: http://localhost:${PORT}/admin/queues`);
 });

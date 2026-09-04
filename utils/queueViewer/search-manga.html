@@ -118,7 +118,7 @@
             <td>${job.processedOn || ''}</td>
             <td>${job.finishedOn || ''}</td>
             <td><pre>${JSON.stringify(job.data, null, 2)}</pre></td>
-            <td><a href="/admin/queues/queue/Get Manga Queue/${job.id}" target="_blank">View</a></td>
+            <td><a href="/admin/queues/queue/${encodeURIComponent(job.queueName)}/${encodeURIComponent(job.id)}" target="_blank">View</a></td>
           `;
           tbody.appendChild(row);
         });
