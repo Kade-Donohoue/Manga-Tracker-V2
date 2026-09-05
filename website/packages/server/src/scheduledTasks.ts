@@ -87,6 +87,7 @@ async function generateUserStatsSnapshot(db: DrizzleD1Database<typeof schema>, d
       chapterTextList: mangaData.chapterTextList,
       latest: mangaData.latestChapterText,
       useAlt: mangaData.useAltStatCalc,
+      mangaId: userData.mangaId,
     })
     .from(userData)
     .leftJoin(mangaData, eq(userData.mangaId, mangaData.mangaId));
@@ -100,17 +101,24 @@ async function generateUserStatsSnapshot(db: DrizzleD1Database<typeof schema>, d
   >();
 
   for (const row of rows) {
-    console.log(row);
-    const curr = calcCurrent(row);
-    const last = calcLatest(row);
+    try {
+      console.log(row);
+      const curr = calcCurrent(row);
+      const last = calcLatest(row);
 
-    if (!statsByUser.has(row.userID)) {
-      statsByUser.set(row.userID, { totalCurrent: 0, totalLatest: 0 });
+      if (!statsByUser.has(row.userID)) {
+        statsByUser.set(row.userID, { totalCurrent: 0, totalLatest: 0 });
+      }
+
+      const data = statsByUser.get(row.userID)!;
+      data.totalCurrent += parseChapterNumber(curr);
+      data.totalLatest += safeNumber(last);
+    } catch (error) {
+      console.error(
+        `Error processing row for user ${row.userID} row ${JSON.stringify(row.mangaId)}:`,
+        error
+      );
     }
-
-    const data = statsByUser.get(row.userID)!;
-    data.totalCurrent += parseChapterNumber(curr);
-    data.totalLatest += safeNumber(last);
   }
 
   const monthlyReads = await db
@@ -181,12 +189,12 @@ function parseChapterNumber(ch: string) {
 
 function calcCurrent(row: any) {
   if (!row.useAlt) return row.currentChap;
-  const chapters = JSON.parse(row.chapterTextList);
+  const chapters = row.chapterTextList.split(',');
   return parseChapterNumber(chapters[row.currentIndex]);
 }
 
 function calcLatest(row: any) {
   if (!row.useAlt) return parseInt(row.latest);
-  const chapters = JSON.parse(row.chapterTextList);
+  const chapters = row.chapterTextList.split(',');
   return parseChapterNumber(chapters[chapters.length - 1]);
 }
