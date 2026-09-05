@@ -13,7 +13,7 @@ import {
   Stack,
 } from '@mui/material';
 import { authClient, useAuthStatus } from '../../hooks/useAuthStatus'; // adjust import
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { fetchPath } from '../../vars';
 
 export default function AdminTools() {

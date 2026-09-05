@@ -5,7 +5,6 @@ import { getBrowser } from '../jobQueue';
 import { CheckResult, fetchData, SiteQueue } from '../types';
 import { Queue, Worker, Job } from 'bullmq';
 import { connection } from '../connections';
-import { ElementHandle } from 'puppeteer';
 
 const Mangafire = 'Mangafire-site';
 const ENABLED = true;
@@ -115,26 +114,6 @@ export async function getManga(
 
   try {
     page.setDefaultNavigationTimeout(1000); // timeout nav after 1 sec
-    page.setRequestInterception(true);
-    const client = await page.target().createCDPSession();
-
-    await client.send('Network.setUserAgentOverride', {
-      userAgent:
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
-      userAgentMetadata: {
-        brands: [
-          { brand: 'Chromium', version: '141' },
-          { brand: 'Google Chrome', version: '141' },
-        ],
-        fullVersion: '141.0.0.0',
-        platform: 'Windows',
-        platformVersion: '10.0.0',
-        architecture: 'x86',
-        model: '',
-        mobile: false,
-      },
-    });
-    await page.setExtraHTTPHeaders({ 'accept-language': 'en-US,en;q=0.9' });
 
     let allowAllRequests: boolean = false;
     const allowRequests = ['mangafire'];
@@ -150,35 +129,40 @@ export async function getManga(
       '.svg',
       '.webp',
     ];
-    page.on('request', (request) => {
+    await page.route('**/*', async (route) => {
       if (allowAllRequests) {
-        request.continue();
+        await route.continue();
         return;
       }
 
-      const u = request.url();
+      const u = route.request().url();
 
       if (match(u, forceAllow)) {
-        request.continue();
-        return;
-      }
-
-      if (match(u, blockRequests)) {
-        request.abort();
+        await route.continue();
         return;
       }
 
       if (!match(u, allowRequests)) {
-        request.abort();
+        await route.abort();
         return;
       }
 
-      if (request.resourceType() == 'image') {
-        request.abort();
+      if (route.request().resourceType() === 'image') {
+        await route.abort();
         return;
       }
 
-      request.continue();
+      if (route.request().resourceType() === 'fetch') {
+        await route.abort();
+        return;
+      }
+
+      if (match(u, blockRequests)) {
+        await route.abort();
+        return;
+      }
+
+      await route.continue();
     });
 
     const mangaId = url.match(/\/title\/([a-zA-Z0-9]+)-/)?.[1];
@@ -228,7 +212,6 @@ export async function getManga(
     let images: { image: Buffer<ArrayBufferLike>; index: number }[] = [];
     if (!job.data.update || pullCoverImages) {
       job.log(logWithTimestamp('Loading Volume html'));
-      await page.setJavaScriptEnabled(false);
 
       try {
         job.log(logWithTimestamp(`Fetching image`));

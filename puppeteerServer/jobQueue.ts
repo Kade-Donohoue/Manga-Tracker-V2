@@ -1,57 +1,52 @@
 import config from './config.json';
-import puppeteer from 'puppeteer-extra';
-import { Browser } from 'puppeteer';
+import { BrowserContext, chromium } from 'patchright';
 
-//puppeteer plugins
-import stealthPlugin from 'puppeteer-extra-plugin-stealth';
-import AdblockerPlugin from 'puppeteer-extra-plugin-adblocker';
 import { sites } from './puppeteerScripts/sites';
 // import { connection } from './connections';
 
-puppeteer.use(stealthPlugin());
-puppeteer.use(AdblockerPlugin({ blockTrackers: true }));
-
-let browser: Browser | null = null;
+let browserContext: BrowserContext | null = null;
 export async function getBrowser() {
-  if (!browser) {
-    const launchArgs = [
-      '--disable-gpu',
-      '--enable-features=NetworkService',
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--mute-audio',
-    ];
+  if (!browserContext) {
+    // const launchArgs = [
+    //   '--disable-gpu',
+    //   '--enable-features=NetworkService',
+    //   '--no-sandbox',
+    //   '--disable-setuid-sandbox',
+    //   '--mute-audio',
+    // ];
 
-    if (config.debug.remotePuppetDebug) {
-      const port = config.debug.remotePuppetDebugPort ?? 9222;
-      launchArgs.push(`--remote-debugging-port=${port}`);
-      if (config.debug.verboseLogging) {
-        console.log(`Puppeteer remote debugging enabled on port ${port}`);
-      }
-    }
+    // if (config.debug.remotePuppetDebug) {
+    //   const port = config.debug.remotePuppetDebugPort ?? 9222;
+    //   launchArgs.push(`--remote-debugging-port=${port}`);
+    //   if (config.debug.verboseLogging) {
+    //     console.log(`Puppeteer remote debugging enabled on port ${port}`);
+    //   }
+    // }
 
-    browser = await puppeteer.launch({
-      executablePath: config.browserPath,
+    let browser = await chromium.launch({
       headless: config.debug.headlessBrowser,
-      devtools: false,
-      acceptInsecureCerts: true,
-      args: launchArgs,
+      channel: 'chrome',
+      // args: launchArgs,
     });
     if (config.debug.verboseLogging) console.log('Stated Puppeteer!');
+
+    browserContext = await browser.newContext();
+
+    await browserContext.newPage();
   }
 
-  browser.on('targetcreated', async (target) => {
-    if (target.type() !== 'page') return;
+  // browser.on('targetcreated', async (target) => {
+  //   if (target.type() !== 'page') return;
 
-    const page = await target.page();
-    if (!page) return;
+  //   const page = await target.page();
+  //   if (!page) return;
 
-    await page.evaluateOnNewDocument(() => {
-      window.open = () => null;
-    });
-  });
+  //   await page.evaluateOnNewDocument(() => {
+  //     window.open = () => null;
+  //   });
+  // });
 
-  return browser;
+  return browserContext;
 }
 
 //cleanup on program termination
@@ -74,7 +69,7 @@ async function shutdown() {
   try {
     await Promise.all(sites.map((site) => site.queue.close()));
 
-    if (browser) await browser.close();
+    if (browserContext) await browserContext.close();
   } catch (error) {
     console.error(error);
     console.log('Unable to gracefully shutdown!');
@@ -86,21 +81,21 @@ async function shutdown() {
   process.exit(0);
 }
 
-if (config.debug.memoryLogging) {
-  setInterval(async () => {
-    if (!browser) return;
-    const contexts = browser.browserContexts();
-    let totalPages = 0;
+// if (config.debug.memoryLogging) {
+//   setInterval(async () => {
+//     if (!browser) return;
+//     const contexts = browser.browserContexts();
+//     let totalPages = 0;
 
-    for (const ctx of contexts) {
-      totalPages += (await ctx.pages()).length;
-    }
+//     for (const ctx of contexts) {
+//       totalPages += (await ctx.pages()).length;
+//     }
 
-    console.log({
-      contexts: contexts.length,
-      pages: totalPages,
-      targets: browser.targets().length,
-      heap: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + 'MB',
-    });
-  }, 5000);
-}
+//     console.log({
+//       contexts: contexts.length,
+//       pages: totalPages,
+//       targets: browser.targets().length,
+//       heap: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + 'MB',
+//     });
+//   }, 5000);
+// }

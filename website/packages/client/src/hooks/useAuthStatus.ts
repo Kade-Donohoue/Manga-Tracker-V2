@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createAuthClient } from 'better-auth/react'; // adjust import if needed
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { adminClient } from 'better-auth/client/plugins';
 
 export interface UseAuthStatusInterface {

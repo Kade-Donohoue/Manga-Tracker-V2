@@ -5,7 +5,7 @@ import { getBrowser } from '../jobQueue';
 import { CheckResult, fetchData, SiteQueue } from '../types';
 import { Queue, Worker, Job } from 'bullmq';
 import { connection } from '../connections';
-import { Page } from 'puppeteer';
+import { Page } from 'patchright';
 
 const comix = 'comix-site';
 const ENABLED = true;
@@ -113,45 +113,35 @@ export async function getManga(
       '.svg',
       '.webp',
     ];
-    page.on('request', (request) => {
+    await page.route('**/*', async (route) => {
       if (allowAllRequests) {
-        request.continue();
+        await route.continue();
         return;
       }
 
-      const u = request.url();
-
-      // console.log('Request URL:', u);
-      // if (/\/api\/v1\/manga\/[^\/]+\/chapters/.test(u)) {
-      //   console.log('Modifying request to include limit and order parameters:', u);
-      //   const newUrl = new URL(u);
-      //   newUrl.searchParams.set('limit', '100');
-      //   newUrl.searchParams.set('order[number]', 'asc');
-      //   request.continue({ url: newUrl.toString() });
-      //   return;
-      // }
+      const u = route.request().url();
 
       if (match(u, forceAllow)) {
-        request.continue();
-        return;
-      }
-
-      if (match(u, blockRequests)) {
-        request.abort();
+        await route.continue();
         return;
       }
 
       if (!match(u, allowRequests)) {
-        request.abort();
+        await route.abort();
         return;
       }
 
-      if (request.resourceType() == 'image') {
-        request.abort();
+      if (route.request().resourceType() === 'image') {
+        await route.abort();
         return;
       }
 
-      request.continue();
+      if (match(u, blockRequests)) {
+        await route.abort();
+        return;
+      }
+
+      await route.continue();
     });
 
     job.updateProgress(0);

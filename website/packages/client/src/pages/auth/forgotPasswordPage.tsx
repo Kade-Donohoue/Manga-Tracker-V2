@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Box, Button, Paper, TextField, Typography, Divider } from '@mui/material';
 import { authClient } from '../../hooks/useAuthStatus';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = React.useState('');

@@ -1,10 +1,11 @@
-import { createTimestampLogger, match } from '../util';
-import config from '../config.json';
+// @ts-nocheck
+import { createTimestampLogger, match } from '../../util';
+import config from '../../config.json';
 import sharp from 'sharp';
-import { getBrowser } from '../jobQueue';
-import { CheckResult, fetchData, SiteQueue } from '../types';
+import { getBrowser } from '../../jobQueue';
+import { CheckResult, fetchData, SiteQueue } from '../../types';
 import { Queue, Worker, Job } from 'bullmq';
-import { connection } from '../connections';
+import { connection } from '../../connections';
 
 const comix = 'comix-site';
 const ENABLED = true;
@@ -144,7 +145,7 @@ export async function getManga(
       });
 
       await page.goto(overviewUrl, {
-        waitUntil: 'networkidle2',
+        waitUntil: 'load',
         timeout: 30000,
       });
 

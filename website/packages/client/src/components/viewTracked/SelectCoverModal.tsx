@@ -147,11 +147,13 @@ export default function SelectCoverModal({
         >
           <Stack
             direction="row"
-            flexWrap="wrap"
-            gap={2}
-            margin={2}
-            justifyContent="flex-start"
-            alignItems="flex-start"
+            sx={{
+              gap: 2,
+              margin: 2,
+              justifyContent: 'flex-start',
+              flexWrap: 'wrap',
+              alignItems: 'flex-start',
+            }}
           >
             {Array.from({ length: (manga.imageIndexes ?? 0) + 1 }, (_, i) => i).map((index) => {
               const imgUrl =
@@ -192,10 +194,13 @@ export default function SelectCoverModal({
 
         <Stack
           direction="row"
-          justifyContent="flex-end"
-          gap={2}
-          mt={2}
-          sx={{ pt: 2, borderTop: '1px solid #333' }}
+          sx={{
+            pt: 2,
+            borderTop: '1px solid #333',
+            justifyContent: 'flex-end',
+            gap: 2,
+            mt: 2,
+          }}
         >
           <Button
             variant="outlined"

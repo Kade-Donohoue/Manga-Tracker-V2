@@ -105,11 +105,10 @@ export async function getManga(
 
   try {
     page.setDefaultNavigationTimeout(1000); // timeout nav after 1 sec
-    page.setRequestInterception(true);
 
     let allowAllRequests: boolean = false;
     const allowRequests = ['asura'];
-    const bypassAllowReqs = ['_astro', 'asura-images/covers/'];
+    const forceAllow = ['_astro', 'asura-images/covers/'];
     const blockRequests = [
       '.css',
       'facebook',
@@ -122,41 +121,46 @@ export async function getManga(
       '.woff',
       '/api/',
     ];
-    page.on('request', (request) => {
-      if (allowAllRequests) return request.continue();
+    await page.route('**/*', async (route) => {
+      if (allowAllRequests) {
+        await route.continue();
+        return;
+      }
 
-      const u = request.url();
+      const u = route.request().url();
+
+      if (match(u, forceAllow)) {
+        await route.continue();
+        return;
+      }
+
       if (!match(u, allowRequests)) {
-        request.abort();
+        await route.abort();
         return;
       }
 
-      if (match(u, bypassAllowReqs)) {
-        request.continue();
+      if (route.request().resourceType() === 'image') {
+        await route.abort();
         return;
       }
 
-      if (request.resourceType() == 'image') {
-        request.abort();
-        return;
-      }
-
-      if (request.resourceType() == 'fetch') {
-        request.abort();
+      if (route.request().resourceType() === 'fetch') {
+        await route.abort();
         return;
       }
 
       if (match(u, blockRequests)) {
-        request.abort();
+        await route.abort();
         return;
       }
-      request.continue();
+
+      await route.continue();
     });
 
     job.log(logWithTimestamp('Starting Loading Chapter'));
 
     const overviewUrl = url.split('/chapter/')[0];
-    await page.goto(overviewUrl, { waitUntil: 'networkidle0', timeout: 10 * 1000 });
+    await page.goto(overviewUrl, { waitUntil: 'load', timeout: 10 * 1000 });
 
     await job.updateProgress(20);
     job.log(logWithTimestamp('Chapter Loaded, starting retrial of overview URL and chapterData'));
@@ -167,7 +171,7 @@ export async function getManga(
 
     const rawData = await page.$$eval(
       'astro-island[component-url*="ChapterListReact"] a[href*="/chapter/"]',
-      (anchors) =>
+      (anchors: HTMLAnchorElement[]) =>
         anchors
           .filter((a) => !a.innerText.includes('EARLY ACCESS'))
           .map((a) => {
@@ -222,7 +226,7 @@ export async function getManga(
       } catch {}
     }
 
-    const overViewURL = await page.$eval('div > a.gap-3', (el) => el.href);
+    const overViewURL = await page.$eval('div > a.gap-3', (el: HTMLAnchorElement) => el.href);
     if (!overViewURL) throw new Error('Manga: Unable to get base URL!');
 
     job.log(logWithTimestamp(overViewURL));
@@ -256,19 +260,24 @@ export async function getManga(
 
       const photo = await page.$eval(
         '#desktop-cover-container img',
-        (img) => (img as HTMLImageElement).src
+        (img: HTMLImageElement) => img.src
       );
 
-      // console.log(photo)
       job.log(logWithTimestamp('Going to Photo'));
       allowAllRequests = true;
-      const icon = await page.goto(photo!, { timeout: 10000 });
+
+      const response = await page.request.get(photo);
+
       await job.updateProgress(60);
 
-      let iconBuffer = await icon?.buffer();
-      let resizedImage = await sharp(iconBuffer).resize(480, 720).toBuffer();
+      const iconBuffer = await response.body();
 
-      images.push({ image: resizedImage, index: 0 });
+      const resizedImage = await sharp(iconBuffer).resize(480, 720).toBuffer();
+
+      images.push({
+        image: resizedImage,
+        index: 0,
+      });
     }
     job.log(logWithTimestamp('Data fetched'));
     await job.updateProgress(80);

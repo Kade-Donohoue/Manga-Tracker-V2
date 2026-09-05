@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Box, Button, Paper, TextField, Typography } from '@mui/material';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router';
 import { authClient } from '../../hooks/useAuthStatus';
 
 export default function ResetPasswordPage() {

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { authClient } from '../../hooks/useAuthStatus';
 import { Box, Button, TextField, Typography, Paper, Link as MuiLink } from '@mui/material';
 import { FormControlLabel, Checkbox } from '@mui/material';
