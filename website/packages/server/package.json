@@ -11,10 +11,10 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@better-auth/api-key": "^1.7.2",
-    "@better-auth/sso": "^1.7.2",
+    "@better-auth/api-key": "^1.6.11",
+    "@better-auth/sso": "^1.6.11",
     "@block65/webcrypto-web-push": "^1.0.2",
-    "better-auth": "^1.7.2",
+    "better-auth": "^1.6.11",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.13.5",
     "web-push": "^3.6.7",

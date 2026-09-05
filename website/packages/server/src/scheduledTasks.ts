@@ -102,7 +102,7 @@ async function generateUserStatsSnapshot(db: DrizzleD1Database<typeof schema>, d
 
   for (const row of rows) {
     try {
-      console.log(row);
+      // console.log(row);
       const curr = calcCurrent(row);
       const last = calcLatest(row);
 
@@ -114,10 +114,11 @@ async function generateUserStatsSnapshot(db: DrizzleD1Database<typeof schema>, d
       data.totalCurrent += parseChapterNumber(curr);
       data.totalLatest += safeNumber(last);
     } catch (error) {
-      console.error(
+      console.warn(
         `Error processing row for user ${row.userID} row ${JSON.stringify(row.mangaId)}:`,
         error
       );
+      continue; // Skip this row and continue with the next one
     }
   }
 
@@ -182,9 +183,14 @@ function thirtyDaysAgo() {
   return d.toISOString();
 }
 
-function parseChapterNumber(ch: string) {
-  const sanitized = ch.replace(/\.(?=.*\.)/g, '');
-  return parseFloat(sanitized) || 0;
+function parseChapterNumber(ch: unknown): number {
+  try {
+    const sanitized = String(ch).replace(/\.(?=.*\.)/g, '');
+    return parseFloat(sanitized) || 0;
+  } catch (error) {
+    console.warn(`Error parsing chapter number from "${ch}":`, error);
+    return 0;
+  }
 }
 
 function calcCurrent(row: any) {
