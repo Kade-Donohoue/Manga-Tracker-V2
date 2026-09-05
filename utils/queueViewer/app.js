@@ -16,7 +16,6 @@ const connection = {
 const queueNames = [
   'Manganato-site',
   'Mangadex-site',
-  'Mangapark-site',
   'asura-site',
   'Mangafire-site',
   'auto-update',
