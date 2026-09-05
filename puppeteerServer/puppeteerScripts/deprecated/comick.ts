@@ -1,3 +1,4 @@
+// @ts-nocheck
 import config from '../../config.json';
 import sharp from 'sharp';
 import { Job } from 'bullmq';

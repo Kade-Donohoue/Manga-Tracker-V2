@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { createTimestampLogger, match } from '../util';
 import config from '../config.json';
 import sharp from 'sharp';

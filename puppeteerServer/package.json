@@ -4,20 +4,17 @@
     "start": "npx tsc && node ./dist/app.js"
   },
   "dependencies": {
-    "@types/node": "^26.4.1",
     "bullmq": "^6.3.4",
     "fastify": "^5.8.4",
     "ioredis": "^6.0.0",
-    "puppeteer": "^25.9.0",
-    "puppeteer-extra": "^3.3.6",
-    "puppeteer-extra-plugin-adblocker": "^2.13.6",
-    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "patchright": "^1.62.2",
     "sharp": "^0.35.4",
     "typescript": "^7.0.2"
   },
   "packageManager": "pnpm@10.33.0",
   "devDependencies": {
     "@types/chrome": "^0.2.8",
-    "@types/firefox-webext-browser": "^143.0.0"
+    "@types/firefox-webext-browser": "^143.0.0",
+    "@types/node": "^24.13.3"
   }
 }

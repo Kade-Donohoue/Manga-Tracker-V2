@@ -98,26 +98,6 @@ export async function getManga(
 
   try {
     page.setDefaultNavigationTimeout(1000); // timeout nav after 1 sec
-    page.setRequestInterception(true);
-    const client = await page.target().createCDPSession();
-
-    await client.send('Network.setUserAgentOverride', {
-      userAgent:
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
-      userAgentMetadata: {
-        brands: [
-          { brand: 'Chromium', version: '141' },
-          { brand: 'Google Chrome', version: '141' },
-        ],
-        fullVersion: '141.0.0.0',
-        platform: 'Windows',
-        platformVersion: '10.0.0',
-        architecture: 'x86',
-        model: '',
-        mobile: false,
-      },
-    });
-    await page.setExtraHTTPHeaders({ 'accept-language': 'en-US,en;q=0.9' });
 
     let allowAllRequests: boolean = false;
     const allowRequests = ['manganato'];
@@ -133,34 +113,40 @@ export async function getManga(
       '.svg',
       '.webp',
     ];
-    page.on('request', (request) => {
+    await page.route('**/*', async (route) => {
       if (allowAllRequests) {
-        request.continue();
+        await route.continue();
         return;
       }
 
-      const u = request.url();
+      const u = route.request().url();
 
       if (match(u, forceAllow)) {
-        request.continue();
+        await route.continue();
         return;
       }
 
       if (!match(u, allowRequests)) {
-        request.abort();
+        await route.abort();
         return;
       }
 
-      if (request.resourceType() == 'image') {
-        request.abort();
+      if (route.request().resourceType() === 'image') {
+        await route.abort();
+        return;
+      }
+
+      if (route.request().resourceType() === 'fetch') {
+        await route.abort();
         return;
       }
 
       if (match(u, blockRequests)) {
-        request.abort();
+        await route.abort();
         return;
       }
-      request.continue();
+
+      await route.continue();
     });
 
     job.log(logWithTimestamp('Loading Chapter Page'));
@@ -220,7 +206,6 @@ export async function getManga(
     let images: { image: Buffer<ArrayBufferLike>; index: number }[] = [];
     if (icon || inputDate < oneMonthAgo) {
       job.log(logWithTimestamp('Loading Overview Page'));
-      await page.setJavaScriptEnabled(false);
       allowAllRequests = true;
 
       await page.goto(overviewUrl);
@@ -237,7 +222,7 @@ export async function getManga(
         'div.manga-info-top > div.manga-info-pic > img'
       );
 
-      const photoUrl = (await photoElement?.evaluate((el) => el.src)) as string;
+      const photoUrl = (await photoElement?.evaluate((el: HTMLImageElement) => el.src)) as string;
 
       job.log(logWithTimestamp('Photo Page Fetched'));
       await job.updateProgress(60);
