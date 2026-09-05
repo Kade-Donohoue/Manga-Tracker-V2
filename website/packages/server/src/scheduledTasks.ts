@@ -102,7 +102,7 @@ async function generateUserStatsSnapshot(db: DrizzleD1Database<typeof schema>, d
 
   for (const row of rows) {
     try {
-      console.log(row);
+      // console.log(row);
       const curr = calcCurrent(row);
       const last = calcLatest(row);
 
