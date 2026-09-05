@@ -347,10 +347,12 @@ queueEvents.on('completed', handleChildDone);
 queueEvents.on('failed', handleChildDone);
 
 async function handleChildDone({ jobId }: { jobId: string }) {
-  const job = await Job.fromId(autoUpdateQueue, jobId);
+  const job = await autoUpdateQueue.getJob(jobId);
+
   if (!job?.parentKey) return;
 
-  const parent = await Job.fromId(autoUpdateQueue, job.parentKey);
+  const parent = await autoUpdateQueue.getJob(job.parentKey);
+
   if (!parent) return;
 
   const deps = await parent.getDependenciesCount();
