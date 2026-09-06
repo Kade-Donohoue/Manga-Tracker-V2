@@ -254,7 +254,7 @@ export async function getManga(
       chapterTextList: chapterData.chapterTextList.join(','),
       currentIndex: currIndex,
       images: images,
-      specialFetchData: specialFetchData,
+      specialFetchData: 'N/A',
       sourceId: titleData.data.id.toString() || 'Unknown',
       author: author,
       description: description,
