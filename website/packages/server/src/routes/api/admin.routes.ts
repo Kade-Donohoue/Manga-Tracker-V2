@@ -154,6 +154,14 @@ adminRouter.post('/saveManga', zValidator('json', newMangaSchama), async (c) => 
     })
     .returning({ addedAt: userData.addedAt });
 
+  if (mangaId[0].mangaId === newMangaId) {
+    await db.insert(mangaStats).values({
+      type: 'mangaCount',
+      value: 1,
+      mangaId: mangaId[0].mangaId,
+    });
+  }
+
   await db.insert(mangaStats).values({
     type: 'chapCount',
     value: Number(newMangaData.chapterTextList.split(',').at(-1) || '0'),
