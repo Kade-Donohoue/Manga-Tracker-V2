@@ -20,7 +20,7 @@ export default function createApp() {
     return next();
   });
 
-  app.use('/api/auth/*', authCors);
+  app.use('/api/*', authCors);
   app.use('*', withSession);
 
   app.use(requestId());

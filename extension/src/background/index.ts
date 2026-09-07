@@ -1,13 +1,36 @@
 import { logger } from '../shared/logger';
 import type { Message } from '../shared/messaging';
+import { authClient } from '../auth/auth-client';
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL ?? 'https://your-backend.com';
+const BACKEND_URL = process.env.PLASMO_PUBLIC_BACKEND_URL ?? 'https://manga.kdonohoue.com';
+
+// const session = getSession();
+
+// async function getSession() {
+//   const response = await fetch(extensionApiPath('/api/auth/session'), {
+//     method: 'GET',
+//     credentials: 'include',
+//   });
+
+//   if (!response.ok) {
+//     logger.error('Failed to fetch session:', response.status, response.statusText);
+//     return null;
+//   }
+
+//   const data = await response.json().catch(() => ({}));
+//   return data?.session ?? null;
+// }
 
 function extensionApiPath(path: string) {
   return `${BACKEND_URL}${path}`;
 }
 
 async function sendPost(path: string, body: unknown) {
+  const session = await authClient.getSession();
+  if (!session.data) {
+    return { ok: false, status: 401, data: { message: 'You must be signed in.' } };
+  }
+
   const response = await fetch(extensionApiPath(path), {
     method: 'POST',
     headers: {
@@ -61,6 +84,18 @@ async function waitForAddStatus(batchId: string, fetchIds: string[]) {
 chrome.runtime.onMessage.addListener((msg: Message, sender, sendResponse) => {
   const handle = async () => {
     try {
+      if (msg.type === 'GET_SESSION') {
+        const session = await authClient.getSession();
+        sendResponse({ authenticated: Boolean(session.data) });
+        return;
+      }
+
+      if (msg.type === 'OPEN_SIGN_IN') {
+        chrome.tabs.create({ url: `${BACKEND_URL}/sign-in` });
+        sendResponse({ success: true });
+        return;
+      }
+
       // msg.mangaData =  {mangaId: string, currentIndex: number, currentChap:string, slugList: string[]}
       if (msg.type === 'CHAPTER_REACHED') {
         await sendPost('/api/data/update/updateCurrentIndex', {

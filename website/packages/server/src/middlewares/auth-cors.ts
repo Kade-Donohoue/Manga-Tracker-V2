@@ -2,11 +2,12 @@ import { cors } from 'hono/cors';
 
 export default cors({
   origin: (origin, c) => {
-    if (!origin) return false;
+    if (!origin) return undefined;
 
     const allowed = c.env.TRUSTED_ORIGINS;
+    const result = allowed.includes(origin) ? origin : '';
 
-    return allowed.includes(origin);
+    return result;
   },
   allowHeaders: ['Content-Type', 'Authorization'],
   allowMethods: ['POST', 'GET', 'OPTIONS'],

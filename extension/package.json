@@ -4,19 +4,35 @@
   "version": "0.2.0",
   "type": "module",
   "scripts": {
-    "dev": "vite build --mode development --watch",
-
-    "build:chrome": "rm -rf dist && vite build --mode production && rm -f dist/manifest.json dist/manifest.firefox.json && cp public/manifest.json dist/manifest.json",
-
-    "build:firefox": "rm -rf dist && vite build --mode production && rm -f dist/manifest.json dist/manifest.firefox.json && cp public/manifest.firefox.json dist/manifest.json",
+    "dev": "plasmo dev",
+    "build:chrome": "plasmo build --target=chrome-mv3",
+    "build:firefox": "plasmo build --target=firefox-mv2",
 
     "build": "pnpm build:chrome",
-
-    "build:all": "rm -rf build && mkdir -p build/chrome build/firefox && pnpm build:chrome && cp -r dist/* build/chrome && pnpm build:firefox && cp -r dist/* build/firefox && cd build/chrome && zip -r ../tomari-chrome-extension.zip . && cd ../firefox && zip -r ../tomari-firefox-extension.zip ."
+    "build:all": "pnpm build:chrome && pnpm build:firefox"
+  },
+  "manifest": {
+    "name": "Tomari, Manga Tracker",
+    "description": "Tracks manga reading progress on supported sites.",
+    "host_permissions": [
+      "https://manga.kdonohoue.com/*",
+      "https://devmanga.kdonohoue.com/*",
+      "http://localhost:8787/*"
+    ],
+    "permissions": ["storage"]
   },
   "devDependencies": {
     "@types/chrome": "^0.0.233",
+    "@types/node": "^22.10.2",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "plasmo": "^0.90.5",
     "typescript": "^5.5.0",
     "vite": "^5.4.0"
+  },
+  "dependencies": {
+    "better-auth": "^1.4.9",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   }
 }

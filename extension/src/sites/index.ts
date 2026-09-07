@@ -15,5 +15,6 @@ const adapters: SiteAdapter[] = [
 
 export function getAdapter(): SiteAdapter | null {
   const url = new URL(location.href);
+  console.log('getAdapter: current URL:', url.href);
   return adapters.find((a) => a.matches(url)) ?? null;
 }
