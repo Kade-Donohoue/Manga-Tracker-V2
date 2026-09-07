@@ -10,8 +10,8 @@
     "build:chrome:staging": "plasmo build --target=chrome-mv3 --tag=development",
     "build:firefox": "plasmo build --target=firefox-mv2",
     "build:firefox:staging": "plasmo build --target=firefox-mv2 --tag=development",
-    "package:chrome": "rm -rf manga-tracker-extension-chrome.zip && zip -r manga-tracker-extension-chrome.zip build/chrome-mv3-prod",
-    "package:firefox": "rm -rf manga-tracker-extension-firefox.zip && zip -r manga-tracker-extension-firefox.zip build/firefox-mv2-prod",
+    "package:chrome": "rm -rf manga-tracker-extension-chrome.zip && (cd build/chrome-mv3-prod && zip -r ../../manga-tracker-extension-chrome.zip .)",
+    "package:firefox": "rm -rf manga-tracker-extension-firefox.zip && (cd build/firefox-mv2-prod && zip -r ../../manga-tracker-extension-firefox.zip .)",
 
     "build": "pnpm clean:build && pnpm build:chrome",
     "build:all": "pnpm clean:build && pnpm build:chrome && pnpm build:firefox",
