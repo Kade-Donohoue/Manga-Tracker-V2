@@ -1,15 +1,23 @@
 {
   "name": "manga-tracker-extension",
   "private": true,
-  "version": "0.2.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "plasmo dev",
+    "clean:build": "rm -rf build .plasmo",
     "build:chrome": "plasmo build --target=chrome-mv3",
+    "build:chrome:staging": "plasmo build --target=chrome-mv3 --tag=development",
     "build:firefox": "plasmo build --target=firefox-mv2",
+    "build:firefox:staging": "plasmo build --target=firefox-mv2 --tag=development",
+    "package:chrome": "rm -rf manga-tracker-extension-chrome.zip && zip -r manga-tracker-extension-chrome.zip build/chrome-mv3-prod",
+    "package:firefox": "rm -rf manga-tracker-extension-firefox.zip && zip -r manga-tracker-extension-firefox.zip build/firefox-mv2-prod",
 
-    "build": "pnpm build:chrome",
-    "build:all": "pnpm build:chrome && pnpm build:firefox"
+    "build": "pnpm clean:build && pnpm build:chrome",
+    "build:all": "pnpm clean:build && pnpm build:chrome && pnpm build:firefox",
+    "build:staging": "pnpm clean:build && pnpm build:chrome:staging",
+    "build:all:staging": "pnpm clean:build && pnpm build:chrome:staging && pnpm build:firefox:staging",
+    "package:all": "pnpm package:chrome && pnpm package:firefox"
   },
   "manifest": {
     "name": "Tomari, Manga Tracker",
