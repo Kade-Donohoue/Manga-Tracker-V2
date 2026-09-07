@@ -22,7 +22,7 @@ export const mangafireAdapter: SiteAdapter = {
     return 'Unknown';
   },
   getSiteName: () => 'mangafire',
-  getChapterId: () => location.pathname.split('-').at(-1) ?? location.pathname,
+  getChapterId: () => location.pathname.split('/chapter/').at(-1) ?? location.pathname,
 
   createTracker: async (onComplete) => {
     const mangaId = await waitForMangaId();

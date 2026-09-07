@@ -98,11 +98,20 @@ chrome.runtime.onMessage.addListener((msg: Message, sender, sendResponse) => {
 
       // msg.mangaData =  {mangaId: string, currentIndex: number, currentChap:string, slugList: string[]}
       if (msg.type === 'CHAPTER_REACHED') {
-        await sendPost('/api/data/update/updateCurrentIndex', {
+        const response = await sendPost('/api/data/update/updateCurrentIndex', {
           mangaId: msg.payload.mangaData.mangaId,
           newIndex: msg.payload.newIndex,
         });
-        sendResponse({ success: true });
+
+        if (!response.ok || response.data?.message !== 'Success') {
+          sendResponse({
+            success: false,
+            error: response.data?.message || `HTTP ${response.status}`,
+          });
+          return;
+        }
+
+        sendResponse({ success: true, message: response.data?.message });
         return;
       }
 

@@ -90,7 +90,7 @@ async function showLoginWarningIfNeeded() {
   }
 }
 
-type TrackingIndicatorState = 'checking' | 'watching' | 'tracking';
+type TrackingIndicatorState = 'checking' | 'watching' | 'tracking' | 'read';
 
 let trackingIndicatorHost: HTMLDivElement | null = null;
 let trackingIndicatorPill: HTMLDivElement | null = null;
@@ -114,11 +114,14 @@ function updateTrackingIndicator(state: TrackingIndicatorState) {
       .pill { display:flex; align-items:center; gap:7px; padding:7px 10px; border:1px solid rgba(148,163,184,.2); border-radius:999px; background:#0f172a; color:#cbd5e1; box-shadow:0 8px 24px rgba(2,6,23,.45); font:12px/1 system-ui,sans-serif; cursor:pointer; }
       .pill.collapsed { padding:7px; }
       .pill.collapsed span:last-child { display:none; }
-      .dot { width:7px; height:7px; border-radius:50%; background:#60a5fa; box-shadow:0 0 0 3px rgba(96,165,250,.16); }
+      .dot { display:inline-flex; align-items:center; justify-content:center; width:7px; height:7px; border-radius:50%; background:#60a5fa; box-shadow:0 0 0 3px rgba(96,165,250,.16); font-size:7px; line-height:1; color:#eff6ff; }
       .checking { color:#fef3c7; }
       .checking .dot { background:#f59e0b; box-shadow:0 0 0 3px rgba(245,158,11,.18); }
       .tracking { color:#dcfce7; }
       .tracking .dot { background:#4ade80; box-shadow:0 0 0 3px rgba(74,222,128,.16); }
+      .read { color:#dcfce7; }
+      .read .dot { background:#15803d; color:#f0fdf4; box-shadow:0 0 0 3px rgba(21,128,61,.2); }
+      .read .dot { width:10px; height:10px; font-size:8px; font-weight:800; }
     `;
 
     trackingIndicatorPill = document.createElement('div');
@@ -142,12 +145,32 @@ function updateTrackingIndicator(state: TrackingIndicatorState) {
   if (!pill) return;
 
   const isChecking = state === 'checking';
-  pill.className = `${isChecking ? 'pill checking' : state === 'tracking' ? 'pill tracking' : 'pill'}${trackingIndicatorCollapsed ? ' collapsed' : ''}`;
+  const isTracking = state === 'tracking';
+  const isRead = state === 'read';
+  const dot = pill.firstElementChild as HTMLElement | null;
+
+  pill.className = `${isChecking ? 'pill checking' : isRead ? 'pill read' : isTracking ? 'pill tracking' : 'pill'}${trackingIndicatorCollapsed ? ' collapsed' : ''}`;
+  if (dot) {
+    dot.textContent = isRead ? '✓' : '';
+    dot.style.width = isRead ? '10px' : '7px';
+    dot.style.height = isRead ? '10px' : '7px';
+    dot.style.fontSize = isRead ? '8px' : '7px';
+    dot.style.fontWeight = isRead ? '800' : '400';
+    dot.style.color = isRead ? '#f0fdf4' : '#eff6ff';
+    dot.style.background = isRead ? '#15803d' : isTracking ? '#4ade80' : '#60a5fa';
+    dot.style.boxShadow = isRead
+      ? '0 0 0 3px rgba(21,128,61,.2)'
+      : isTracking
+        ? '0 0 0 3px rgba(74,222,128,.16)'
+        : '0 0 0 3px rgba(96,165,250,.16)';
+  }
   pill.lastElementChild!.textContent = isChecking
     ? 'Checking if tracking…'
-    : state === 'tracking'
-      ? 'Tracking · synced'
-      : 'Watching · not saved';
+    : isRead
+      ? 'Marked read'
+      : isTracking
+        ? 'Tracking · synced'
+        : 'Watching · not saved';
 }
 
 function hideTrackingIndicator() {
@@ -414,7 +437,7 @@ async function handleChapterCompletion(adapter: SiteAdapter, data: any) {
     const { isTracking, mangaData } = await isTrackingManga(sourceId, siteName);
 
     if (isTracking) {
-      updateTrackingIndicator('tracking');
+      updateTrackingIndicator('checking');
       logger.info('User is tracking manga, sending chapter completion event', {
         sourceId,
         siteName,
@@ -429,21 +452,27 @@ async function handleChapterCompletion(adapter: SiteAdapter, data: any) {
           chapterId,
           slugList: mangaData.slugList,
         });
-        return;
-      } else {
-        const success = await sendChapterReached(
-          sourceId,
-          siteName,
-          url,
-          timeSpent,
-          mangaData,
-          newIndex
-        );
-        if (!success) {
-          logger.warn('Failed to send chapter completion event');
-        }
+        updateTrackingIndicator('watching');
         return;
       }
+
+      const success = await sendChapterReached(
+        sourceId,
+        siteName,
+        url,
+        timeSpent,
+        mangaData,
+        newIndex
+      );
+
+      if (!success) {
+        logger.warn('Failed to send chapter completion event');
+        updateTrackingIndicator('watching');
+        return;
+      }
+
+      updateTrackingIndicator('read');
+      return;
     }
 
     const shouldTrack = await askStartTracking(title, sourceId);
