@@ -5,6 +5,7 @@ export const mangadexAdapter: SiteAdapter = {
   matches: (url) => url.hostname.includes('mangadex.org') && url.pathname.includes('/chapter/'),
 
   getSourceId: () => {
+    // need to append "(lang)" but going to for now just statically append "(en)"
     const anchor = document.querySelector<HTMLAnchorElement>('a.reader--header-manga');
     if (anchor?.href) {
       const match = anchor.href.match(/\/title\/([^\/]+)\//);
@@ -14,7 +15,7 @@ export const mangadexAdapter: SiteAdapter = {
     }
 
     const parts = location.pathname.split('/');
-    return parts[2] ?? 'unknown';
+    return (parts[2] ?? 'unknown') + '(en)';
   },
 
   getSiteName: () => 'mangadex',

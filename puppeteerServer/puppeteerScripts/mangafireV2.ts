@@ -249,12 +249,12 @@ export async function getManga(
     await job.updateProgress(100);
     return {
       mangaName: mangaName,
-      urlBase: 'https://mangafire.to' + titleData.data.url + '/',
+      urlBase: 'https://mangafire.to' + titleData.data.url + '/chapter/',
       slugList: chapterData.slugList.join(','),
       chapterTextList: chapterData.chapterTextList.join(','),
       currentIndex: currIndex,
       images: images,
-      specialFetchData: specialFetchData,
+      specialFetchData: 'N/A',
       sourceId: titleData.data.id.toString() || 'Unknown',
       author: author,
       description: description,

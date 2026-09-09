@@ -1,5 +1,11 @@
 export type Message =
   | {
+      type: 'GET_SESSION';
+    }
+  | {
+      type: 'OPEN_SIGN_IN';
+    }
+  | {
       type: 'CHAPTER_REACHED';
       payload: {
         url: string;

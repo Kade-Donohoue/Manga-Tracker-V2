@@ -4,3 +4,6 @@
 /dist*
 /node_modules
 /build*
+/.plasmo
+manga-tracker-extension-chrome.zip
+manga-tracker-extension-firefox.zip

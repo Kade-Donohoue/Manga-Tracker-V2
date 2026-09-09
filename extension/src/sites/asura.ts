@@ -3,8 +3,11 @@ import { waitForElement } from '../core/waitForElement';
 import { logger } from '../shared/logger';
 
 export const asuraAdapter: SiteAdapter = {
-  matches: (url) => url.hostname.includes('asurascans.com') && url.pathname.includes('/chapter/'),
-  getSourceId: () => location.pathname.split('/')[2] ?? location.pathname,
+  matches: (url) => url.hostname.includes('asurascans') && url.pathname.includes('/chapter/'),
+  getSourceId: () => {
+    const comicSlug = location.pathname.split('/').filter(Boolean)[1] ?? '';
+    return comicSlug || 'Unknown';
+  },
   getSiteName: () => 'asura',
   getChapterId: () => location.pathname.split('/').at(-1) ?? location.pathname,
 

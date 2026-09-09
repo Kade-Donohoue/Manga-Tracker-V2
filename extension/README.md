@@ -1,200 +1,146 @@
 # Manga Tracker Extension
 
-A browser extension for tracking manga chapters across multiple reading platforms. Integrates with the Manga Tracker backend to sync reading progress and manage your manga library.
-
-## Features
-
-- Track manga across multiple platforms (Asura, Comix, Mangadex, Mangafire, Manganato, and more)
-- Sync reading progress with your Manga Tracker account
-- Get notifications when new chapters are available
-- Manage your manga collection directly from the extension
-- Support for both Chrome and Firefox
+A Plasmo browser extension for tracking manga chapters across supported reading platforms. It uses Better Auth to connect to the Manga Tracker backend and sync reading progress.
 
 ## Prerequisites
 
-- **Node.js** (v18 or higher)
-- **pnpm** (recommended) or npm
-- A modern browser (Chrome or Firefox)
+- Node.js 18 or newer
+- pnpm
+- Chrome or Firefox
 
 ## Installation
 
-1. Install dependencies:
+From this directory:
+
 ```bash
 pnpm install
 ```
 
-2. Set up environment variables:
-   - Copy `.env.example` to `.env.local` (if it exists)
-   - Set `VITE_BACKEND_URL` to your backend server URL (e.g., `https://your-backend.com`)
+Set `PLASMO_PUBLIC_BACKEND_URL` in the appropriate environment file:
 
-## Building
+```env
+PLASMO_PUBLIC_BACKEND_URL=https://your-backend.com
+```
 
-### Development Mode
+Development uses `.env.development`; production builds use `.env.production`.
 
-Watch for changes and rebuild automatically:
+## Development
+
+Start the Plasmo watcher:
+
 ```bash
 pnpm dev
 ```
 
-This will continuously rebuild the extension as you modify files and output to the `dist/` directory.
+For Chrome, load this generated directory in `chrome://extensions/`:
 
-### Build for Chrome
+```text
+build/chrome-mv3-dev/
+```
+
+It contains the generated `manifest.json`. Keep the watcher running while developing and reload the extension after changes. The `.plasmo/` directory is an internal Plasmo workspace and should not be loaded as an unpacked extension.
+
+The development package includes Plasmo's live-reload support, which may cause Chrome to show a broad site-access warning. This is development tooling, not access to other installed apps or device services. For the least-privilege browser prompt, use the production package from `build/chrome-mv3-prod/`.
+
+## Production Builds
 
 ```bash
 pnpm build:chrome
 ```
 
-Output: `dist/` directory with Chrome-compatible manifest
+Chrome MV3 output:
 
-### Build for Firefox
+```text
+build/chrome-mv3-prod/
+```
 
 ```bash
 pnpm build:firefox
 ```
 
-Output: `dist/` directory with Firefox-compatible manifest
+Firefox MV2 output:
 
-### Build for Both Browsers (Production)
+```text
+build/firefox-mv2-prod/
+```
+
+Build both targets with:
 
 ```bash
 pnpm build:all
 ```
 
-This will:
-1. Build for Chrome → `build/chrome/`
-2. Build for Firefox → `build/firefox/`
-3. Generate `tomari-chrome-extension.zip`
-4. Generate `tomari-firefox-extension.zip`
+The `build:all` script produces both directories above. It does not create ZIP archives.
 
 ## Loading the Extension
 
 ### Chrome
 
-1. Open `chrome://extensions/` in your browser
-2. Enable "Developer mode" (toggle in top right)
-3. Click "Load unpacked"
-4. Select the `dist/` directory
-5. The extension should now appear in your extensions list
+1. Open `chrome://extensions/`.
+2. Enable Developer mode.
+3. Click Load unpacked.
+4. Select `build/chrome-mv3-dev/` for development or `build/chrome-mv3-prod/` for production.
 
 ### Firefox
 
-1. Open `about:debugging#/runtime/this-firefox` in your browser
-2. Click "Load Temporary Add-on"
-3. Select any file from the `dist/` directory
-4. The extension should now appear in your extensions list
+1. Open `about:debugging#/runtime/this-firefox`.
+2. Click Load Temporary Add-on.
+3. Select `build/firefox-mv2-prod/manifest.json`.
 
 ## Project Structure
 
-```
+```text
 extension/
+├── assets/               # Plasmo assets, including the extension icon
+├── build/                # Generated Plasmo builds
 ├── src/
-│   ├── background/       # Background service worker script
-│   ├── content/          # Content script for page interactions
-│   ├── popup/            # Popup UI script
-│   ├── core/             # Core functionality
-│   │   ├── types.ts      # Type definitions
-│   │   ├── readingCompletion.ts
-│   │   ├── waitForElement.ts
-│   │   └── trackers/     # Site-specific tracking logic
-│   ├── shared/           # Shared utilities
-│   │   ├── logger.ts
-│   │   └── messaging.ts
+│   ├── auth/             # Better Auth client
+│   ├── background.ts     # Plasmo background entrypoint
+│   ├── background/       # Background message handling
+│   ├── contents/         # Plasmo content-script entrypoints
+│   ├── content/          # Content-script implementation
+│   ├── core/             # Shared tracking logic
+│   ├── popup.tsx         # Plasmo popup and login state
+│   ├── shared/           # Shared utilities and messaging
 │   └── sites/            # Site detection and parsers
-├── public/
-│   ├── manifest.json     # Chrome manifest
-│   ├── manifest.firefox.json  # Firefox manifest
-│   ├── popup.html        # Popup UI
-│   └── icons/            # Extension icons
-├── dist/                 # Built extension (generated)
-├── build/                # Production builds (generated)
-├── vite.config.ts        # Vite build configuration
-├── tsconfig.json         # TypeScript configuration
-└── package.json          # Dependencies and scripts
+├── package.json          # Scripts, manifest settings, and dependencies
+└── tsconfig.json         # TypeScript configuration
 ```
 
-## Development
+Plasmo generates the browser manifest from `package.json` and the entrypoint configuration. The legacy files in `public/` are not the files loaded by the current Plasmo build.
 
-### Available Scripts
+## Available Scripts
 
 | Command | Description |
-|---------|-------------|
-| `pnpm dev` | Watch mode - rebuild on file changes |
-| `pnpm build` | Build for Chrome (default) |
-| `pnpm build:chrome` | Build for Chrome explicitly |
-| `pnpm build:firefox` | Build for Firefox |
-| `pnpm build:all` | Build for both browsers and create ZIP files |
+| --- | --- |
+| `pnpm dev` | Watch and build the Chrome development package |
+| `pnpm build` | Build the Chrome production package |
+| `pnpm build:chrome` | Build Chrome MV3 |
+| `pnpm build:firefox` | Build Firefox MV2 |
+| `pnpm build:all` | Build both browser targets |
 
-### File Organization
+## Supported Sites
 
-- **Background Script** (`src/background/index.ts`): Handles extension messages, API calls, and state management
-- **Content Script** (`src/content/index.ts`): Injects into manga websites to track reading progress
-- **Popup Script** (`src/popup/index.ts`): Manages the popup UI and user interactions
-
-### Manifest Files
-
-- `public/manifest.json` - Chrome manifest (MV3)
-- `public/manifest.firefox.json` - Firefox manifest (MV2/MV3 compatible)
-
-## Configuration
-
-### Environment Variables
-
-Create a `.env.local` file with:
-
-```env
-VITE_BACKEND_URL=https://your-backend.com
-```
-
-This will be replaced in the build process via Vite's environment handling.
-
-## Supported Manga Sites
-
-The extension currently supports:
 - Asura Scans
 - Comix
 - Mangadex
 - Mangafire
 - Manganato
-- End Level (generic parser)
+- End Level through the generic parser
 
 ## Troubleshooting
 
-### Extension doesn't load
-1. Make sure you've run `pnpm build` or `pnpm build:chrome`
-2. Check that the `dist/` directory exists and contains `manifest.json`
-3. Try reloading the extension in browser settings
+If the extension does not load, confirm that the selected directory contains `manifest.json`. For development, ensure `pnpm dev` is still running and use the reload button in the browser's extension page after rebuilding.
 
-### Changes not appearing
-1. Run `pnpm dev` to rebuild with your changes
-2. In browser extensions page, click the reload icon for the extension
-3. Hard refresh the manga website (Ctrl+Shift+R or Cmd+Shift+R)
+The extension only declares `storage`, the configured Manga Tracker backend, and content-script access for the supported manga sites. It does not request access to other installed applications or device services.
 
-### Content script not injecting
-1. Check that the website URL matches the patterns in `manifest.json`
-2. Hard refresh the page
-3. Check browser console for errors (Ctrl+Shift+J)
-
-### API calls failing
-1. Verify `VITE_BACKEND_URL` is set correctly
-2. Check that your backend server is running
-3. Check browser console for CORS errors
-4. Ensure you're authenticated with your Manga Tracker account
+If API requests fail, verify `PLASMO_PUBLIC_BACKEND_URL`, backend CORS/trusted-origin settings, and that the account is signed in. The popup displays a sign-in action when no Better Auth session is available.
 
 ## Publishing
 
-### Chrome Web Store
-1. Create a `.zip` of the `dist/` directory
-2. Upload to [Chrome Web Store Developer Dashboard](https://chrome.google.com/webstore/devconsole)
-3. Fill in required store listing information
-4. Submit for review
+Create an archive of the relevant production directory before uploading it to the Chrome Web Store or Firefox Add-ons Store:
 
-### Firefox Add-ons Store
-1. Create a `.zip` of the `dist/` directory (already created by `pnpm build:all`)
-2. Sign in to [Firefox Add-ons Developer](https://addons.mozilla.org/en-US/developers/)
-3. Upload the `.zip` file
-4. Fill in required store listing information
-5. Submit for review
-
-## License
-
-[Your License Here]
+```bash
+cd build/chrome-mv3-prod && zip -r ../../tomari-chrome-extension.zip .
+cd ../firefox-mv2-prod && zip -r ../../tomari-firefox-extension.zip .
+```
