@@ -45,11 +45,12 @@
     "updateAtStart": true,
     "refetchImgs": false,
     "forceUpdateManga": false,
-    "intitalMangaFire": false
+    "intitalMangaFire": false,
+    "updateSourceId": true
   },
   "rateLimits": {
-      "mangaFireDuration": 2000,
-      "mangaFireMax": 2
+    "mangaFireDuration": 2000,
+    "mangaFireMax": 2
   },
   "browserPath": "/usr/bin/chromium"
 }
