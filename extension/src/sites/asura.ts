@@ -6,7 +6,7 @@ export const asuraAdapter: SiteAdapter = {
   matches: (url) => url.hostname.includes('asurascans') && url.pathname.includes('/chapter/'),
   getSourceId: () => {
     const comicSlug = location.pathname.split('/').filter(Boolean)[1] ?? '';
-    return comicSlug || 'Unknown';
+    return comicSlug.slice(0, comicSlug.lastIndexOf('-')) || 'Unknown';
   },
   getSiteName: () => 'asura',
   getChapterId: () => location.pathname.split('/').at(-1) ?? location.pathname,

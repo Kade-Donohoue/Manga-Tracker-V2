@@ -200,7 +200,7 @@ export async function getManga(
 
     const comicSlug = new URL(url).pathname.split('/').filter(Boolean)[1];
 
-    const sourceId = comicSlug || 'Unknown';
+    const sourceId = comicSlug.slice(0, comicSlug.lastIndexOf('-')) || 'Unknown';
 
     await job.updateProgress(30);
 
