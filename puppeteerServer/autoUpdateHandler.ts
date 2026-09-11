@@ -336,6 +336,7 @@ new Worker(
         },
         body: JSON.stringify({
           newData: updatesWithNewChapters,
+          updateSourceId: config.updateSettings.updateSourceId,
         }),
       }
     );

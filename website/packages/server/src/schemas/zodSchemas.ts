@@ -157,6 +157,7 @@ export type UpdateData = z.infer<typeof updateData>[number];
 
 export const updateDataSchema = z.object({
   newData: updateData,
+  updateSourceId: z.boolean().optional().default(false),
 });
 
 export const isTrackingMangaSchema = z.object({

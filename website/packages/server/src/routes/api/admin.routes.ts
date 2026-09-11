@@ -230,7 +230,7 @@ adminRouter.post('/userMangaFailed/:fetchId', async (c) => {
 
 adminRouter.post('/updateManga', zValidator('json', updateDataSchema), async (c) => {
   const db = createDb(c.env);
-  const { newData } = c.req.valid('json');
+  const { newData, updateSourceId } = c.req.valid('json');
 
   // Safe batch size based on your table size
   const batches = chunkByEstimatedSize(newData, estimateRowSize);
@@ -261,6 +261,9 @@ adminRouter.post('/updateManga', zValidator('json', updateDataSchema), async (c)
           latestChapterText: sql`excluded.latestChapterText`,
           specialFetchData: sql`excluded.specialFetchData`,
           updateTime: sql`CURRENT_TIMESTAMP`,
+          ...(updateSourceId && {
+            sourceId: sql`excluded.sourceId`,
+          }),
         },
       });
 
