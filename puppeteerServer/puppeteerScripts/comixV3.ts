@@ -293,6 +293,7 @@ export async function getManga(
       sourceId: mangaId,
       author: author,
       description: description,
+      source: 'comix',
     };
   } catch (err) {
     job.log(logWithTimestamp(`Error: ${err}`));

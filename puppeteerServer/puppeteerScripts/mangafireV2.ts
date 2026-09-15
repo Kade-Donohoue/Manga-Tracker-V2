@@ -258,6 +258,7 @@ export async function getManga(
       sourceId: titleData.data.id.toString() || 'Unknown',
       author: author,
       description: description,
+      source: 'mangafire',
     };
   } catch (err) {
     job.log(logWithTimestamp(`Error: ${err}`));

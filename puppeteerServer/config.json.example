@@ -46,7 +46,7 @@
     "refetchImgs": false,
     "forceUpdateManga": false,
     "intitalMangaFire": false,
-    "updateSourceId": true
+    "updateStaticValues": true
   },
   "rateLimits": {
     "mangaFireDuration": 2000,

@@ -300,6 +300,7 @@ export async function getManga(
       sourceId: sourceId,
       author: author,
       description: description,
+      source: 'asura',
     };
   } catch (err) {
     job.log(logWithTimestamp(`Error: ${err}`));

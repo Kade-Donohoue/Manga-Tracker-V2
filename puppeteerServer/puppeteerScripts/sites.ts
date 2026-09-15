@@ -10,13 +10,15 @@ import { connection } from '../connections';
 import { comixSite } from './comixV3';
 import { userQueue } from '../user';
 import { autoUpdateQueue } from '../autoUpdateHandler';
+import { mangaDotNetSite } from './mangadotnet';
 
 const allSites: SiteQueue[] = [
-  manganatoSite,
-  mangadexSite,
-  asuraSite,
-  mangafireSite,
-  comixSite,
+  // manganatoSite,
+  // mangadexSite,
+  // asuraSite,
+  // mangafireSite,
+  // comixSite,
+  mangaDotNetSite,
 ];
 
 export const sites = allSites.filter((s) => s.enabled);

@@ -63,7 +63,7 @@ export const account = sqliteTable('account', {
     .references(() => user.id, { onDelete: 'cascade' }),
   accessToken: text('access_token'),
   refreshToken: text('refresh_token'),
-  idToken: text('id_token'), 
+  idToken: text('id_token'),
   accessTokenExpiresAt: integer('access_token_expires_at', { mode: 'timestamp' }),
   refreshTokenExpiresAt: integer('refresh_token_expires_at', { mode: 'timestamp' }),
   scope: text('scope'),
@@ -116,7 +116,7 @@ export const userData = sqliteTable(
       .references(() => user.id, { onDelete: 'cascade' }),
     mangaId: text('mangaId')
       .notNull()
-      .references(() => mangaData.mangaId, { onDelete: 'cascade' }),
+      .references(() => mangaData.mangaId, { onDelete: 'no action' }),
     userTitle: text('userTitle'),
     currentIndex: integer('currentIndex').notNull(),
     currentChap: text('currentChap').notNull(),
@@ -130,20 +130,26 @@ export const userData = sqliteTable(
   (table) => [primaryKey({ columns: [table.userID, table.mangaId] })]
 );
 
-export const mangaData = sqliteTable('mangaData', {
-  mangaId: text('mangaId').primaryKey(),
-  mangaName: text('mangaName').notNull(),
-  urlBase: text('urlBase').notNull(),
-  slugList: text('slugList').notNull(),
-  chapterTextList: text('chapterTextList').notNull(),
-  latestChapterText: real('latestChapterText').notNull(),
-  updateTime: text('updateTime').notNull(),
-  useAltStatCalc: integer('useAltStatCalc', { mode: 'boolean' }).notNull().default(false),
-  specialFetchData: text('specialFetchData'),
-  sourceId: text('sourceId').unique(),
-  description: text('description').notNull().default(''),
-  author: text('author').notNull().default('Unknown Author'),
-});
+export const mangaData = sqliteTable(
+  'mangaData',
+  {
+    mangaId: text('mangaId').primaryKey(),
+    mangaName: text('mangaName').notNull(),
+    urlBase: text('urlBase').notNull(),
+    source: text('source').notNull().default('Temp'),
+    mangaGroupId: text('mangaGroupId'),
+    slugList: text('slugList').notNull(),
+    chapterTextList: text('chapterTextList').notNull(),
+    latestChapterText: real('latestChapterText').notNull(),
+    updateTime: text('updateTime').notNull(),
+    useAltStatCalc: integer('useAltStatCalc', { mode: 'boolean' }).notNull().default(false),
+    specialFetchData: text('specialFetchData'),
+    sourceId: text('sourceId').unique(),
+    description: text('description').notNull().default(''),
+    author: text('author').notNull().default('Unknown Author'),
+  }
+  // (table) => [unique('mangaData_Unique').on(table.sourceId, table.source)] // got tired fighting migration will get working later... maybe
+);
 
 export const userCategories = sqliteTable(
   'userCategories',
@@ -168,7 +174,7 @@ export const coverImages = sqliteTable(
     mangaId: t
       .text('mangaId')
       .notNull()
-      .references(() => mangaData.mangaId),
+      .references(() => mangaData.mangaId, { onDelete: 'cascade' }),
     coverIndex: t.integer('coverIndex').notNull(),
     savedAt: t
       .text('savedAt')

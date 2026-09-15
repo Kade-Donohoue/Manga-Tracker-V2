@@ -11,6 +11,7 @@ export type fetchData = {
   sourceId: string;
   author: string;
   description: string;
+  source: string;
 };
 
 export type autoUpdateJobData = {
