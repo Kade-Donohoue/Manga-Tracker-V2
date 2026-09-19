@@ -235,6 +235,7 @@ export async function getManga(
       sourceId: mangaId + `(${language})`,
       author: author,
       description: description,
+      source: 'mangadex',
     };
   } catch (err) {
     job.log(logWithTimestamp(`Error: ${err}`));

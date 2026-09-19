@@ -49,16 +49,13 @@ async function updateAllManga() {
   console.log(`Updating all manga at ${formattedTime}`);
 
   try {
-    const resp = await fetch(
-      `${config.serverCom.serverUrl}/api/serverReq/data/getAllManga`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': config.serverCom.apiKey,
-        },
-      }
-    );
+    const resp = await fetch(`${config.serverCom.serverUrl}/api/serverReq/data/getAllManga`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': config.serverCom.apiKey,
+      },
+    });
 
     if (config.debug.verboseLogging) console.log(resp);
 
@@ -156,9 +153,7 @@ new Worker(
     const log = async (message: string) => {
       const elapsedMs = Date.now() - startTime;
 
-      await job.log(
-        `[${new Date().toLocaleTimeString()}] ${message} (${elapsedMs}ms elapsed)`
-      );
+      await job.log(`[${new Date().toLocaleTimeString()}] ${message} (${elapsedMs}ms elapsed)`);
     };
 
     const updateProgress = async (data: any) => {
@@ -169,11 +164,7 @@ new Worker(
       });
     };
 
-    const fetchWithTimeout = async (
-      url: string,
-      options: any = {},
-      timeoutMs = 15000
-    ) => {
+    const fetchWithTimeout = async (url: string, options: any = {}, timeoutMs = 15000) => {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -212,9 +203,7 @@ new Worker(
 
     const totalFailedCount = job.data.total - results.length;
 
-    await log(
-      `Child jobs complete: ${results.length} successful, ${totalFailedCount} failed`
-    );
+    await log(`Child jobs complete: ${results.length} successful, ${totalFailedCount} failed`);
 
     await updateProgress({
       stage: 'processing_results',
@@ -247,9 +236,7 @@ new Worker(
 
       console.warn(title, queueCounts);
 
-      await log(
-        `Failures: ${totalFailedCount}/${job.data.total} child jobs failed`
-      );
+      await log(`Failures: ${totalFailedCount}/${job.data.total} child jobs failed`);
 
       for (const [queue, count] of Object.entries(queueCounts)) {
         await log(`  ${queue}: ${count} failed`);
@@ -263,10 +250,7 @@ new Worker(
     let totalNewChapters = 0;
 
     const updateData = results.map(
-      ({
-        returnvalue: { images, ...rest },
-        data: { oldSlugList, mangaId },
-      }) => {
+      ({ returnvalue: { images, ...rest }, data: { oldSlugList, mangaId } }) => {
         const oldSlugs = oldSlugList
           .split(',')
           .map((s) => s.trim())
@@ -277,9 +261,7 @@ new Worker(
           .map((s) => s.trim())
           .filter(Boolean);
 
-        const newChapters = newSlugs.filter(
-          (slug: string) => !oldSlugs.includes(slug)
-        );
+        const newChapters = newSlugs.filter((slug: string) => !oldSlugs.includes(slug));
 
         totalNewChapters += newChapters.length;
 
@@ -292,25 +274,16 @@ new Worker(
       }
     );
 
-    const imageData = results.map(
-      ({
-        returnvalue: { images },
-        data: { mangaId },
-      }) => ({
-        images,
-        mangaId,
-      })
-    );
+    const imageData = results.map(({ returnvalue: { images }, data: { mangaId } }) => ({
+      images,
+      mangaId,
+    }));
 
     const updatesWithNewChapters = updateData.filter(
-      (d) =>
-        config.updateSettings.forceUpdateManga ||
-        d.newChapterCount > 0
+      (d) => config.updateSettings.forceUpdateManga || d.newChapterCount > 0
     );
 
-    await log(
-      `Processed results: ${updatesWithNewChapters.length} manga need database updates`
-    );
+    await log(`Processed results: ${updatesWithNewChapters.length} manga need database updates`);
 
     await log(`Detected ${totalNewChapters} new chapters`);
 
@@ -322,9 +295,7 @@ new Worker(
     /*
      * Send update data
      */
-    await log(
-      `Sending ${updatesWithNewChapters.length} manga updates to server...`
-    );
+    await log(`Sending ${updatesWithNewChapters.length} manga updates to server...`);
 
     const resp = await fetchWithTimeout(
       `${config.serverCom.serverUrl}/api/serverReq/data/updateManga`,
@@ -336,21 +307,16 @@ new Worker(
         },
         body: JSON.stringify({
           newData: updatesWithNewChapters,
-          updateSourceId: config.updateSettings.updateSourceId,
+          updateStaticValues: config.updateSettings.updateStaticValues,
         }),
       }
     );
 
     if (!resp.ok) {
-      await log(
-        `ERROR: Failed to send update data: ${resp.status} ${resp.statusText}`
-      );
+      await log(`ERROR: Failed to send update data: ${resp.status} ${resp.statusText}`);
 
       if (config.notif.batchFailureNotif) {
-        await sendNotif(
-          `Failed to send update Data!`,
-          `Error ${resp.status}:${resp.statusText}`
-        );
+        await sendNotif(`Failed to send update Data!`, `Error ${resp.status}:${resp.statusText}`);
       }
 
       console.warn(await resp.text());
@@ -373,10 +339,7 @@ new Worker(
 
     const BATCH_SIZE = 5;
 
-    const totalImages = imageData.reduce(
-      (acc, m) => acc + m.images.length,
-      0
-    );
+    const totalImages = imageData.reduce((acc, m) => acc + m.images.length, 0);
 
     let processedImages = 0;
     let savedImageCount = 0;
@@ -421,10 +384,7 @@ new Worker(
           try {
             const controller = new AbortController();
 
-            const timeout = setTimeout(
-              () => controller.abort(),
-              15000
-            );
+            const timeout = setTimeout(() => controller.abort(), 15000);
 
             const resp = await fetch(
               `${config.serverCom.serverUrl}/api/serverReq/data/saveCoverImage`,
@@ -457,9 +417,7 @@ new Worker(
           } catch (err) {
             failedImageCount++;
 
-            await log(
-              `Image upload exception for manga ${mangaId}, index ${img.index}`
-            );
+            await log(`Image upload exception for manga ${mangaId}, index ${img.index}`);
 
             console.warn(`Image upload failed`, err);
           }
@@ -468,9 +426,7 @@ new Worker(
         })
       );
 
-      const imageProgress = Math.floor(
-        (processedImages / totalImages) * 100
-      );
+      const imageProgress = Math.floor((processedImages / totalImages) * 100);
 
       await log(
         `Image batch complete: ${processedImages}/${totalImages} processed, ${savedImageCount} saved, ${failedImageCount} failed`
@@ -502,9 +458,7 @@ new Worker(
       `Batch completed: ${results.length} successful, ${totalFailedCount} failed, ${totalNewChapters} new chapters, ${savedImageCount} images saved, ${failedImageCount} image failures`
     );
 
-    await log(
-      `Total batch runtime: ${totalElapsedSeconds}s`
-    );
+    await log(`Total batch runtime: ${totalElapsedSeconds}s`);
 
     return {
       total: results.length,

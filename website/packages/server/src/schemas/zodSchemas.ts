@@ -126,6 +126,7 @@ const newMangaData = z.object({
   sourceId: z.string().min(1),
   author: z.string().min(0).default('Unknown'),
   description: z.string().default('Unknown'),
+  source: z.string().min(1),
 });
 
 export const newMangaSchama = z.object({
@@ -150,6 +151,7 @@ export const updateData = z.array(
     currentIndex: z.coerce.string(),
     specialFetchData: z.any().nullable(),
     sourceId: z.string().min(1),
+    source: z.string().min(1),
   })
 );
 
@@ -157,7 +159,7 @@ export type UpdateData = z.infer<typeof updateData>[number];
 
 export const updateDataSchema = z.object({
   newData: updateData,
-  updateSourceId: z.boolean().optional().default(false),
+  updateStaticValues: z.boolean().optional().default(false),
 });
 
 export const isTrackingMangaSchema = z.object({

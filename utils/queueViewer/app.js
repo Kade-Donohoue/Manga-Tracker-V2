@@ -21,6 +21,7 @@ const queueNames = [
   'auto-update',
   'user-bulk',
   'comix-site',
+  'MangaDotNet-site',
 ];
 
 // Create BullMQ queues

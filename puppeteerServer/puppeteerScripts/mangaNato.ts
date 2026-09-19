@@ -282,6 +282,7 @@ export async function getManga(
       sourceId: overviewUrl.split('/').at(-1) || 'Unknown',
       author: author,
       description: description,
+      source: 'manganato',
     };
   } catch (err) {
     job.log(logWithTimestamp(`Error: ${err}`));

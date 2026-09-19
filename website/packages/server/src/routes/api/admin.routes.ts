@@ -114,6 +114,7 @@ adminRouter.post('/saveManga', zValidator('json', newMangaSchama), async (c) => 
       sourceId: newMangaData.sourceId,
       author: newMangaData.author,
       description: newMangaData.description,
+      source: newMangaData.source,
     })
     .onConflictDoUpdate({
       target: [mangaData.sourceId],
@@ -230,7 +231,7 @@ adminRouter.post('/userMangaFailed/:fetchId', async (c) => {
 
 adminRouter.post('/updateManga', zValidator('json', updateDataSchema), async (c) => {
   const db = createDb(c.env);
-  const { newData, updateSourceId } = c.req.valid('json');
+  const { newData, updateStaticValues } = c.req.valid('json');
 
   // Safe batch size based on your table size
   const batches = chunkByEstimatedSize(newData, estimateRowSize);
@@ -242,6 +243,7 @@ adminRouter.post('/updateManga', zValidator('json', updateDataSchema), async (c)
         batch.map((m) => ({
           mangaId: m.mangaId,
           mangaName: m.mangaName,
+          source: m.source,
           urlBase: m.urlBase,
           slugList: m.slugList,
           chapterTextList: m.chapterTextList,
@@ -261,7 +263,8 @@ adminRouter.post('/updateManga', zValidator('json', updateDataSchema), async (c)
           latestChapterText: sql`excluded.latestChapterText`,
           specialFetchData: sql`excluded.specialFetchData`,
           updateTime: sql`CURRENT_TIMESTAMP`,
-          ...(updateSourceId && {
+          ...(updateStaticValues && {
+            source: sql`excluded.source`,
             sourceId: sql`excluded.sourceId`,
           }),
         },
