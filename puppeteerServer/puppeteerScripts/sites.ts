@@ -13,11 +13,11 @@ import { autoUpdateQueue } from '../autoUpdateHandler';
 import { mangaDotNetSite } from './mangadotnet';
 
 const allSites: SiteQueue[] = [
-  // manganatoSite,
-  // mangadexSite,
-  // asuraSite,
-  // mangafireSite,
-  // comixSite,
+  manganatoSite,
+  mangadexSite,
+  asuraSite,
+  mangafireSite,
+  comixSite,
   mangaDotNetSite,
 ];
 
