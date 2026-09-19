@@ -1,5 +1,12 @@
 [
   {
+    "version": "v4.5.0",
+    "date": "2026-18-09",
+    "features": ["Manga.net Support!", "Cross-site manga linking support!", "Major extension update for tracking and automatic updates."],
+    "fixes": ["Fixed MangaFire chapter detection and source configuration.", "Fixed Asura source IDs and URL handling.", "Fixed Comix missing chapters.", "New manga is now included in reading statistics."],
+    "improvements": ["Improved manga metadata tracking with author and description fields. (For some sites)", "Improved automatic updates across manga sources.", "Replaced Puppeteer with Patchright for scraping. (Backend server to be renamed)", "Improved Bull Board queue access and scheduled-task logging.", "Removed MangaPark from the queue viewer."]
+  },
+  {
     "version": "v4.4.0", 
     "date": "2026-28-06", 
     "features": ["Admin Requests!"], 
